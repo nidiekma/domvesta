@@ -10,11 +10,11 @@ const year = 2026;
 // Linien-Piktogramme (2px-Strich wie die Kartenränder, Farbe via currentColor)
 // statt OS-Emoji, die je nach System unterschiedlich und "consumer-grade" rendern.
 const icons: Record<string, string> = {
-  shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
-  bolt: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
-  umbrella: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v7a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg>`,
-  mail: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
-  phone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  shield: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
+  bolt: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  umbrella: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v7a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg>`,
+  mail: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+  phone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
 };
 ---
 
@@ -568,7 +568,8 @@ const icons: Record<string, string> = {
       }
       .expert:hover { transform: translate(-3px, -3px); box-shadow: 10px 10px 0 var(--orange); }
       .expert__icon { display: inline-block; color: var(--orange); line-height: 1; }
-      .expert__icon svg { width: 2.2rem; height: 2.2rem; display: block; }
+      /* set:html-SVGs bekommen Astros Scoping-Attribut nicht → :global() */
+      .expert__icon :global(svg) { width: 2rem; height: 2rem; display: block; }
       .expert__name {
         font-family: "Instrument Serif", serif; font-weight: 400;
         font-size: 1.9rem; margin: 0.7rem 0 0.1rem; color: var(--ink);
@@ -600,7 +601,7 @@ const icons: Record<string, string> = {
       }
       .svc:hover { transform: translate(-3px, -3px); box-shadow: 10px 10px 0 var(--orange); }
       .svc__icon { display: inline-block; color: var(--orange); line-height: 1; }
-      .svc__icon svg { width: 2.4rem; height: 2.4rem; display: block; }
+      .svc__icon :global(svg) { width: 2.2rem; height: 2.2rem; display: block; }
       .svc__title { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 2rem; margin: 0.8rem 0 0.2rem; color: var(--orange); }
       .svc__claim { font-family: "Instrument Serif", serif; font-style: italic; font-size: 1.3rem; color: var(--blue); margin: 0 0 1.1rem; }
       .svc__intro { color: var(--ink-soft); margin: 0 0 1.1rem; font-size: 0.96rem; }
@@ -613,7 +614,7 @@ const icons: Record<string, string> = {
         background: var(--blue-soft); border: 1.5px solid var(--blue); border-radius: 14px;
       }
       .svc__note-title { display: block; font-weight: 700; color: var(--blue); margin-bottom: 0.35rem; }
-      .svc__note-icon svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
+      .svc__note-icon :global(svg) { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
       .svc__note p { margin: 0; color: var(--ink); font-size: 0.94rem; }
       .svc__result {
         margin-top: auto; padding: 1.1rem 1.2rem;
@@ -673,7 +674,7 @@ const icons: Record<string, string> = {
       .kontakt__lead { color: var(--ink); margin: 0 0 2rem; }
       .kontakt__meta { display: grid; gap: 0.8rem; }
       .kontakt__meta a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1.05rem; }
-      .kontakt__meta-icon svg { width: 1.05em; height: 1.05em; vertical-align: -0.15em; margin-right: 0.35rem; }
+      .kontakt__meta-icon :global(svg) { width: 1.05em; height: 1.05em; vertical-align: -0.15em; margin-right: 0.35rem; }
       .kontakt__meta a:hover { text-decoration: underline; }
 
       .kontakt__formwrap { background: #fff; padding: clamp(1.8rem, 4vw, 2.6rem); position: relative; }
