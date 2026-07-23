@@ -19,7 +19,8 @@ const year = 2026;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/png" href={site.logo} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <title>{title} — {site.name}</title>
     <meta name="description" content={description} />
     <meta name="robots" content="noindex, follow" />
@@ -66,12 +67,19 @@ const year = 2026;
         --ink-soft: #6b5742;
         --orange: #e8651b;
         --orange-deep: #cc4f0c;
+        /* Textsicheres Orange: ≥4,5:1 auf Creme & Weiß (WCAG AA für Fließtext-Größen). */
+        --orange-text: #b34509;
         --blue: #1f4e8c;
         --blue-soft: #dbe6f3;
         --line: #e6d6bf;
         --maxw: 1180px;
       }
       * { box-sizing: border-box; }
+      a:focus-visible, button:focus-visible {
+        outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px;
+      }
+      .btn:focus-visible { border-radius: 999px; }
+      .footer a:focus-visible { outline-color: var(--cream); }
       body {
         margin: 0;
         background: var(--cream);
@@ -102,8 +110,12 @@ const year = 2026;
       .brand img { border-radius: 9px; }
       .nav__links { display: flex; gap: 1.7rem; margin-left: auto; }
       .nav__links a { color: var(--ink); text-decoration: none; font-weight: 500; font-size: 0.95rem; position: relative; }
-      .nav__links a::after { content: ""; position: absolute; left: 0; bottom: -3px; height: 2px; width: 0; background: var(--orange); transition: width .25s; }
-      .nav__links a:hover::after { width: 100%; }
+      .nav__links a::after {
+        content: ""; position: absolute; left: 0; bottom: -3px; height: 2px; width: 100%;
+        background: var(--orange); transform: scaleX(0); transform-origin: left;
+        transition: transform .25s;
+      }
+      .nav__links a:hover::after { transform: scaleX(1); }
 
       /* Inhalt */
       .legal {
@@ -114,7 +126,7 @@ const year = 2026;
         display: inline-block; margin-bottom: 2rem;
         color: var(--blue); text-decoration: none; font-weight: 600; font-size: 0.95rem;
       }
-      .legal__back:hover { color: var(--orange); }
+      .legal__back:hover { color: var(--orange-text); }
       .legal__title {
         font-family: "Instrument Serif", serif; font-weight: 400;
         font-size: clamp(2.6rem, 6vw, 4.2rem); line-height: 1;
@@ -139,7 +151,7 @@ const year = 2026;
       .legal__prose p { margin: 0 0 1rem; }
       .legal__prose strong { color: var(--ink); }
       .legal__prose a { color: var(--blue); font-weight: 500; word-break: break-word; }
-      .legal__prose a:hover { color: var(--orange); }
+      .legal__prose a:hover { color: var(--orange-text); }
       .legal__prose ul { margin: 0 0 1rem; padding-left: 1.3rem; }
       .legal__prose li { margin-bottom: 0.5rem; }
       .legal__prose address {

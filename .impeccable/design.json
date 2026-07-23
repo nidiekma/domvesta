@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-23T12:00:00Z",
+  "title": "Design System: Domvesta",
+  "extensions": {
+    "colorMeta": {
+      "signal-orange": { "role": "primary", "displayName": "Signal Orange", "canonical": "#e8651b", "tonalRamp": ["oklch(20% 0.08 45)", "oklch(30% 0.12 45)", "oklch(40% 0.15 45)", "oklch(50% 0.18 45)", "oklch(60% 0.19 45)", "oklch(68% 0.185 45)", "oklch(80% 0.12 45)", "oklch(95% 0.04 45)"] },
+      "burnt-orange": { "role": "primary", "displayName": "Burnt Orange", "canonical": "#cc4f0c", "tonalRamp": ["oklch(18% 0.07 42)", "oklch(28% 0.11 42)", "oklch(38% 0.14 42)", "oklch(48% 0.17 42)", "oklch(58% 0.18 42)", "oklch(66% 0.17 42)", "oklch(78% 0.11 42)", "oklch(94% 0.04 42)"] },
+      "trust-blue": { "role": "secondary", "displayName": "Trust Blue", "canonical": "#1f4e8c", "tonalRamp": ["oklch(18% 0.06 258)", "oklch(26% 0.09 258)", "oklch(34% 0.11 258)", "oklch(42% 0.12 258)", "oklch(52% 0.12 258)", "oklch(64% 0.10 258)", "oklch(80% 0.06 258)", "oklch(95% 0.02 258)"] },
+      "powder-blue": { "role": "secondary", "displayName": "Powder Blue", "canonical": "#dbe6f3", "tonalRamp": ["oklch(25% 0.05 250)", "oklch(38% 0.06 250)", "oklch(50% 0.06 250)", "oklch(62% 0.06 250)", "oklch(74% 0.05 250)", "oklch(84% 0.04 250)", "oklch(91% 0.025 250)", "oklch(96% 0.015 250)"] },
+      "warm-paper": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#fbf2e4", "tonalRamp": ["oklch(22% 0.03 80)", "oklch(35% 0.04 80)", "oklch(48% 0.05 82)", "oklch(60% 0.05 82)", "oklch(72% 0.05 84)", "oklch(84% 0.04 84)", "oklch(92% 0.03 85)", "oklch(96% 0.02 85)"] },
+      "deep-paper": { "role": "neutral", "displayName": "Deep Paper", "canonical": "#f6e8d3", "tonalRamp": ["oklch(20% 0.03 78)", "oklch(33% 0.04 78)", "oklch(46% 0.05 80)", "oklch(58% 0.05 80)", "oklch(70% 0.05 82)", "oklch(82% 0.05 82)", "oklch(90% 0.04 83)", "oklch(94% 0.03 83)"] },
+      "card-white": { "role": "neutral", "displayName": "Card White", "canonical": "#ffffff", "tonalRamp": ["oklch(20% 0 0)", "oklch(35% 0 0)", "oklch(50% 0 0)", "oklch(65% 0 0)", "oklch(78% 0 0)", "oklch(88% 0 0)", "oklch(95% 0 0)", "oklch(100% 0 0)"] },
+      "espresso-ink": { "role": "neutral", "displayName": "Espresso Ink", "canonical": "#2a1c10", "tonalRamp": ["oklch(15% 0.02 60)", "oklch(22% 0.03 60)", "oklch(32% 0.04 62)", "oklch(42% 0.04 63)", "oklch(54% 0.04 64)", "oklch(68% 0.04 66)", "oklch(82% 0.03 70)", "oklch(94% 0.02 80)"] },
+      "soft-umber": { "role": "neutral", "displayName": "Soft Umber", "canonical": "#6b5742", "tonalRamp": ["oklch(16% 0.02 62)", "oklch(24% 0.03 62)", "oklch(34% 0.04 63)", "oklch(47% 0.04 65)", "oklch(58% 0.04 66)", "oklch(70% 0.04 68)", "oklch(83% 0.03 72)", "oklch(94% 0.02 80)"] },
+      "parchment-line": { "role": "neutral", "displayName": "Parchment Line", "canonical": "#e6d6bf", "tonalRamp": ["oklch(20% 0.02 75)", "oklch(33% 0.03 76)", "oklch(46% 0.04 77)", "oklch(58% 0.045 78)", "oklch(70% 0.045 79)", "oklch(80% 0.04 80)", "oklch(88% 0.035 80)", "oklch(95% 0.02 82)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headline only; stacked short lines, second line color-highlighted." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles with exactly one italic/colored emphasis word; max-width ~20ch." },
+      "title": { "displayName": "Title", "purpose": "Card and sub-block titles: expert names, service titles, process steps." },
+      "body": { "displayName": "Body", "purpose": "All running text; secondary text in Soft Umber at ~52-70ch measure." },
+      "label": { "displayName": "Label", "purpose": "Uppercase tracked eyebrows, section labels, tags." }
+    },
+    "shadows": [
+      { "name": "chip-offset", "value": "3px 3px 0 #2a1c10", "purpose": "Small tactile elements (chips)." },
+      { "name": "card-offset", "value": "6px 6px 0 #2a1c10", "purpose": "Default raised card at rest." },
+      { "name": "card-offset-hover", "value": "10px 10px 0 #1f4e8c", "purpose": "Hover lift; shadow grows and recolors to an accent (blue for experts, orange for services)." },
+      { "name": "frame-offset", "value": "10px 10px 0 #2a1c10", "purpose": "Hero-level frames: contact card, Calendly, video (ink, orange, or blue)." },
+      { "name": "cta-glow", "value": "0 12px 28px -12px rgba(232,101,27,0.8)", "purpose": "Solid buttons only — the single blurred shadow in the system." }
+    ],
+    "motion": [
+      { "name": "ease-lift", "value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "purpose": "All hover lifts and the reveal animation; springy but quick." },
+      { "name": "duration-state", "value": "0.25s", "purpose": "Hover/focus transitions on buttons, cards, links." },
+      { "name": "reveal", "value": "0.8s ease-lift, fade + 20px rise, staggered via --d custom property", "purpose": "Hero entrance animation." },
+      { "name": "ticker-scroll", "value": "30s linear infinite", "purpose": "Full-bleed brand ticker loop; aria-hidden decorative." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "900px" },
+      { "name": "mobile", "value": "520px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-solid",
+      "description": "The only CTA style: Signal Orange pill with warm glow; hover darkens, lifts, and winks with a -1° rotation.",
+      "html": "<a href=\"#\" class=\"ds-btn-solid\">Kostenloses Erstgespräch</a>",
+      "css": ".ds-btn-solid { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.9rem 1.6rem; border-radius: 999px; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 600; font-size: 1rem; text-decoration: none; cursor: pointer; border: 2px solid transparent; background: #e8651b; color: #fff; box-shadow: 0 12px 28px -12px rgba(232,101,27,0.8); transition: transform .25s cubic-bezier(.2,.8,.2,1), background .25s, box-shadow .25s; } .ds-btn-solid:hover { background: #cc4f0c; transform: translateY(-3px) rotate(-1deg); } .ds-btn-solid:focus-visible { outline: 3px solid #1f4e8c; outline-offset: 2px; }"
+    },
+    {
+      "name": "Wire Button",
+      "kind": "button",
+      "refersTo": "button-wire",
+      "description": "Secondary action: transparent pill with Trust Blue border; fills blue on hover.",
+      "html": "<a href=\"#\" class=\"ds-btn-wire\">★ Bewertungen auf ProvenExpert</a>",
+      "css": ".ds-btn-wire { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.9rem 1.6rem; border-radius: 999px; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 600; font-size: 1rem; text-decoration: none; cursor: pointer; background: transparent; color: #1f4e8c; border: 2px solid #1f4e8c; transition: transform .25s cubic-bezier(.2,.8,.2,1), background .25s, color .25s; } .ds-btn-wire:hover { background: #1f4e8c; color: #fff; transform: translateY(-2px); } .ds-btn-wire:focus-visible { outline: 3px solid #e8651b; outline-offset: 2px; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Static keyword label: white pill with ink border and small hard shadow.",
+      "html": "<span class=\"ds-chip\">Energie &amp; Versicherung aus einer Hand</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 0.4rem 1rem; border: 2px solid #2a1c10; border-radius: 999px; background: #fff; color: #2a1c10; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 600; font-size: 0.9rem; box-shadow: 3px 3px 0 #2a1c10; }"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Quiet metadata pill: Powder Blue fill, uppercase Trust Blue text, no border.",
+      "html": "<span class=\"ds-tag\">Unverbindlich</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; font-family: 'Schibsted Grotesk', sans-serif; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #1f4e8c; background: #dbe6f3; border-radius: 999px; padding: 0.25rem 0.75rem; }"
+    },
+    {
+      "name": "Raised Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The system's core surface: white card, 2px ink border, hard offset shadow; hover lifts and recolors the shadow to an accent.",
+      "html": "<article class=\"ds-card\"><span class=\"ds-card-emoji\">⚡</span><h3 class=\"ds-card-title\">Joshua de Buhr</h3><p class=\"ds-card-label\">Energie-Experte</p><ul class=\"ds-card-list\"><li>Seit 2021 in der Energiebranche</li><li>Spezialist für Strom &amp; Gas</li></ul></article>",
+      "css": ".ds-card { background: #fff; border: 2px solid #2a1c10; border-radius: 22px; padding: 1.9rem 1.8rem; font-family: 'Schibsted Grotesk', sans-serif; box-shadow: 6px 6px 0 #2a1c10; transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; max-width: 22rem; } .ds-card:hover { transform: translate(-3px, -3px); box-shadow: 10px 10px 0 #1f4e8c; } .ds-card-emoji { font-size: 2rem; line-height: 1; } .ds-card-title { font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 1.9rem; margin: 0.7rem 0 0.1rem; color: #2a1c10; } .ds-card-label { margin: 0 0 1.1rem; font-weight: 700; color: #e8651b; } .ds-card-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; } .ds-card-list li { position: relative; padding-left: 1.6rem; color: #6b5742; font-size: 0.96rem; } .ds-card-list li::before { content: '✓'; position: absolute; left: 0; top: 0; font-weight: 700; color: #e8651b; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Form field: warm paper fill on a white card, parchment border, orange focus ring.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-demo-name\">Wie heißen Sie?</label><input class=\"ds-field-input\" id=\"ds-demo-name\" type=\"text\" placeholder=\"Vor- und Nachname\" /></div>",
+      "css": ".ds-field { font-family: 'Schibsted Grotesk', sans-serif; max-width: 20rem; } .ds-field-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.4rem; color: #2a1c10; } .ds-field-input { width: 100%; padding: 0.85rem 1rem; border: 2px solid #e6d6bf; border-radius: 12px; background: #fbf2e4; font-family: inherit; font-size: 1rem; color: #2a1c10; transition: border-color .2s, box-shadow .2s; } .ds-field-input:focus { outline: none; border-color: #e8651b; box-shadow: 0 0 0 3px rgba(232,101,27,0.15); }"
+    },
+    {
+      "name": "Section Label",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "Wayfinding signature: orange circled number plus uppercase tracked label, preceding every section headline.",
+      "html": "<div class=\"ds-seclabel\"><span class=\"ds-seclabel-num\">02</span> Was wir machen</div>",
+      "css": ".ds-seclabel { display: inline-flex; align-items: center; gap: 0.6rem; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: #e8651b; } .ds-seclabel-num { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; background: #e8651b; color: #fff; border-radius: 50%; font-size: 0.8rem; letter-spacing: 0; }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "label",
+      "description": "Sticky-nav link: 500 weight ink text; hover draws a 2px orange underline from the left.",
+      "html": "<a href=\"#\" class=\"ds-navlink\">Wer wir sind</a>",
+      "css": ".ds-navlink { font-family: 'Schibsted Grotesk', sans-serif; color: #2a1c10; text-decoration: none; font-weight: 500; font-size: 0.95rem; position: relative; display: inline-block; } .ds-navlink::after { content: ''; position: absolute; left: 0; bottom: -3px; height: 2px; width: 0; background: #e8651b; transition: width .25s; } .ds-navlink:hover::after, .ds-navlink:focus-visible::after { width: 100%; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Cleared Desk",
+    "overview": "Domvesta's site is a warm paper desk on which everything that used to be chaos has been sorted into a few tactile, clearly labeled objects. The page itself is cream paper; content lives on white cards with firm espresso-ink outlines and hard offset shadows, as if each card were a physical thing you could pick up. Numbered section labels (01–05) walk the visitor through the desk in order — the layout performs the Entlastung the product sells.\n\nThe mood is warm and inviting: cream instead of white, espresso brown instead of black, a large friendly serif that speaks in short confident lines. Wit appears in small doses (a slight rotation on button hover, a scrolling ticker, emoji as card icons) but never at the expense of B2B credibility. The explicit anti-reference is sterile corporate finance — cold blue-and-white broker templates with handshake stock photos. This system rejects that world with warmth, real photography (the founders, a real Mehrfamilienhaus), and paper-like materiality.",
+    "keyCharacteristics": [
+      "Warm cream paper background; content on white ink-outlined cards",
+      "Hard offset shadows (no blur) as the primary depth cue",
+      "Instrument Serif display voice over Schibsted Grotesk workhorse text",
+      "Two accent voices: orange acts, blue reassures",
+      "Numbered, sequential section rhythm (01–05)"
+    ],
+    "rules": [
+      { "name": "The Two Voices Rule", "body": "Orange acts, blue reassures. CTAs, highlights, and progress are always orange; trust, partnership, and process metadata are always blue. Neither color takes the other's job.", "section": "colors" },
+      { "name": "The Warm Paper Rule", "body": "There is no gray and no pure-white page background in this system. Every neutral is warm (cream, parchment, umber, espresso); pure white exists only as the surface of raised cards.", "section": "colors" },
+      { "name": "The Serif Speaks Rule", "body": "Instrument Serif appears only at large sizes, only at weight 400, and its emphasis gesture is the italic — never bold. Everything functional (buttons, labels, body, forms) is Schibsted Grotesk.", "section": "typography" },
+      { "name": "The One Italic Rule", "body": "Headlines carry exactly one emphasized word or phrase — italic and/or accent-colored — never more.", "section": "typography" },
+      { "name": "The Hard Shadow Rule", "body": "Shadows are solid offset blocks — equal x/y, zero blur, flat color (ink by default, accent on hover). The only blurred shadow in the system is the CTA glow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do give every raised surface the pair: 2px Espresso Ink border + hard offset shadow (equal x/y, zero blur).",
+      "Do keep CTAs exclusively Signal Orange pills; blue never calls to action.",
+      "Do set headlines in Instrument Serif 400 with exactly one italic/colored emphasis word.",
+      "Do announce new sections with the numbered orange circle label, continuing the 01–05 sequence.",
+      "Do use real photography (founders, buildings) — the humans are the trust strategy.",
+      "Do respect prefers-reduced-motion (global.css already zeroes animations)."
+    ],
+    "donts": [
+      "Don't introduce gray neutrals or a pure-white page background — every neutral stays warm.",
+      "Don't use soft blurred shadows on cards; the only glow allowed is the CTA glow.",
+      "Don't use Instrument Serif at small sizes, in bold, or for functional UI text.",
+      "Don't swap the accent roles: no blue CTAs, no orange trust-metadata tags.",
+      "Don't add stock imagery or corporate-finance clichés (handshakes, glass towers, suit photos).",
+      "Don't rewrite client-approved copy while styling — wording changes are proposed, never silent."
+    ]
+  }
+}

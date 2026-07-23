@@ -13,7 +13,8 @@ const year = 2026;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/png" href={site.logo} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <title>{site.name} — Energie & Versicherung für Hausverwaltungen</title>
     <meta
       name="description"
@@ -33,6 +34,15 @@ const year = 2026;
         <a href="#vorgehen">Ablauf</a>
         <a href="#kontakt">Kontakt</a>
       </nav>
+      <details class="nav__menu" data-nav-menu>
+        <summary>Menü</summary>
+        <div class="nav__menu-panel">
+          <a href="#about">Wer wir sind</a>
+          <a href="#leistungen">Was wir machen</a>
+          <a href="#vorgehen">Ablauf</a>
+          <a href="#kontakt">Kontakt</a>
+        </div>
+      </details>
       <a class="btn btn--solid nav__cta" href="#termin">Termin buchen</a>
     </header>
 
@@ -67,7 +77,15 @@ const year = 2026;
             </div>
           </div>
           <figure class="hero__media reveal" style="--d:.3s">
-            <img src="/mfh_background.png" alt="Mehrfamilienhaus in der Abendsonne" width="1537" height="1023" />
+            <img
+              src="/mfh_background.webp"
+              srcset="/mfh_background-800.webp 800w, /mfh_background.webp 1537w"
+              sizes="(max-width: 900px) 100vw, 45vw"
+              alt="Fassade eines Mehrfamilienhauses in der Abendsonne"
+              width="1537"
+              height="640"
+              fetchpriority="high"
+            />
           </figure>
         </div>
       </section>
@@ -94,10 +112,12 @@ const year = 2026;
         <figure class="about__media">
           <img
             class="about__media-img"
-            src="/team.png"
+            src="/team.webp"
+            srcset="/team-800.webp 800w, /team.webp 1600w"
+            sizes="(max-width: 900px) 90vw, 540px"
             alt="Ben Siefkes und Joshua de Buhr"
-            width="3021"
-            height="2260"
+            width="1600"
+            height="1196"
             loading="lazy"
           />
         </figure>
@@ -225,7 +245,21 @@ const year = 2026;
           </div>
 
           <div class="kontakt__formwrap" data-contact-wrapper>
-            <form class="kontakt__form" data-contact-form data-endpoint={site.contactEndpoint} novalidate>
+            {
+              !site.contactEndpoint && (
+                <p class="form-note--demo">
+                  Vorschau-Modus: Das Formular ist noch nicht mit einem
+                  Versand-Dienst verbunden – Anfragen kommen so noch nicht an.
+                </p>
+              )
+            }
+            <form
+              class="kontakt__form"
+              method="post"
+              data-contact-form
+              data-endpoint={site.contactEndpoint}
+              data-email={site.email}
+            >
               <div class="field">
                 <label for="p-name">Wie heißen Sie?</label>
                 <input id="p-name" name="name" type="text" required placeholder="Vor- und Nachname" autocomplete="name" />
@@ -255,6 +289,17 @@ const year = 2026;
                 <textarea id="p-msg" name="nachricht" rows="3" placeholder="Erzählen Sie uns kurz, worum es geht …"></textarea>
               </div>
               <button class="btn btn--solid btn--full" type="submit">Anfrage abschicken</button>
+              <p class="form-message" role="alert" hidden data-form-message></p>
+              <p class="form-privacy">
+                Mit dem Absenden stimmen Sie unserer
+                <a href="/datenschutz">Datenschutzerklärung</a> zu.
+              </p>
+              <noscript>
+                <p class="form-message">
+                  Für das Formular ist JavaScript nötig – oder schreiben Sie uns
+                  direkt an <a href={`mailto:${site.email}`}>{site.email}</a>.
+                </p>
+              </noscript>
             </form>
             <div class="form-success" role="status">
               <span class="form-success__mark" aria-hidden="true">✓</span>
@@ -270,14 +315,27 @@ const year = 2026;
         <div class="about__label"><span>05</span> Termin buchen</div>
         <h2 class="section__title">Lieber direkt einen <em>Termin?</em></h2>
         <p class="termin__lead">Suchen Sie sich einfach einen passenden Slot aus.</p>
-        <div class="calendly-frame">
-          <div
-            class="calendly-inline-widget"
-            data-url={site.calendlyUrl}
-            style="min-width:320px;height:680px;"
-          >
+        <div class="calendly-frame" data-calendly data-url={site.calendlyUrl}>
+          <div class="calendly-gate" data-calendly-gate>
+            <p class="calendly-gate__hint">
+              Der Terminkalender von Calendly wird erst nach Ihrem Klick geladen
+              – vorher werden keine Daten an Calendly übertragen.
+            </p>
+            <button class="btn btn--solid" type="button" data-calendly-load>
+              Terminkalender laden
+            </button>
+            <p class="calendly-gate__error" data-calendly-error hidden>
+              ⚠ Der Kalender konnte nicht geladen werden. Nutzen Sie den
+              Direktlink unten – dort finden Sie dieselben Termine.
+            </p>
           </div>
         </div>
+        <p class="termin__fallback">
+          Der Kalender lädt nicht oder Sie mögen keine Einbettungen?
+          <a href={site.calendlyUrl} target="_blank" rel="noopener">
+            Termin direkt bei Calendly buchen ↗
+          </a>
+        </p>
       </section>
     </main>
 
@@ -295,9 +353,10 @@ const year = 2026;
       <p class="footer__copy">© {year} {site.name}. Mit ❤ für Hausverwaltungen.</p>
     </footer>
 
-    <script src="https://assets.calendly.com/assets/external/widget.js" async is:inline></script>
     <script>
       import "../scripts/contactForm.ts";
+      import "../scripts/calendlyGate.ts";
+      import "../scripts/navMenu.ts";
     </script>
 
     <style>
@@ -308,6 +367,8 @@ const year = 2026;
         --ink-soft: #6b5742;
         --orange: #e8651b;
         --orange-deep: #cc4f0c;
+        /* Textsicheres Orange: ≥4,5:1 auf Creme & Weiß (WCAG AA für Fließtext-Größen). */
+        --orange-text: #b34509;
         --blue: #1f4e8c;
         --blue-soft: #dbe6f3;
         --line: #e6d6bf;
@@ -322,6 +383,20 @@ const year = 2026;
         font-size: 17px; line-height: 1.6;
       }
       em { font-style: italic; }
+
+      /* Sichtbarer Tastatur-Fokus im System-Stil; Formularfelder haben
+         bereits eigene :focus-Ringe. */
+      a:focus-visible, button:focus-visible {
+        outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px;
+      }
+      .btn:focus-visible { border-radius: 999px; }
+      .footer a:focus-visible { outline-color: var(--cream); }
+      .kontakt__intro a:focus-visible { outline-color: #fff; }
+      /* Anker-Ziele nicht unter der Sticky-Nav verschwinden lassen. */
+      [id] { scroll-margin-top: 5.5rem; }
+      .field ::placeholder, .field input::placeholder, .field textarea::placeholder {
+        color: var(--ink-soft); opacity: 1;
+      }
 
       .btn {
         display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -349,8 +424,35 @@ const year = 2026;
       .brand img { border-radius: 9px; }
       .nav__links { display: flex; gap: 1.7rem; margin-left: auto; }
       .nav__links a { color: var(--ink); text-decoration: none; font-weight: 500; font-size: 0.95rem; position: relative; }
-      .nav__links a::after { content: ""; position: absolute; left: 0; bottom: -3px; height: 2px; width: 0; background: var(--orange); transition: width .25s; }
-      .nav__links a:hover::after { width: 100%; }
+      .nav__links a::after {
+        content: ""; position: absolute; left: 0; bottom: -3px; height: 2px; width: 100%;
+        background: var(--orange); transform: scaleX(0); transform-origin: left;
+        transition: transform .25s;
+      }
+      .nav__links a:hover::after { transform: scaleX(1); }
+
+      /* Mobiles Menü (<details>) — erst unter 900px sichtbar */
+      .nav__menu { display: none; position: relative; }
+      .nav__menu summary {
+        list-style: none; cursor: pointer; user-select: none;
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 0.6rem 1.1rem; border: 2px solid var(--ink); border-radius: 999px;
+        font-weight: 600; font-size: 0.95rem; color: var(--ink); background: #fff;
+      }
+      .nav__menu summary::-webkit-details-marker { display: none; }
+      .nav__menu summary::before { content: "☰"; font-size: 0.9em; }
+      .nav__menu[open] summary { background: var(--ink); color: var(--cream); }
+      .nav__menu-panel {
+        position: absolute; right: 0; top: calc(100% + 0.8rem); z-index: 40;
+        min-width: 230px; display: grid; gap: 0.2rem; padding: 0.6rem;
+        background: #fff; border: 2px solid var(--ink); border-radius: 14px;
+        box-shadow: 6px 6px 0 var(--ink);
+      }
+      .nav__menu-panel a {
+        display: block; padding: 0.8rem 1rem; border-radius: 10px;
+        color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1rem;
+      }
+      .nav__menu-panel a:hover, .nav__menu-panel a:focus-visible { background: var(--cream); }
 
       /* hero */
       .hero { position: relative; overflow: hidden; }
@@ -407,14 +509,14 @@ const year = 2026;
       .about__label {
         display: inline-flex; align-items: center; gap: 0.6rem;
         font-weight: 600; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase;
-        color: var(--orange); margin-bottom: 1.6rem;
+        color: var(--orange-text); margin-bottom: 1.6rem;
       }
       .about__label span {
         display: grid; place-items: center; width: 1.9rem; height: 1.9rem;
-        background: var(--orange); color: #fff; border-radius: 50%; font-size: 0.8rem;
+        background: var(--orange-text); color: #fff; border-radius: 50%; font-size: 0.8rem;
       }
-      .about__label--light { color: #fff; }
-      .about__label--light span { background: #fff; color: var(--orange); }
+      .about__label--light { color: var(--ink); }
+      .about__label--light span { background: #fff; color: var(--orange-text); }
       .section__title {
         font-family: "Instrument Serif", serif; font-weight: 400;
         font-size: clamp(2.2rem, 5.5vw, 4rem); line-height: 1.02;
@@ -463,10 +565,10 @@ const year = 2026;
         font-family: "Instrument Serif", serif; font-weight: 400;
         font-size: 1.9rem; margin: 0.7rem 0 0.1rem; color: var(--ink);
       }
-      .expert__label { margin: 0 0 1.1rem; font-weight: 700; color: var(--orange); }
+      .expert__label { margin: 0 0 1.1rem; font-weight: 700; color: var(--orange-text); }
       .expert__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
       .expert__list li { position: relative; padding-left: 1.6rem; color: var(--ink-soft); font-size: 0.96rem; }
-      .expert__list li::before { content: "✓"; position: absolute; left: 0; top: 0; font-weight: 700; color: var(--orange); }
+      .expert__list li::before { content: "✓"; position: absolute; left: 0; top: 0; font-weight: 700; color: var(--orange-text); }
 
       .about__foot {
         display: flex; justify-content: flex-end; align-items: center; gap: 2rem;
@@ -500,7 +602,7 @@ const year = 2026;
       .svc__intro { color: var(--ink-soft); margin: 0 0 1.1rem; font-size: 0.96rem; }
       .svc__list { list-style: none; margin: 0 0 1.2rem; padding: 0; display: grid; gap: 0.65rem; }
       .svc__list li { position: relative; padding-left: 1.6rem; color: var(--ink-soft); font-size: 0.96rem; }
-      .svc__list li::before { content: "✓"; position: absolute; left: 0; top: 0; font-weight: 700; color: var(--orange); }
+      .svc__list li::before { content: "✓"; position: absolute; left: 0; top: 0; font-weight: 700; color: var(--orange-text); }
       .svc__list strong { color: var(--ink); }
       .svc__note {
         margin: 0 0 1.2rem; padding: 1.1rem 1.2rem;
@@ -514,7 +616,7 @@ const year = 2026;
       }
       .svc__result-label {
         display: inline-block; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.12em;
-        text-transform: uppercase; color: var(--orange); margin-bottom: 0.35rem;
+        text-transform: uppercase; color: var(--orange-text); margin-bottom: 0.35rem;
       }
       .svc__result p { margin: 0; font-weight: 500; color: var(--ink); font-size: 0.95rem; }
 
@@ -563,9 +665,9 @@ const year = 2026;
       }
       .kontakt__intro { background: var(--orange); color: #fff; padding: clamp(2rem, 4vw, 3rem); }
       .kontakt__title { font-family: "Instrument Serif", serif; font-weight: 400; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.05; margin: 0 0 1rem; }
-      .kontakt__lead { opacity: 0.92; margin: 0 0 2rem; }
+      .kontakt__lead { color: var(--ink); margin: 0 0 2rem; }
       .kontakt__meta { display: grid; gap: 0.8rem; }
-      .kontakt__meta a { color: #fff; text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+      .kontakt__meta a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1.05rem; }
       .kontakt__meta a:hover { text-decoration: underline; }
 
       .kontakt__formwrap { background: #fff; padding: clamp(1.8rem, 4vw, 2.6rem); position: relative; }
@@ -592,12 +694,45 @@ const year = 2026;
       .form-success h3 { font-family: "Instrument Serif", serif; font-weight: 400; font-size: 1.8rem; margin: 0 0 0.4rem; color: var(--orange); }
       .form-success p { margin: 0; color: var(--ink-soft); }
 
+      /* Formular-Hinweise (Demo-Modus, Fehler, Datenschutz) */
+      .form-note--demo {
+        margin: 0 0 1.2rem; padding: 0.8rem 1.1rem;
+        background: var(--blue-soft); border: 1.5px solid var(--blue); border-radius: 14px;
+        color: var(--blue); font-weight: 600; font-size: 0.9rem;
+      }
+      .form-message {
+        margin: 1.1rem 0 0; padding: 1rem 1.2rem;
+        background: var(--cream); border: 1.5px solid var(--orange-deep); border-radius: 14px;
+        color: var(--ink); font-size: 0.95rem; line-height: 1.5;
+      }
+      .form-message a { color: var(--blue); font-weight: 600; }
+      .form-privacy { margin: 0.9rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
+      .form-privacy a { color: var(--blue); font-weight: 600; }
+
       /* calendly */
       .termin__lead { color: var(--ink-soft); margin: -1.6rem 0 1.8rem; font-size: 1.1rem; }
       .calendly-frame {
         width: 100%;
         border: 2px solid var(--ink); border-radius: 24px; overflow: hidden; background: #fff;
         box-shadow: 10px 10px 0 var(--orange);
+      }
+      .calendly-gate {
+        display: grid; justify-items: center; gap: 1.2rem; text-align: center;
+        padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1.2rem, 4vw, 3rem);
+      }
+      .calendly-gate__hint { margin: 0; max-width: 46ch; color: var(--ink-soft); }
+      .calendly-gate__error {
+        margin: 0; padding: 1rem 1.2rem; max-width: 46ch;
+        background: var(--cream); border: 1.5px solid var(--orange-deep); border-radius: 14px;
+        color: var(--ink); font-size: 0.95rem;
+      }
+      .termin__fallback { margin: 1.4rem 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+      .termin__fallback a { color: var(--blue); font-weight: 600; }
+      .calendly-inline-widget { min-width: 320px; height: 680px; }
+      /* Mobil höher: Calendlys Mobil-Layout ist ein langer vertikaler Fluss —
+         so entsteht kein zweiter Scrollbalken im Seiten-Scroll (Scroll-Falle). */
+      @media (max-width: 900px) {
+        .calendly-inline-widget { height: 1100px; }
       }
 
       /* footer */
@@ -621,6 +756,7 @@ const year = 2026;
       /* responsive */
       @media (max-width: 900px) {
         .nav__links { display: none; }
+        .nav__menu { display: block; margin-left: auto; }
         .hero__inner { grid-template-columns: 1fr; }
         .statband { grid-template-columns: repeat(2, 1fr); }
         .bigstat:nth-child(2) { border-right: none; }
@@ -635,6 +771,9 @@ const year = 2026;
         .field-row { grid-template-columns: 1fr; }
         .footer__row { flex-direction: column; align-items: flex-start; }
         .about__foot { flex-direction: column; align-items: flex-start; }
+        .nav { gap: 0.8rem; }
+        .brand { font-size: 1.15rem; }
+        .nav__cta { padding: 0.7rem 1.1rem; font-size: 0.9rem; }
       }
     </style>
   </body>
