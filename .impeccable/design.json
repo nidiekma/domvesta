@@ -25,7 +25,7 @@
     "shadows": [
       { "name": "chip-offset", "value": "3px 3px 0 #2a1c10", "purpose": "Small tactile elements (chips)." },
       { "name": "card-offset", "value": "6px 6px 0 #2a1c10", "purpose": "Default raised card at rest." },
-      { "name": "card-offset-hover", "value": "10px 10px 0 #1f4e8c", "purpose": "Hover lift; shadow grows and recolors to an accent (blue for experts, orange for services)." },
+      { "name": "card-offset-hover", "value": "10px 10px 0 #e8651b", "purpose": "Hover lift; shadow grows and recolors to Signal Orange." },
       { "name": "frame-offset", "value": "10px 10px 0 #2a1c10", "purpose": "Hero-level frames: contact card, Calendly, video (ink, orange, or blue)." },
       { "name": "cta-glow", "value": "0 12px 28px -12px rgba(232,101,27,0.8)", "purpose": "Solid buttons only — the single blurred shadow in the system." }
     ],
@@ -77,9 +77,9 @@
       "name": "Raised Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "The system's core surface: white card, 2px ink border, hard offset shadow; hover lifts and recolors the shadow to an accent.",
+      "description": "The system's core surface: white card, 2px ink border, hard offset shadow; hover lifts and recolors the shadow to Signal Orange.",
       "html": "<article class=\"ds-card\"><span class=\"ds-card-emoji\">⚡</span><h3 class=\"ds-card-title\">Joshua de Buhr</h3><p class=\"ds-card-label\">Energie-Experte</p><ul class=\"ds-card-list\"><li>Seit 2021 in der Energiebranche</li><li>Spezialist für Strom &amp; Gas</li></ul></article>",
-      "css": ".ds-card { background: #fff; border: 2px solid #2a1c10; border-radius: 22px; padding: 1.9rem 1.8rem; font-family: 'Schibsted Grotesk', sans-serif; box-shadow: 6px 6px 0 #2a1c10; transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; max-width: 22rem; } .ds-card:hover { transform: translate(-3px, -3px); box-shadow: 10px 10px 0 #1f4e8c; } .ds-card-emoji { font-size: 2rem; line-height: 1; } .ds-card-title { font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 1.9rem; margin: 0.7rem 0 0.1rem; color: #2a1c10; } .ds-card-label { margin: 0 0 1.1rem; font-weight: 700; color: #e8651b; } .ds-card-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; } .ds-card-list li { position: relative; padding-left: 1.6rem; color: #6b5742; font-size: 0.96rem; } .ds-card-list li::before { content: '✓'; position: absolute; left: 0; top: 0; font-weight: 700; color: #e8651b; }"
+      "css": ".ds-card { background: #fff; border: 2px solid #2a1c10; border-radius: 22px; padding: 1.9rem 1.8rem; font-family: 'Schibsted Grotesk', sans-serif; box-shadow: 6px 6px 0 #2a1c10; transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; max-width: 22rem; } .ds-card:hover { transform: translate(-3px, -3px); box-shadow: 10px 10px 0 #e8651b; } .ds-card-emoji { font-size: 2rem; line-height: 1; } .ds-card-title { font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 1.9rem; margin: 0.7rem 0 0.1rem; color: #2a1c10; } .ds-card-label { margin: 0 0 1.1rem; font-weight: 700; color: #e8651b; } .ds-card-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; } .ds-card-list li { position: relative; padding-left: 1.6rem; color: #6b5742; font-size: 0.96rem; } .ds-card-list li::before { content: '✓'; position: absolute; left: 0; top: 0; font-weight: 700; color: #e8651b; }"
     },
     {
       "name": "Text Input",

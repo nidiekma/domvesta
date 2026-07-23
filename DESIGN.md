@@ -161,11 +161,11 @@ Full-bleed bands (ticker, stat band, footer) interrupt the contained sections at
 
 ## Elevation & Depth
 
-Depth is structural, not atmospheric: raised surfaces are declared by a 2px Espresso Ink border plus a hard offset shadow — a solid block of flat color, equal x/y offset, zero blur (`6px 6px 0 var(--ink)` on cards, `3px 3px 0` on chips, `10px 10px 0` on hero-level frames). Hover states physically lift the object (`translate(-3px, -3px)`) and grow the shadow, often switching its color to an accent (blue or orange) — elevation doubles as a color moment. The single exception is the solid button's soft orange glow (`0 12px 28px -12px rgba(232,101,27,0.8)`), which reads as warmth radiating from the primary action, not as ambient depth.
+Depth is structural, not atmospheric: raised surfaces are declared by a 2px Espresso Ink border plus a hard offset shadow — a solid block of flat color, equal x/y offset, zero blur (`6px 6px 0 var(--ink)` on cards, `3px 3px 0` on chips, `10px 10px 0` on hero-level frames). Hover states physically lift the object (`translate(-3px, -3px)`) and grow the shadow, switching its color to Signal Orange — elevation doubles as a color moment. The single exception is the solid button's soft orange glow (`0 12px 28px -12px rgba(232,101,27,0.8)`), which reads as warmth radiating from the primary action, not as ambient depth.
 
 ### Shadow Vocabulary
 - **Chip offset** (`box-shadow: 3px 3px 0 #2a1c10`): Small tactile elements (chips).
-- **Card offset** (`box-shadow: 6px 6px 0 #2a1c10`): Default raised card; hover grows to `10px 10px 0` in blue or orange.
+- **Card offset** (`box-shadow: 6px 6px 0 #2a1c10`): Default raised card; hover grows to `10px 10px 0` in Signal Orange.
 - **Frame offset** (`box-shadow: 10px 10px 0 <ink|orange|blue>`): Hero-level frames (contact card, Calendly, video).
 - **CTA glow** (`box-shadow: 0 12px 28px -12px rgba(232,101,27,0.8)`): Solid buttons only.
 
@@ -191,7 +191,7 @@ Two shape families coexist: **pills** (999px) for everything interactive-small �
 ### Cards / Containers
 - **Corner Style:** 22px (cards), 20px (process rows), 28px (contact frame).
 - **Background:** Card White; Deep Paper for alternating process rows.
-- **Shadow Strategy:** Card offset per Elevation; hover lifts and recolors the shadow (experts → blue, services → orange).
+- **Shadow Strategy:** Card offset per Elevation; hover lifts and recolors the shadow to Signal Orange.
 - **Border:** Always 2px Espresso Ink.
 - **Internal Padding:** ~1.9rem × 1.8rem; inner panels (notes, results) use 14px radius with 1.5px quiet borders.
 
