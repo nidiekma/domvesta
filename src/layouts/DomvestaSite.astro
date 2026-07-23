@@ -138,11 +138,6 @@ const year = 2026;
             ))
           }
         </div>
-        <div class="about__foot">
-          <a class="btn btn--wire" href={site.provenExpertUrl} target="_blank" rel="noopener">
-            ★ Bewertungen auf {site.rating.platform}
-          </a>
-        </div>
       </section>
 
       <!-- ============================ STATS ============================ -->
@@ -407,8 +402,6 @@ const year = 2026;
       .btn--solid { background: var(--orange); color: #fff; box-shadow: 0 12px 28px -12px rgba(232,101,27,0.8); }
       .btn--solid:hover { background: var(--orange-deep); transform: translateY(-3px) rotate(-1deg); }
       .btn--lg { padding: 1.05rem 2rem; font-size: 1.08rem; }
-      .btn--wire { background: transparent; color: var(--blue); border-color: var(--blue); }
-      .btn--wire:hover { background: var(--blue); color: #fff; transform: translateY(-2px); }
       .btn--full { width: 100%; }
 
       /* nav */
@@ -569,11 +562,6 @@ const year = 2026;
       .expert__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
       .expert__list li { position: relative; padding-left: 1.6rem; color: var(--ink-soft); font-size: 0.96rem; }
       .expert__list li::before { content: "✓"; position: absolute; left: 0; top: 0; font-weight: 700; color: var(--orange-text); }
-
-      .about__foot {
-        display: flex; justify-content: flex-end; align-items: center; gap: 2rem;
-        flex-wrap: wrap; margin-top: 2.6rem; padding-top: 2rem; border-top: 2px dotted var(--line);
-      }
 
       /* stat band */
       .statband {
@@ -770,7 +758,6 @@ const year = 2026;
         .statband { grid-template-columns: 1fr; }
         .field-row { grid-template-columns: 1fr; }
         .footer__row { flex-direction: column; align-items: flex-start; }
-        .about__foot { flex-direction: column; align-items: flex-start; }
         .nav { gap: 0.8rem; }
         .brand { font-size: 1.15rem; }
         .nav__cta { padding: 0.7rem 1.1rem; font-size: 0.9rem; }
