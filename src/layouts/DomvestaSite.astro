@@ -138,7 +138,7 @@ const icons: Record<string, string> = {
           {
             founders.map((f) => (
               <article class="expert">
-                <span class="expert__icon" aria-hidden="true" set:html={icons[f.icon]} />
+                {/* <span class="expert__icon" aria-hidden="true" set:html={icons[f.icon]} /> */}
                 <h3 class="expert__name">{f.name}</h3>
                 <p class="expert__label">{f.label}</p>
                 <ul class="expert__list">
@@ -173,7 +173,7 @@ const icons: Record<string, string> = {
           {
             services.map((svc) => (
               <article class={`svc svc--${svc.id}`}>
-                <span class="svc__icon" aria-hidden="true" set:html={icons[svc.icon]} />
+                {/* <span class="svc__icon" aria-hidden="true" set:html={icons[svc.icon]} /> */}
                 <h3 class="svc__title">{svc.title}</h3>
                 <p class="svc__claim">{svc.claim}</p>
                 <p class="svc__intro">{svc.intro}</p>
@@ -185,7 +185,8 @@ const icons: Record<string, string> = {
                 {"note" in svc && (
                   <div class="svc__note">
                     <span class="svc__note-title">
-                      <span class="svc__note-icon" aria-hidden="true" set:html={icons[svc.note.icon]} /> {svc.note.title}
+                      {/* <span class="svc__note-icon" aria-hidden="true" set:html={icons[svc.note.icon]} />  */}
+                      {svc.note.title}
                     </span>
                     <p>{svc.note.body}</p>
                   </div>
@@ -673,8 +674,12 @@ const icons: Record<string, string> = {
       .kontakt__title { font-family: "Instrument Serif", serif; font-weight: 400; font-size: clamp(1.9rem, 3.4vw, 2.8rem); line-height: 1.05; margin: 0 0 1rem; }
       .kontakt__lead { color: var(--ink); margin: 0 0 2rem; }
       .kontakt__meta { display: grid; gap: 0.8rem; }
-      .kontakt__meta a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1.05rem; }
-      .kontakt__meta-icon :global(svg) { width: 1.05em; height: 1.05em; vertical-align: -0.15em; margin-right: 0.35rem; }
+      .kontakt__meta a {
+        display: flex; align-items: center; gap: 0.5rem; width: fit-content;
+        color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1.05rem;
+      }
+      .kontakt__meta-icon { display: inline-flex; }
+      .kontakt__meta-icon :global(svg) { width: 1.05em; height: 1.05em; }
       .kontakt__meta a:hover { text-decoration: underline; }
 
       .kontakt__formwrap { background: #fff; padding: clamp(1.8rem, 4vw, 2.6rem); position: relative; }
