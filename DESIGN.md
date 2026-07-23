@@ -98,7 +98,7 @@ components:
 
 Domvesta's site is a warm paper desk on which everything that used to be chaos has been sorted into a few tactile, clearly labeled objects. The page itself is cream paper; content lives on white cards with firm espresso-ink outlines and hard offset shadows, as if each card were a physical thing you could pick up. Numbered section labels (01–05) walk the visitor through the desk in order — the layout performs the Entlastung the product sells.
 
-The mood is warm and inviting: cream instead of white, espresso brown instead of black, a large friendly serif that speaks in short confident lines. Wit appears in small doses (a slight rotation on button hover, a scrolling ticker, emoji as card icons) but never at the expense of B2B credibility. The explicit anti-reference is sterile corporate finance — cold blue-and-white broker templates with handshake stock photos. This system rejects that world with warmth, real photography (the founders, a real Mehrfamilienhaus), and paper-like materiality.
+The mood is warm and inviting: cream instead of white, espresso brown instead of black, a large friendly serif that speaks in short confident lines. Wit appears in small doses (a slight rotation on button hover, a scrolling ticker) but never at the expense of B2B credibility. Iconography is a small set of 2px-stroke line pictograms (shield, bolt, umbrella, mail, phone) colored via currentColor in the accent voices — never OS emoji. The explicit anti-reference is sterile corporate finance — cold blue-and-white broker templates with handshake stock photos. This system rejects that world with warmth, real photography (the founders, a real Mehrfamilienhaus), and paper-like materiality.
 
 **Key Characteristics:**
 - Warm cream paper background; content on white ink-outlined cards
@@ -217,6 +217,7 @@ A full-bleed Espresso Ink band with cream Instrument Serif phrases separated by 
 - **Do** set headlines in Instrument Serif 400 with exactly one italic/colored emphasis word.
 - **Do** announce new sections with the numbered orange circle label, continuing the 01–05 sequence.
 - **Do** use real photography (founders, buildings) — the humans are the trust strategy.
+- **Do** draw icons as 2px-stroke line pictograms (24px grid, currentColor) matching the 2px border language.
 - **Do** respect `prefers-reduced-motion` (global.css already zeroes animations).
 
 ### Don't:
@@ -225,4 +226,5 @@ A full-bleed Espresso Ink band with cream Instrument Serif phrases separated by 
 - **Don't** use Instrument Serif at small sizes, in bold, or for functional UI text.
 - **Don't** swap the accent roles: no blue CTAs, no orange trust-metadata tags.
 - **Don't** add stock imagery or corporate-finance clichés (handshakes, glass towers, suit photos).
+- **Don't** use OS emoji as interface iconography — they render inconsistently and read consumer-grade.
 - **Don't** rewrite client-approved copy while styling — wording changes are proposed, never silent.

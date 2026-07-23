@@ -54,7 +54,7 @@ export const founders = [
     initials: "BS",
     name: "Ben Siefkes",
     label: "Versicherungs-Experte",
-    emoji: "🛡",
+    icon: "shield",
     role: "Versicherungen & Rahmenverträge",
     points: [
       "Seit 2019 in der Finanz- und Versicherungsbranche",
@@ -68,7 +68,7 @@ export const founders = [
     initials: "JB",
     name: "Joshua de Buhr",
     label: "Energie-Experte",
-    emoji: "⚡",
+    icon: "bolt",
     role: "Strom, Gas & Energieprojekte",
     points: [
       "Seit 2021 in der Energiebranche",
@@ -109,7 +109,7 @@ export const about = {
 export const services = [
   {
     id: "energie",
-    emoji: "⚡",
+    icon: "bolt",
     title: "Strom & Gas",
     claim: "Verwalten war gestern.",
     intro:
@@ -137,7 +137,7 @@ export const services = [
   },
   {
     id: "versicherung",
-    emoji: "🛡",
+    icon: "shield",
     title: "Versicherungen",
     claim: "Papierkram war gestern.",
     intro:
@@ -159,7 +159,7 @@ export const services = [
     // Schadensmanagement ist bewusst kein eigener Bereich, sondern
     // Bestandteil der Versicherungsbetreuung (Kundenfeedback Juli 2026).
     note: {
-      emoji: "🤝",
+      icon: "umbrella",
       title: "Inklusive Schadensmanagement",
       body: "Ein Schadensfall kostet vor allem Zeit. Deshalb begleiten wir Sie von der Schadensmeldung bis zur Regulierung: Gemeinsam mit Wirth Rechtsanwälte und dem digitalen Schadenmanager unseres Versicherungspartners sorgen wir für eine strukturierte, schnelle und rechtssichere Schadensabwicklung – mit möglichst geringem Aufwand für Ihre Hausverwaltung.",
     },
