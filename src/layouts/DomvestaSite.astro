@@ -51,6 +51,7 @@ const icons: Record<string, string> = {
           <a href="#leistungen">Was wir machen</a>
           <a href="#vorgehen">Ablauf</a>
           <a href="#kontakt">Kontakt</a>
+          <a class="btn btn--solid nav__menu-cta" href="#termin">Termin buchen</a>
         </div>
       </details>
       <a class="btn btn--solid nav__cta" href="#termin">Termin buchen</a>
@@ -448,6 +449,8 @@ const icons: Record<string, string> = {
         color: var(--ink); text-decoration: none; font-weight: 600; font-size: 1rem;
       }
       .nav__menu-panel a:hover, .nav__menu-panel a:focus-visible { background: var(--cream); }
+      .nav__menu-panel .nav__menu-cta { display: flex; margin-top: 0.5rem; padding: 0.9rem 1rem; }
+      .nav__menu-panel .nav__menu-cta:hover, .nav__menu-panel .nav__menu-cta:focus-visible { background: var(--orange-deep); }
 
       /* hero */
       .hero { position: relative; overflow: hidden; }
@@ -744,6 +747,7 @@ const icons: Record<string, string> = {
       /* responsive */
       @media (max-width: 900px) {
         .nav__links { display: none; }
+        .nav__cta { display: none; }
         .nav__menu { display: block; margin-left: auto; }
         .hero__inner { grid-template-columns: 1fr; }
         .experts { grid-template-columns: 1fr; }
@@ -756,7 +760,6 @@ const icons: Record<string, string> = {
         .footer__row { flex-direction: column; align-items: flex-start; }
         .nav { gap: 0.8rem; }
         .brand { font-size: 1.15rem; }
-        .nav__cta { padding: 0.7rem 1.1rem; font-size: 0.9rem; }
       }
     </style>
   </body>
