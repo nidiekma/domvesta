@@ -28,7 +28,7 @@ export const site = {
 
   // --- Externe Links (PLATZHALTER) -------------------------------------------
   provenExpertUrl: "https://www.provenexpert.com/ben-siefkes-finanz-und-versicherungsmakler/",
-  calendlyUrl: "https://calendly.com/domvesta-beispiel/erstgespraech",
+  calendlyUrl: "https://calendly.com/finanzen-bensiefkes/treffen-mit-domvesta-1",
   // Optionaler Form-Endpunkt (z. B. Formspree). Leer = Demo-Modus.
   contactEndpoint: "",
 
