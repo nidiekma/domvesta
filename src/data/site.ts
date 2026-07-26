@@ -79,14 +79,6 @@ export const founders = [
   },
 ] as const;
 
-// --- Kennzahlen (ProvenExpert bleibt, "~7 Jahre" ersetzt) -------------------
-export const stats = [
-  { value: "4,9 / 5", label: "auf ProvenExpert", sub: "über 55 Bewertungen" },
-  { value: "2", label: "Experten an Ihrer Seite", sub: "Ben Siefkes & Joshua de Buhr" },
-  { value: "1", label: "Ansprechpartner", sub: "für Energie & Versicherung" },
-  { value: "2", label: "Bereiche gebündelt", sub: "an einem Ort betreut" },
-] as const;
-
 // --- "Wer sind wir?" (Text 1:1 aus copy.md, Hervorhebungen als Markup) ------
 export const about = {
   label: "Wer wir sind",
@@ -170,10 +162,12 @@ export const services = [
 
 // --- Video unter "Was wir machen" -------------------------------------------
 // Selbst gehostet (public/video/) — kein Drittanbieter, kein Datenschutz-Thema.
+// Hochformat 9:16; Greenscreen entfernt und auf --cream-deep (#f6e8d3) gerendert,
+// damit es ohne Alpha-Kanal in allen Browsern nahtlos im Rahmen sitzt.
 export const video = {
-  src: "/video/domvesta.mp4", // PLATZHALTER — echte Videodatei hier ablegen
-  poster: "/video/poster.svg", // PLATZHALTER — echtes Standbild hinterlegen
-  title: "Domvesta in 90 Sekunden",
+  src: "/video/domvesta-video.mp4",
+  poster: "/video/poster.jpg",
+  title: "Domvesta in wenigen Minuten",
   lead: "Lieber anschauen statt lesen? Hier erklären wir kurz, wie wir Hausverwaltungen entlasten.",
 } as const;
 

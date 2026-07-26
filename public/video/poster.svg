@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
-  <!-- PLATZHALTER-Poster — durch echtes Standbild (z. B. poster.jpg) ersetzen. -->
-  <rect width="1280" height="720" fill="#f6e8d3"/>
-  <circle cx="220" cy="160" r="260" fill="#e8651b" opacity="0.16"/>
-  <circle cx="1080" cy="580" r="300" fill="#1f4e8c" opacity="0.14"/>
-  <text x="640" y="330" text-anchor="middle" font-family="Georgia, serif" font-size="72" fill="#e8651b">Platzhalter</text>
-  <text x="640" y="400" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#2a1c10">Hier kommt das Domvesta-Video hin</text>
-</svg>
