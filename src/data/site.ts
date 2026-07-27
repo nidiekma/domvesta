@@ -32,7 +32,14 @@ export const site = {
   // Optionaler Form-Endpunkt (z. B. Formspree). Leer = Demo-Modus.
   contactEndpoint: "",
 
-  rating: { score: "4,9", max: "5", count: "55+", platform: "ProvenExpert" },
+  // Das ProvenExpert-Profil gehört Ben Siefkes persönlich, nicht Domvesta.
+  // Die Zuordnung muss überall dort stehen, wo die Bewertung genannt wird
+  // (§ 5 / § 5b Abs. 3 UWG) – nicht nur im Impressum.
+  rating: {
+    score: "4,9", max: "5", count: "55+", platform: "ProvenExpert",
+    subject: "Ben Siefkes",
+    disclaimer: "Mitgründer von Domvesta",
+  },
 } as const;
 
 // --- Rechtliches (Daten aus bensiefkes.de/impressum) -------------------------
@@ -217,7 +224,7 @@ export const hero = {
 // --- Laufband ---------------------------------------------------------------
 export const ticker = [
   "Strom & Gas", "Versicherungen", "Ein Ansprechpartner", "Persönlich & digital",
-  "4,9 / 5 auf ProvenExpert", "Für Hausverwaltungen", "Mehr Zeit fürs Wesentliche",
+  "4,9 / 5 für Ben Siefkes auf ProvenExpert", "Für Hausverwaltungen", "Mehr Zeit fürs Wesentliche",
 ] as const;
 
 // --- Auswahl im Kontaktformular ---------------------------------------------
