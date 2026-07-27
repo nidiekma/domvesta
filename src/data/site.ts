@@ -100,7 +100,7 @@ export const about = {
   // Kurzintro (Kundenfeedback Juli 2026: knapper Text, Details in den
   // Experten-Karten darunter).
   bodyHtml: [
-    "Wir sind <strong>Ben Siefkes</strong> und <strong>Joshua de Buhr</strong> – gemeinsam haben wir <em>Domvesta</em> gegründet, um Hausverwaltungen nachhaltig zu entlasten. Sie verwalten Immobilien, wir übernehmen Strom &amp; Gas sowie Versicherungen: persönlich, digital und als <em>langfristige Partnerschaft</em>.",
+    "Wir sind <strong>Joshua de Buhr</strong> und <strong>Ben Siefkes</strong> – gemeinsam haben wir <em>Domvesta</em> gegründet, um Hausverwaltungen nachhaltig zu entlasten. Sie verwalten Immobilien, wir übernehmen Strom &amp; Gas sowie Versicherungen: persönlich, digital und als <em>langfristige Partnerschaft</em>.",
   ],
 } as const;
 
