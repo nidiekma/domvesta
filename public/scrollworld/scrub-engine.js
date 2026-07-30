@@ -231,7 +231,14 @@ function mountScrollWorld(container, config) {
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
-      if (y < s.start) outside = s.start - y; else if (y > s.end) outside = y - s.end;
+      // LOKALE ANPASSUNG (Domvesta /welt): Die letzte Szene NICHT ausblenden, wenn
+      // darüber hinaus gescrollt wird. Der Track ist absichtlich 1vh höher als die
+      // Segmente ("+1vh so the last flight completes"); ohne diese Ausnahme fadet
+      // die Schlussszene nach crossfade*vh auf 0 und man sieht bis zum Epilog nur
+      // leeren Himmel. So bleibt das Schlussbild stehen, bis der Epilog darüber
+      // schiebt. Betrifft ausschließlich das letzte Segment.
+      if (y < s.start) outside = s.start - y;
+      else if (y > s.end && i < NSEG - 1) outside = y - s.end;
       const op = smooth(1 - outside / fade);
       s.el.style.opacity = op; s.visible = op > 0.001;
       s.el.style.zIndex = (i === ci) ? '120' : String(100 + Math.round(op * 10));

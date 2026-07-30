@@ -15,7 +15,7 @@
 // Engine: public/scrollworld/scrub-engine.js (vanilla, framework-agnostisch).
 // ============================================================================
 import "../styles/global.css";
-import { site } from "../data/site.ts";
+import { site, founders, video } from "../data/site.ts";
 
 const V = "/scrollworld/vid";
 
@@ -124,6 +124,88 @@ const config = {
   <body>
     <div id="world"></div>
 
+    <!-- ======================= EPILOG: die echten Menschen =======================
+      Der Flug endet an einem leeren Papiertisch mit zwei Stühlen gegenüber. Hier
+      wird aufgelöst, wer dort sitzt — Teamfoto und Video als Landung in der
+      Realität. Damit erfüllt auch /welt das PRODUCT.md-Prinzip 2 (Vertrauen
+      entsteht durch echte Menschen), das die reine KI-Bildwelt sonst unterläuft.
+
+      Technisch: die Engine arbeitet komplett mit position:fixed (Sky z0, Stage z10,
+      Copy z20, Route z40, Topbar z50) über einem hohen Track-Spacer. Der Epilog
+      liegt danach im normalen Fluss und braucht nur z-index:45 + deckenden
+      Hintergrund — über der Stage, aber unter der Topbar, damit die Nav bleibt.
+
+      Hintergrund ist exakt --cream-deep #f6e8d3: das Video wurde ohne Alpha auf
+      genau diesen Ton gerendert (siehe site.ts) und steht damit rahmenlos im
+      Raum — so wie die Papier-Objekte in der Schlussszene um den Tisch schweben.
+    -->
+    <section class="epilog" id="epilog" aria-labelledby="epilog-title">
+      <div class="epilog__inner">
+        <p class="epilog__eyebrow">Und dahinter</p>
+        <h2 class="epilog__title" id="epilog-title">
+          Zwei Menschen. <em>Kein Callcenter.</em>
+        </h2>
+        <p class="epilog__lead">
+          Die beiden Stühle am Tisch sind nicht dekorativ. Hier sind die zwei, die
+          darauf sitzen.
+        </p>
+
+        <figure class="epilog__team">
+          <img
+            src="/team.webp"
+            srcset="/team-800.webp 800w, /team.webp 1600w"
+            sizes="(max-width: 900px) 92vw, 1080px"
+            width="1600"
+            height="1196"
+            alt={`${founders[0].name} und ${founders[1].name} von ${site.name}`}
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
+
+        <ul class="epilog__people">
+          {founders.map((f) => (
+            <li class="person">
+              <span class="person__initials" aria-hidden="true">{f.initials}</span>
+              <span class="person__text">
+                <strong>{f.name}</strong>
+                <span>{f.role}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <!-- Video rahmenlos: gleicher Hintergrundton wie die Datei selbst.
+             Bewusst OHNE native controls im Ruhezustand — die dunkle Controls-
+             Leiste ist ein massiver Balken auf der Cremefläche und zerstört den
+             schwebenden Eindruck. Erst beim Start werden die echten Controls
+             eingeblendet (Scrubben/Ton bleiben also verfügbar). -->
+        <div class="epilog__video">
+          <h3 class="epilog__vtitle">{video.title}</h3>
+          <p class="epilog__vlead">{video.lead}</p>
+          <div class="epilog__vwrap">
+            <video
+              id="epilog-video"
+              playsinline
+              preload="none"
+              poster={video.poster}
+              src={video.src}></video>
+            <button class="epilog__play" type="button" data-play-video>
+              <span class="epilog__play-icon" aria-hidden="true"></span>
+              Video abspielen
+            </button>
+          </div>
+        </div>
+
+        <div class="epilog__cta">
+          <a class="epilog__btn epilog__btn--primary" href={site.calendlyUrl}>
+            Erstgespräch buchen
+          </a>
+          <a class="epilog__btn" href="/">Zur vollständigen Website</a>
+        </div>
+      </div>
+    </section>
+
     <style is:global>
       /* Theme-Tokens der Engine auf die Domvesta-Palette (DESIGN.md) mappen.
          Unlayered :root gewinnt gegen @layer sw der Engine — keine !important nötig. */
@@ -145,7 +227,256 @@ const config = {
       html {
         scroll-behavior: auto;
       }
+
+      /* ===================== EPILOG ===================== */
+      .epilog {
+        position: relative;
+        /* über Stage (10) / Copy (20) / Route (40), unter Topbar (50) */
+        z-index: 45;
+        /* Exakt der Ton, auf den das Video gerendert wurde → rahmenlos. */
+        background: #f6e8d3;
+        color: var(--sw-ink);
+        font-family: var(--sw-font-body);
+        padding: clamp(4.5rem, 11vh, 8rem) clamp(1.2rem, 5vw, 3rem)
+          calc(clamp(4rem, 9vh, 7rem) + env(safe-area-inset-bottom, 0px));
+        /* Weiche Kante nach oben: die Papierwelt "legt sich" über den Flug. */
+        box-shadow: 0 -40px 60px -30px rgb(42 28 16 / 0.18);
+      }
+      .epilog__inner {
+        max-width: 1080px;
+        margin: 0 auto;
+        text-align: center;
+      }
+      .epilog__eyebrow {
+        margin: 0 0 0.9rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--sw-accent);
+      }
+      .epilog__title {
+        margin: 0 0 1rem;
+        font-family: var(--sw-font-display);
+        font-weight: 400;
+        line-height: 1.02;
+        letter-spacing: -0.01em;
+        font-size: clamp(2.2rem, 5.5vw, 4rem);
+      }
+      .epilog__title em {
+        font-style: italic;
+        color: var(--sw-accent);
+      }
+      .epilog__lead {
+        margin: 0 auto clamp(2.5rem, 6vh, 4rem);
+        max-width: 46ch;
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        color: var(--sw-ink-soft);
+      }
+
+      /* team.webp ist freigestellt (yuva420p) — also KEINE Fotokarte, sondern die
+         beiden stehen direkt auf der Papierfläche. drop-shadow folgt dem Alpha-
+         Umriss statt einem Rechteck und gibt ihnen denselben weichen Kontakt-
+         schatten, den laut Style-Preamble jedes Diorama im Flug hat. */
+      .epilog__team {
+        margin: 0 0 clamp(1.6rem, 4vh, 2.4rem);
+      }
+      .epilog__team img {
+        display: block;
+        width: min(560px, 82vw);
+        height: auto;
+        margin: 0 auto;
+        /* Die Vorlage ist ein Halbkörper-Freisteller und endet unten hart. Ohne
+           Verlauf zeichnet der Schatten diese gerade Kante nach und die beiden
+           wirken abgeschnitten — der Fade lässt sie ins Papier auslaufen. */
+        -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 97%);
+        mask-image: linear-gradient(to bottom, #000 72%, transparent 97%);
+        filter: drop-shadow(0 14px 18px rgb(42 28 16 / 0.16));
+      }
+
+      .epilog__people {
+        list-style: none;
+        margin: 0 0 clamp(3.5rem, 9vh, 6rem);
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.8rem 1.2rem;
+      }
+      .person {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.55rem 1.1rem 0.55rem 0.55rem;
+        border: 1px solid #e6d6bf;
+        border-radius: 999px;
+        background: #fbf2e4;
+        text-align: left;
+      }
+      .person__initials {
+        display: grid;
+        place-items: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        border-radius: 999px;
+        background: var(--sw-accent);
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .person__text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+      .person__text strong {
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+      .person__text span {
+        font-size: 0.82rem;
+        color: var(--sw-ink-soft);
+      }
+
+      /* Video: 9:16, ohne Rahmen — der Dateihintergrund IST der Seitenhintergrund. */
+      .epilog__vtitle {
+        margin: 0 0 0.6rem;
+        font-family: var(--sw-font-display);
+        font-weight: 400;
+        font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+        line-height: 1.1;
+      }
+      .epilog__vlead {
+        margin: 0 auto 1.8rem;
+        max-width: 44ch;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--sw-ink-soft);
+      }
+      .epilog__vwrap {
+        position: relative;
+        width: min(340px, 78vw);
+        margin: 0 auto;
+      }
+      .epilog__video video {
+        display: block;
+        width: 100%;
+        aspect-ratio: 9 / 16; /* Quelle ist 1080x1920 */
+        background: #f6e8d3;
+        object-fit: cover;
+        border-radius: 22px;
+      }
+      /* Im Ruhezustand unten auslaufen lassen — sonst steht der Schreibtisch als
+         hartes Rechteck auf der Cremefläche, während das Teamfoto weich ausläuft.
+         Beim Abspielen entfernt, damit die Controls nicht mitgefadet werden. */
+      .epilog__vwrap:not(.is-playing) video {
+        -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 99%);
+        mask-image: linear-gradient(to bottom, #000 82%, transparent 99%);
+      }
+      .epilog__play {
+        position: absolute;
+        left: 50%;
+        bottom: 6%;
+        transform: translateX(-50%);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.8rem 1.4rem;
+        border: 0;
+        border-radius: 999px;
+        background: var(--sw-accent);
+        color: #fff;
+        font-family: var(--sw-font-body);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 10px 22px -10px rgb(42 28 16 / 0.55);
+        transition: transform 0.18s ease;
+      }
+      .epilog__play:hover {
+        transform: translateX(-50%) translateY(-2px);
+      }
+      .epilog__play:focus-visible {
+        outline: 3px solid var(--sw-ink);
+        outline-offset: 3px;
+      }
+      .epilog__play[hidden] {
+        display: none;
+      }
+      .epilog__play-icon {
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 6px 0 6px 10px;
+        border-color: transparent transparent transparent #fff;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .epilog__play {
+          transition: none;
+        }
+        .epilog__play:hover {
+          transform: translateX(-50%);
+        }
+      }
+
+      .epilog__cta {
+        margin-top: clamp(3rem, 8vh, 5rem);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.8rem;
+      }
+      .epilog__btn {
+        display: inline-block;
+        padding: 0.95rem 1.7rem;
+        border: 1px solid #e6d6bf;
+        border-radius: 999px;
+        font-size: 0.98rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--sw-ink);
+        transition: transform 0.18s ease, background 0.18s ease;
+      }
+      .epilog__btn--primary {
+        background: var(--sw-accent);
+        border-color: var(--sw-accent);
+        color: #fff;
+      }
+      .epilog__btn:hover {
+        transform: translateY(-2px);
+      }
+      .epilog__btn:focus-visible {
+        outline: 3px solid var(--sw-accent);
+        outline-offset: 3px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .epilog__btn {
+          transition: none;
+        }
+        .epilog__btn:hover {
+          transform: none;
+        }
+      }
     </style>
+
+    <script is:inline>
+      // Erst auf Klick starten und dann die nativen Controls freigeben, damit die
+      // dunkle Leiste nicht dauerhaft auf der Cremefläche liegt.
+      (function () {
+        var btn = document.querySelector("[data-play-video]");
+        var vid = document.getElementById("epilog-video");
+        if (!btn || !vid) return;
+        btn.addEventListener("click", function () {
+          vid.closest(".epilog__vwrap").classList.add("is-playing");
+          vid.controls = true;
+          vid.play();
+          btn.hidden = true;
+        });
+      })();
+    </script>
 
     <script is:inline src="/scrollworld/scrub-engine.js"></script>
     <script
