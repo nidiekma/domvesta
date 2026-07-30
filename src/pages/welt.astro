@@ -231,6 +231,24 @@ const config = {
         scroll-behavior: auto;
       }
 
+      /* Die Engine zeichnet als Markenzeichen nur einen generischen Platzhalter
+         (leeres <span> mit Verlauf) und kennt keine brand.logo-Option. Hier das
+         echte Logo als Hintergrund — rein per CSS, damit beim Laden nicht kurz
+         das Quadrat aufblitzt. Kein alt nötig: der Markenname steht als Text
+         direkt daneben, das Zeichen ist dekorativ.
+         logo.png ist 152x159 (rgba) — `contain` hält das Seitenverhältnis. */
+      .sw-brand__mark {
+        /* 34px statt der 24x28 des Platzhalters: das Zeichen ist fein
+           gegliedert und wird darunter matschig. Die Hauptseite nutzt 38px,
+           die kompaktere Topbar hier verträgt etwas weniger. */
+        width: 34px;
+        height: 34px;
+        flex: none;
+        border-radius: 0;
+        background: url("/logo.png") center / contain no-repeat;
+        box-shadow: none;
+      }
+
       /* Nav-Eintrag zum Epilog: durch die Trennlinie als Sprungziel lesbar und
          nicht als sechste Szene des Flugs. */
       .sw-nav__item--epilog {
