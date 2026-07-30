@@ -93,7 +93,10 @@ const config = {
       tags: [`${site.rating.score} / ${site.rating.max} auf ${site.rating.platform}`],
       cta: {
         primary: { label: "Erstgespräch buchen", href: site.calendlyUrl },
-        secondary: { label: "Zur Website", href: "/" },
+        // Zeigt bewusst nach unten statt nach außen: die Schlussszene wirkt mit
+        // zwei Buttons wie das Seitenende, sonst sehen viele Teamfoto und Video
+        // nie. Der Weg zur Hauptseite steht im Epilog.
+        secondary: { label: "Die Menschen dahinter ↓", href: "#epilog" },
       },
     },
   ],
@@ -226,6 +229,13 @@ const config = {
          Scrolling (global.css) würde dabei nachlaufen. */
       html {
         scroll-behavior: auto;
+      }
+
+      /* Nav-Eintrag zum Epilog: durch die Trennlinie als Sprungziel lesbar und
+         nicht als sechste Szene des Flugs. */
+      .sw-nav__item--epilog {
+        border-left: 1px solid color-mix(in srgb, var(--sw-ink) 18%, transparent);
+        margin-left: 4px;
       }
 
       /* ===================== EPILOG ===================== */
@@ -483,5 +493,27 @@ const config = {
       is:inline
       set:html={`mountScrollWorld(document.getElementById('world'), ${JSON.stringify(config)});`}
     />
+
+    <script is:inline>
+      // Der Epilog gehört in die Topbar-Navigation, aber NICHT in die Route-Rail
+      // rechts: deren Punkte markieren die Szenen des Kameraflugs ("05 / 05"),
+      // ein sechster Punkt würde ein sechstes Diorama versprechen, das es nicht
+      // gibt, und den Zähler verstimmen. Deshalb wird hier nur die Nav ergänzt.
+      // Bewusst als Sprunglink ohne Active-State: die Engine setzt .is-active per
+      // Index über alle .sw-nav__item, ein Mitspielen würde nur dagegen kämpfen.
+      (function () {
+        var nav = document.querySelector(".sw-nav");
+        var target = document.getElementById("epilog");
+        if (!nav || !target) return;
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "sw-nav__item sw-nav__item--epilog";
+        b.textContent = "Die Menschen";
+        b.addEventListener("click", function () {
+          window.scrollTo(0, target.offsetTop);
+        });
+        nav.appendChild(b);
+      })();
+    </script>
   </body>
 </html>
