@@ -9,7 +9,10 @@ import LegalPage from "../layouts/LegalPage.astro";
 import { legal } from "../data/site.ts";
 ---
 
-<LegalPage title="Datenschutz&shy;erklärung">
+{/* Echtes Weiches Trennzeichen (U+00AD), nicht "&shy;": der Titel geht als
+    String-Prop durch und wird beim Rendern escaped — die Entity stand dadurch
+    wörtlich auf der Seite. */}
+<LegalPage title="Datenschutz­erklärung">
   <h2>1. Datenschutz auf einen Blick</h2>
 
   <h3>Allgemeine Hinweise</h3>
