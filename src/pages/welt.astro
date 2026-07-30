@@ -499,12 +499,11 @@ const config = {
       // rechts: deren Punkte markieren die Szenen des Kameraflugs ("05 / 05"),
       // ein sechster Punkt würde ein sechstes Diorama versprechen, das es nicht
       // gibt, und den Zähler verstimmen. Deshalb wird hier nur die Nav ergänzt.
-      // Bewusst als Sprunglink ohne Active-State: die Engine setzt .is-active per
-      // Index über alle .sw-nav__item, ein Mitspielen würde nur dagegen kämpfen.
       (function () {
         var nav = document.querySelector(".sw-nav");
         var target = document.getElementById("epilog");
         if (!nav || !target) return;
+
         var b = document.createElement("button");
         b.type = "button";
         b.className = "sw-nav__item sw-nav__item--epilog";
@@ -513,6 +512,37 @@ const config = {
           window.scrollTo(0, target.offsetTop);
         });
         nav.appendChild(b);
+
+        // Active-State. Die Engine aktualisiert Nav und Route-Rail nur, wenn sich
+        // die Sektion ändert (`if (near !== activeIndex)`); beim Scrollen in den
+        // Epilog bleibt `near` auf der letzten Szene stehen. Sie überschreibt uns
+        // also nicht laufend — es genügt, die beiden Übergänge zu behandeln:
+        // rein  → eigenen Eintrag aktiv, Szenen-Einträge aus.
+        // raus  → Engine-Zustand aus der Route-Rail spiegeln, die weiterhin
+        //         korrekt gepflegt wird (identische Reihenfolge wie die Nav).
+        var scenes = nav.querySelectorAll(".sw-nav__item:not(.sw-nav__item--epilog)");
+        var dots = document.querySelectorAll(".sw-route__dot");
+
+        function setActive(inEpilog) {
+          b.classList.toggle("is-active", inEpilog);
+          for (var i = 0; i < scenes.length; i++) {
+            scenes[i].classList.toggle(
+              "is-active",
+              !inEpilog && dots[i] && dots[i].classList.contains("is-active")
+            );
+          }
+        }
+
+        if ("IntersectionObserver" in window) {
+          new IntersectionObserver(
+            function (entries) {
+              setActive(entries[0].isIntersecting);
+            },
+            // Schmales Band in der Viewport-Mitte: der Eintrag wird aktiv, sobald
+            // der Epilog die Mitte überquert — nicht schon beim Hereinschieben.
+            { rootMargin: "-45% 0px -45% 0px" }
+          ).observe(target);
+        }
       })();
     </script>
   </body>
