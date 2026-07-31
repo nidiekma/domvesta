@@ -2,7 +2,9 @@
 // Datenschutzerklärung — Inhalte übernommen von https://bensiefkes.de/datenschutz/
 // und an die tatsächlich auf dieser Website eingesetzten Dienste angepasst:
 //   - Complianz (WordPress-Consent-Tool) entfernt — hier nicht im Einsatz.
-//   - Abschnitt "Kontaktformular" ergänzt — diese Website hat ein Formular.
+//   - Abschnitt "Kontaktformular" entfernt (Juli 2026) — seit der Umstellung auf
+//     die Scroll-World-Startseite gibt es hier kein Formular mehr. Kontakt läuft
+//     über E-Mail und Calendly, beides ist weiterhin beschrieben.
 //   - Google Fonts werden wie bei bensiefkes.de lokal gehostet (via Fontsource,
 //     eingebunden in global.css) — daher die Textvariante "lokales Hosting".
 import LegalPage from "../layouts/LegalPage.astro";
@@ -33,7 +35,8 @@ import { legal } from "../data/site.ts";
   <h4>Wie erfassen wir Ihre Daten?</h4>
   <p>
     Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich
-    z.&nbsp;B. um Daten handeln, die Sie in ein Kontaktformular eingeben.
+    z.&nbsp;B. um Daten handeln, die Sie uns per E-Mail senden oder bei einer Terminbuchung
+    angeben.
   </p>
   <p>
     Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch
@@ -342,27 +345,11 @@ import { legal } from "../data/site.ts";
     Datenschutzerklärung entnehmen.
   </p>
 
-  <h3>Kontaktformular</h3>
-  <p>
-    Wenn Sie uns per Kontaktformular Anfragen zukommen lassen, werden Ihre Angaben aus dem
-    Anfrageformular inklusive der von Ihnen dort angegebenen Kontaktdaten zwecks Bearbeitung der
-    Anfrage und für den Fall von Anschlussfragen bei uns gespeichert. Diese Daten geben wir nicht
-    ohne Ihre Einwilligung weiter.
-  </p>
-  <p>
-    Die Verarbeitung dieser Daten erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO, sofern Ihre
-    Anfrage mit der Erfüllung eines Vertrags zusammenhängt oder zur Durchführung vorvertraglicher
-    Maßnahmen erforderlich ist. In allen übrigen Fällen beruht die Verarbeitung auf unserem
-    berechtigten Interesse an der effektiven Bearbeitung der an uns gerichteten Anfragen (Art. 6
-    Abs. 1 lit. f DSGVO) oder auf Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) sofern diese
-    abgefragt wurde; die Einwilligung ist jederzeit widerrufbar.
-  </p>
-  <p>
-    Die von Ihnen im Kontaktformular eingegebenen Daten verbleiben bei uns, bis Sie uns zur Löschung
-    auffordern, Ihre Einwilligung zur Speicherung widerrufen oder der Zweck für die Datenspeicherung
-    entfällt (z.&nbsp;B. nach abgeschlossener Bearbeitung Ihrer Anfrage). Zwingende gesetzliche
-    Bestimmungen – insbesondere Aufbewahrungsfristen – bleiben unberührt.
-  </p>
+  {/* Abschnitt "Kontaktformular" entfernt (Juli 2026): mit der Umstellung auf die
+      Scroll-World-Startseite gibt es auf dieser Website kein Formular mehr. Eine
+      Datenschutzerklärung darf keine Verarbeitung beschreiben, die nicht
+      stattfindet. Kontaktaufnahme läuft nur noch über E-Mail und Calendly —
+      beides ist unten weiterhin abgedeckt. */}
 
   <h3>Anfrage per E-Mail, Telefon oder Telefax</h3>
   <p>
