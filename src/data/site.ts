@@ -57,6 +57,19 @@ export const legal = {
 // Nach Kundenfeedback (Juli 2026): Statt langem Fließtext kompakte
 // Experten-Karten mit Stichpunkten unter dem Teamfoto.
 export const founders = [
+    {
+    initials: "JB",
+    name: "Joshua de Buhr",
+    label: "Energie-Experte",
+    icon: "bolt",
+    role: "Strom, Gas & Energieprojekte",
+    points: [
+      "Seit 2021 in der Energiebranche",
+      "Spezialist für Strom & Gas",
+      "Planung und Optimierung von Energieverträgen",
+      "Photovoltaik- und Wärmepumpenprojekte",
+    ],
+  },
   {
     initials: "BS",
     name: "Ben Siefkes",
@@ -69,19 +82,6 @@ export const founders = [
       "Spezialist für Rahmenverträge",
       "Wohngebäude- und Grundbesitzerhaftpflicht",
       "Gewerbeversicherungen",
-    ],
-  },
-  {
-    initials: "JB",
-    name: "Joshua de Buhr",
-    label: "Energie-Experte",
-    icon: "bolt",
-    role: "Strom, Gas & Energieprojekte",
-    points: [
-      "Seit 2021 in der Energiebranche",
-      "Spezialist für Strom & Gas",
-      "Planung und Optimierung von Energieverträgen",
-      "Photovoltaik- und Wärmepumpenprojekte",
     ],
   },
 ] as const;
