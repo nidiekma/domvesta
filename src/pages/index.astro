@@ -46,7 +46,9 @@ const config = {
       id: "liegenschaften",
       label: "Ihr Bestand",
       still: "/scrollworld/liegenschaften.webp",
+      stillMobile: "/scrollworld/m/liegenschaften.webp",
       clip: `${V}/liegenschaften.mp4`,
+      clipMobile: `${V}/m/liegenschaften.mp4`,
       accent: "#e8651b",
       eyebrow: "Für Hausverwaltungen",
       title: "Alter Verwalter, ist das einfach!",
@@ -57,7 +59,9 @@ const config = {
       id: "papierkram",
       label: "Der Aufwand",
       still: "/scrollworld/papierkram.webp",
+      stillMobile: "/scrollworld/m/papierkram.webp",
       clip: `${V}/papierkram.mp4`,
+      clipMobile: `${V}/m/papierkram.mp4`,
       accent: "#6b5742",
       eyebrow: "Das Problem",
       title: "Zehn Ansprechpartner. Eine Aufgabe.",
@@ -68,7 +72,9 @@ const config = {
       id: "energie",
       label: "Strom & Gas",
       still: "/scrollworld/energie.webp",
+      stillMobile: "/scrollworld/m/energie.webp",
       clip: `${V}/energie.mp4`,
+      clipMobile: `${V}/m/energie.mp4`,
       accent: "#e8651b",
       scroll: 1.6,
       linger: 0.42,
@@ -81,7 +87,9 @@ const config = {
       id: "versicherung",
       label: "Versicherungen",
       still: "/scrollworld/versicherung.webp",
+      stillMobile: "/scrollworld/m/versicherung.webp",
       clip: `${V}/versicherung.mp4`,
+      clipMobile: `${V}/m/versicherung.mp4`,
       accent: "#1f4e8c",
       scroll: 1.6,
       linger: 0.42,
@@ -94,7 +102,9 @@ const config = {
       id: "gespraech",
       label: "Erstgespräch",
       still: "/scrollworld/gespraech.webp",
+      stillMobile: "/scrollworld/m/gespraech.webp",
       clip: `${V}/gespraech.mp4`,
+      clipMobile: `${V}/m/gespraech.mp4`,
       accent: "#e8651b",
       scroll: 1.8,
       linger: 0.5,
@@ -121,6 +131,17 @@ const config = {
     `${V}/conn2.mp4`,
     `${V}/conn3.mp4`,
     `${V}/conn4.mp4`,
+  ],
+  // Native 9:16-Kette (720x1280). Die Engine serviert sie auf Touch-Geräten bzw.
+  // <=860px automatisch und fällt sonst auf die Desktop-Clips zurück. Bewusst
+  // NICHT der Mittenausschnitt der Landscape-Fassung — die Szenen sind für
+  // Hochformat neu komponiert, mit eigenen Portrait-Postern als stillMobile,
+  // damit beim ersten Frame kein Landscape->Portrait-Sprung sichtbar wird.
+  connectorsMobile: [
+    `${V}/m/conn1.mp4`,
+    `${V}/m/conn2.mp4`,
+    `${V}/m/conn3.mp4`,
+    `${V}/m/conn4.mp4`,
   ],
 };
 ---
