@@ -33,7 +33,13 @@ const config = {
   // Der alte One-Pager hatte diesen CTA von der ersten Sekunde an.
   cta: { label: "Termin buchen", href: site.calendlyUrl },
   diveScroll: 1.3,
-  connScroll: 0.9,
+  // 1.3 statt 0.9: die Connectors hatten die KÜRZESTE Scroll-Strecke der Seite
+  // (0,9vh = 760px am Telefon) bei gleichzeitig SCHNELLSTEM Ablauf (0,66 s Film
+  // je 100px, gegenüber 0,40–0,52 bei den späteren Dives). Ein einziger
+  // Daumen-Flick verschluckt damit den kompletten Übergang — er wirkt wie ein
+  // harter Schnitt, obwohl der Clip durchgehend animiert. Jetzt bekommen sie
+  // dieselbe Strecke wie die ersten beiden Dives.
+  connScroll: 1.3,
   // Die Connector-Clips wurden auf den Frame bei -0,15 s des jeweiligen Dives
   // konditioniert — bei 24 fps fehlen an der Naht also ~3 Frames Kamerabewegung.
   // Etwas breiterer Crossfade als der Default (0.12) blendet genau das weg.
