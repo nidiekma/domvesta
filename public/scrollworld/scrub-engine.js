@@ -192,7 +192,12 @@ function mountScrollWorld(container, config) {
 
   function jumpTo(i) {
     const seg = SECTIONS[i]._seg;
-    window.scrollTo({ top: seg.start + (seg.end - seg.start) * 0.5, behavior: reduce ? 'auto' : 'smooth' });
+    // Land where this section's copy actually peaks — see the opacity curves in
+    // read(). The first section greets on landing (full at pr=0 and fading from
+    // there), so a mid-segment jump would drop you into a half-faded headline.
+    // The last one holds from pr=0.4 on, mid-segment is fine; all others peak at 0.5.
+    const at = i === 0 ? 0 : 0.5;
+    window.scrollTo({ top: seg.start + (seg.end - seg.start) * at, behavior: reduce ? 'auto' : 'smooth' });
   }
 
   function loadClip(s) {
