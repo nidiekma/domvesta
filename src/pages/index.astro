@@ -194,6 +194,33 @@ const config = {
       </div>
     </noscript>
 
+    <!-- ===================== HERO-CTA (nur Szene 01) =====================
+      Zweiter Einstieg neben "Termin buchen" in der Topbar — bewusst mit anderer
+      Tonlage: die Topbar fordert einen Termin, das hier ist der niedrigschwellige
+      Weg ("prüfen", kostenlos). Deshalb auch orange statt Ink: zwei dunkle Pillen
+      im selben Viewport läsen sich als derselbe Button, die Akzentfarbe trennt
+      die beiden Angebote. Orange ist zudem der accent von Szene 01.
+
+      Nicht über die per-Section-`cta`-Option der Engine gebaut, weil die nur
+      Buttons unter dem Copy-Block links rendert — der Kunde hat die Position
+      unten rechts markiert, als Gegengewicht zur Headline.
+
+      Steht als statisches Markup im Body und wird per JS an die richtige Stelle
+      gehängt (siehe Skript unten): Desktop in die .sw-copylayer (absolut unten
+      rechts), Mobil in den Copy-Block von Szene 01, wo unten rechts kein Platz
+      ist. Ohne JS bleibt es `hidden` — dann greift die .nojs-Fassung mit
+      eigenem CTA.
+    -->
+    <div class="hero-cta" hidden>
+      <p class="hero-cta__in">
+        <span class="hero-cta__lead">Neugierig?</span>
+        <a class="hero-cta__btn" href={site.calendlyUrl} target="_blank" rel="noopener">
+          Kostenloses Entlastungspotenzial prüfen
+          <span class="hero-cta__arrow" aria-hidden="true">→</span>
+        </a>
+      </p>
+    </div>
+
     <!-- ======================= EPILOG: die echten Menschen =======================
       Der Flug endet an einem leeren Papiertisch mit zwei Stühlen gegenüber. Hier
       wird aufgelöst, wer dort sitzt — Teamfoto und Video als Landung in der
@@ -427,6 +454,154 @@ const config = {
       .sw-nav__item--epilog {
         border-left: 1px solid color-mix(in srgb, var(--sw-ink) 18%, transparent);
         margin-left: 4px;
+      }
+
+      /* ===================== HERO-CTA (Szene 01) ===================== */
+      .hero-cta {
+        /* Desktop: absolut in der .sw-copylayer (position:fixed; inset:0).
+           Unten rechts — die Route-Rail sitzt vertikal mittig (y 50% ± ~100px)
+           und die Scroll-Hint mittig unten, hier stört also nichts. Die untere
+           Kante des Dioramas läuft je nach Viewport-Höhe in diesen Bereich; der
+           Button legt sich dann leicht auf die Papierfläche, was zur Bildwelt
+           passt (schwebende Papier-Objekte) und durch den Schatten getragen wird. */
+        position: absolute;
+        right: clamp(20px, 4vw, 56px);
+        /* Untergrenze 104px, nicht 72: auf flachen Fenstern (~600px hoch) säße
+           der Button sonst in der Scroll-Hint, die von unten 26px bis ~88px
+           reicht. */
+        bottom: clamp(104px, 12vh, 130px);
+        z-index: 1;
+        /* Der Titel braucht einzeilig 366–404px (je nach clamp-Stufe). 50vw
+           hält ihn ab der Breakpoint-Grenze durchgehend auf einer Zeile, ohne
+           in den Copy-Block links zu laufen. */
+        max-width: min(50vw, 470px);
+        font-family: var(--sw-font-body);
+        /* Die Copylayer ist pointer-events:none; das Skript unten schaltet hier
+           auf auto, sobald die Copy von Szene 01 sichtbar ist. */
+      }
+      .hero-cta[hidden] {
+        display: none;
+      }
+      .hero-cta__in {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 12px;
+        text-align: right;
+        /* Eigenes Element für die Eingangs-Animation: die Opacity des äußeren
+           .hero-cta wird vom Skript mit dem Copy-Fade der Engine synchronisiert
+           und darf davon nicht überschrieben werden. `backwards` hält den
+           Startzustand während der Verzögerung — der CTA erscheint erst, wenn
+           die Headline gelesen ist, und stiehlt ihr nicht die Aufmerksamkeit. */
+        animation: hero-cta-in 0.55s 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+      }
+      @keyframes hero-cta-in {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+      }
+      .hero-cta__lead {
+        /* Bewusst identisch zu .sw-copy__body der Engine (Zeile 405 in
+           scrub-engine.js): gleiche Sans, gleiche Größe, gleiche Farbe. Der
+           Zuruf soll wie ein weitergesprochener Satz des Fließtexts wirken,
+           nicht wie eine zweite Headline. */
+        font-family: var(--sw-font-body);
+        font-size: clamp(1rem, 1.25vw, 1.14rem);
+        line-height: 1.55;
+        color: color-mix(in srgb, var(--sw-ink) 78%, var(--sw-ink-soft));
+        /* Wo genau die Diorama-Kante liegt, hängt an der Fensterhöhe — auf
+           flachen Fenstern steht die Zeile mitten in der Hecke. Deckender
+           Cream-Halo statt einer Plakette: auf freier Fläche unsichtbar, über
+           dem Bild trägt er die Schrift. */
+        text-shadow: 0 0 10px var(--sw-bg), 0 0 20px var(--sw-bg),
+          0 0 34px var(--sw-bg);
+      }
+      .hero-cta__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 13px 24px;
+        border-radius: 999px;
+        background: var(--sw-accent);
+        color: #fff;
+        /* Größe und Gewicht wie .sw-copy__body — Kundenwunsch: der Button soll
+           nicht schwerer wirken als der Fließtext daneben.
+           ACHTUNG: Weiß auf #e8651b liegt bei 3,3:1. Als "large scale text"
+           (>=18,66px fett) reichte das nach WCAG 1.4.3, in normaler Stärke
+           gelten 4,5:1 — die erreicht diese Kombination nicht. Bewusst so
+           entschieden zugunsten der Markenfarbe. Wer das drehen will: Füllung
+           auf #c44f0d (4,7:1) oder Schrift auf var(--sw-ink) (5,0:1). */
+        font-size: clamp(1rem, 1.25vw, 1.14rem);
+        font-weight: 400;
+        line-height: 1.4;
+        text-decoration: none;
+        /* Weicher Kontaktschatten wie bei den Papier-Objekten im Flug, leicht
+           orange eingefärbt statt neutral grau. */
+        box-shadow: 0 12px 26px -14px rgb(232 101 27 / 0.7),
+          0 2px 8px -6px rgb(42 28 16 / 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .hero-cta__btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 30px -14px rgb(232 101 27 / 0.8),
+          0 3px 10px -6px rgb(42 28 16 / 0.4);
+      }
+      .hero-cta__btn:focus-visible {
+        outline: 3px solid var(--sw-ink);
+        outline-offset: 3px;
+      }
+      .hero-cta__arrow {
+        transition: transform 0.2s ease;
+      }
+      .hero-cta__btn:hover .hero-cta__arrow {
+        transform: translateX(4px);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .hero-cta__in {
+          animation: none;
+        }
+        .hero-cta__btn,
+        .hero-cta__arrow {
+          transition: none;
+        }
+        .hero-cta__btn:hover {
+          transform: none;
+        }
+      }
+
+      /* Mobil hängt das Skript den CTA in den Copy-Block von Szene 01 (unten
+         rechts ist dort die Copy selbst). Er läuft dann im Fluss mit, erbt
+         Opacity/Transform/pointer-events der Engine und braucht keinen Sync. */
+      @media (max-width: 860px) {
+        .hero-cta {
+          position: static;
+          max-width: none;
+          margin-top: 22px;
+          /* Der Copy-Block hängt am unteren Rand — eine Untermarge am letzten
+             Kind schiebt ihn also nach oben. Nötig, weil die Engine ihn bei
+             pr=0 zusätzlich um +2vh nach unten schiebt und er damit auf kurzen
+             Displays (740px) genau in die Scroll-Hint läuft, die dort auf zwei
+             Zeilen umbricht. */
+          margin-bottom: 32px;
+        }
+        .hero-cta__in {
+          align-items: flex-start;
+          text-align: left;
+          gap: 10px;
+        }
+        .hero-cta__btn {
+          /* Der Titel bricht am Telefon auf zwei Zeilen: er bräuchte samt
+             Polsterung ~358px, ein iPhone gibt im Copy-Block 324–351px her.
+             Dann lieber bewusst über die volle Copy-Breite und zentriert,
+             statt eines flatternden Blocks mit dem Pfeil weit außen.
+             Nebeneffekt: großes Tap-Ziel. */
+          width: 100%;
+          justify-content: center;
+          text-align: center;
+          padding: 14px 20px;
+        }
       }
 
       /* ===================== EPILOG ===================== */
@@ -720,6 +895,68 @@ const config = {
       is:inline
       set:html={`mountScrollWorld(document.getElementById('world'), ${JSON.stringify(config)});`}
     />
+
+    <script is:inline>
+      // Hero-CTA einhängen. Die Engine baut ihr DOM erst beim Mounten, deshalb
+      // steht der Button als statisches Markup im Body und zieht erst hier an
+      // seinen Platz:
+      //   Desktop → direkt in die .sw-copylayer (position:fixed; inset:0), also
+      //             absolut unten rechts im Viewport. Die Copylayer ist
+      //             pointer-events:none, Opacity und Klickbarkeit werden unten
+      //             mit dem Copy-Fade von Szene 01 synchronisiert.
+      //   Mobil   → in den Copy-Block von Szene 01. Dort erbt er Opacity,
+      //             translateY und pointer-events der Engine — kein Sync nötig,
+      //             und ein eigenes opacity würde sich mit dem geerbten
+      //             multiplizieren (0.5 * 0.5 = 0.25).
+      (function () {
+        var cta = document.querySelector(".hero-cta");
+        var layer = document.querySelector(".sw-copylayer");
+        var first = document.querySelector(".sw-copy");
+        if (!cta || !layer || !first) return;
+
+        // Bewusst NUR die Breite — nicht isMobile() der Engine, das zusätzlich
+        // auf (pointer: coarse) prüft. Deren Kriterium entscheidet über die
+        // Video-Encodes (Bandbreite), hier geht es allein um den Platz unten
+        // rechts. 860px ist exakt die Schwelle, ab der die Engine ihren
+        // Copy-Block auf volle Breite an den unteren Rand legt — genau der
+        // Moment, in dem die Ecke belegt ist. Muss zur @media-Regel im
+        // Stylesheet passen.
+        var small = window.matchMedia("(max-width: 860px)");
+        var obs = null;
+
+        function sync() {
+          var o = first.style.opacity === "" ? 1 : parseFloat(first.style.opacity);
+          cta.style.opacity = o;
+          // Gleiche Schwelle wie die Engine für ihre Copy-Blöcke: unsichtbar =
+          // nicht klickbar, sonst schluckt der CTA ab Szene 02 unsichtbar Klicks.
+          cta.style.pointerEvents = o > 0.5 ? "auto" : "none";
+        }
+
+        function place() {
+          if (small.matches) {
+            if (cta.parentNode !== first) first.appendChild(cta);
+            if (obs) { obs.disconnect(); obs = null; }
+            cta.style.opacity = "";
+            cta.style.pointerEvents = "";
+          } else {
+            if (cta.parentNode !== layer) layer.appendChild(cta);
+            // Die Engine schreibt die Copy-Opacity als Inline-Style in ihrer
+            // rAF-Schleife. Ein MutationObserver läuft als Microtask direkt
+            // danach — also im selben Frame, ohne eigene Schleife und ohne den
+            // Fade-Verlauf (smooth(1 - pr/0.62)) hier zu duplizieren.
+            if (!obs) {
+              obs = new MutationObserver(sync);
+              obs.observe(first, { attributes: true, attributeFilter: ["style"] });
+            }
+            sync();
+          }
+          cta.hidden = false;
+        }
+
+        place();
+        small.addEventListener("change", place);
+      })();
+    </script>
 
     <script is:inline>
       // Der Epilog gehört in die Topbar-Navigation, aber NICHT in die Route-Rail
