@@ -28,6 +28,29 @@
        connectors: [clipUrl, …],          // length = sections.length - 1 (nulls allowed)
        connectorsMobile: [clipUrl, …],    // optional lighter connectors for phones (same length)
 
+   SNAPPY SCROLL (optional — `snap: true` or `snap: {…}`; off by default)
+     Without it, one wheel notch moves the flight by ~100px and the visitor has to
+     grind through every frame of a 15-second camera move to reach the next scene.
+     With it, a scroll gesture no longer transports pixels: it launches an animated
+     flight to the NEXT STOP and the camera flies there on its own. Stops are the
+     same landing positions the nav/route dots use (where each section's copy peaks),
+     plus one final stop at whatever follows the world (`exit`).
+       snap: {
+         exit: '#epilog',   // selector of the section after the world. Below it the
+                            // page scrolls natively again (long content must stay
+                            // readable); an upward gesture at its top flies back in.
+         perVh: 900,        // ms of flight per viewport-height of distance
+         min: 700, max: 3200,
+         wheelThreshold: 18,// accumulated wheel delta before a gesture counts
+         cooldown: 240,     // ms after landing in which trackpad inertia is swallowed
+         touch: true,       // hijack touch too (drag gives ~⅓ live preview, release snaps)
+         keys: true,        // ↑/↓/PageUp/PageDown/Space/Home/End
+         drag: 0.32,        // how far the world follows the finger during a drag
+       }
+     Ignored under prefers-reduced-motion (native scrolling stays). mountScrollWorld
+     returns { jumpTo(i), scrollTo(y, ms?), stops(), layout() } so page code can use
+     the same flight for its own links.
+
    MOBILE (the clipMobile/connectorsMobile variants are the opt-in mobile version;
    the rest of the phone handling below is always on)
      The engine is phone-aware out of the box: on a coarse-pointer / ≤860px viewport it
@@ -77,6 +100,12 @@ function mountScrollWorld(container, config) {
   const DIVE_W = config.diveScroll || 1.3;
   const CONN_W = config.connScroll || 0.9;
   const CROSSFADE = (config.crossfade != null) ? config.crossfade : 0.12;  // seam dissolve width (vh)
+  // Snappy scroll: a gesture flies to the next stop instead of transporting pixels.
+  // Never under prefers-reduced-motion — there the page scrolls natively.
+  const SNAP = (!reduce && config.snap) ? Object.assign({
+    perVh: 900, min: 700, max: 3200, wheelThreshold: 18, cooldown: 240,
+    touch: true, keys: true, drag: 0.32, exit: null
+  }, config.snap === true ? {} : config.snap) : null;
   const N = SECTIONS.length;
   if (!N) return;
 
@@ -187,17 +216,93 @@ function mountScrollWorld(container, config) {
     SEGMENTS.forEach(s => { s.start = off * vh; off += s.w; s.end = off * vh; });
     totalW = off;
     track.style.height = (totalW * vh + vh) + 'px';   // +1vh so the last flight completes
+    buildStops();
     read();
   }
 
+  // ---- stops: the scroll positions a jump/snap may land on -------------------
+  // Land where this section's copy actually peaks — see the opacity curves in
+  // read(). The first section greets on landing (full at pr=0 and fading from
+  // there), so a mid-segment jump would drop you into a half-faded headline.
+  // The last one holds from pr=0.4 on, mid-segment is fine; all others peak at 0.5.
+  // The final stop is the top of whatever follows the world (snap.exit), i.e. the
+  // point where the flight is over and the page becomes an ordinary page again.
+  let stops = [], exitY = Infinity;
+  function buildStops() {
+    stops = SECTIONS.map((s, i) => {
+      const seg = s._seg, at = i === 0 ? 0 : 0.5;
+      return Math.round(seg.start + (seg.end - seg.start) * at);
+    });
+    const ex = (SNAP && SNAP.exit) ? document.querySelector(SNAP.exit) : null;
+    exitY = ex ? Math.round(ex.getBoundingClientRect().top + scrollPos()) : Math.round(totalW * vh);
+    exitY = Math.min(exitY, maxScroll());
+    stops.push(exitY);
+  }
+  function stopAfter(y) { for (let i = 0; i < stops.length; i++) if (stops[i] > y + 6) return stops[i]; return null; }
+  function stopBefore(y) { for (let i = stops.length - 1; i >= 0; i--) if (stops[i] < y - 6) return stops[i]; return null; }
+
   function jumpTo(i) {
-    const seg = SECTIONS[i]._seg;
-    // Land where this section's copy actually peaks — see the opacity curves in
-    // read(). The first section greets on landing (full at pr=0 and fading from
-    // there), so a mid-segment jump would drop you into a half-faded headline.
-    // The last one holds from pr=0.4 on, mid-segment is fine; all others peak at 0.5.
-    const at = i === 0 ? 0 : 0.5;
-    window.scrollTo({ top: seg.start + (seg.end - seg.start) * at, behavior: reduce ? 'auto' : 'smooth' });
+    const y = stops[i];
+    if (y == null) return;
+    if (SNAP) { flyTo(y); return; }
+    window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  // ---- the flight: a rAF tween of window.scrollY ----------------------------
+  // Not scrollTo({behavior:'smooth'}) — its duration isn't ours to choose, and the
+  // browser's snap-fast curve would whip a 15-second camera move past in ~300ms.
+  // Every frame we set the scroll position, the engine's own scroll listener picks
+  // it up and scrubs the clips, so the flight plays exactly as if hand-scrolled.
+  const scrollPos = () => window.scrollY || window.pageYOffset || 0;
+  const maxScroll = () => Math.max(0, (document.documentElement.scrollHeight || 0) - window.innerHeight);
+  // Quadratic in-out, not cubic: a cubic ease covers 0.6% of the distance in its
+  // first 300ms, which after a wheel notch reads as "nothing happened". Quad moves
+  // ~4x as far in that window (the gesture is answered immediately) and still
+  // departs and lands at rest — and its slope is continuous at the midpoint, so
+  // there's no kick halfway through the flight.
+  const easeIO = x => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+  let fly = null, flyRAF = 0, setY = -1, coolUntil = 0;
+
+  function flyTo(y, dur) {
+    const from = scrollPos();
+    y = clamp(Math.round(y), 0, maxScroll());
+    if (Math.abs(y - from) < 2) return;
+    const d = (dur != null) ? dur
+      : clamp(Math.abs(y - from) / Math.max(1, vh) * SNAP.perVh, SNAP.min, SNAP.max);
+    fly = { from: from, to: y, t0: performance.now(), dur: d };
+    if (!flyRAF) flyRAF = requestAnimationFrame(stepFly);
+  }
+
+  function stepFly(now) {
+    flyRAF = 0;
+    if (!fly) return;
+    const p = clamp((now - fly.t0) / fly.dur);
+    setY = Math.round(fly.from + (fly.to - fly.from) * easeIO(p));
+    window.scrollTo(0, setY);
+    if (p >= 1) { fly = null; coolUntil = now + SNAP.cooldown; return; }
+    flyRAF = requestAnimationFrame(stepFly);
+  }
+
+  function cancelFly() { fly = null; if (flyRAF) { cancelAnimationFrame(flyRAF); flyRAF = 0; } }
+
+  // Chained gestures count from the *target*, so a second flick during a flight
+  // queues the section after the one we're heading to instead of the one we left.
+  function snapStep(dir) {
+    const base = fly ? fly.to : scrollPos();
+    const t = dir > 0 ? stopAfter(base) : stopBefore(base);
+    if (t == null) return false;
+    flyTo(t);
+    return true;
+  }
+
+  // Hijack only inside the world. Past the exit the page is ordinary content that
+  // has to scroll normally; sitting exactly at the exit, an upward gesture is the
+  // way back into the flight.
+  function hijack(dir) {
+    if (!SNAP) return false;
+    const y = scrollPos();
+    if (y < exitY - 2) return true;
+    return dir < 0 && y < exitY + 2;
   }
 
   function loadClip(s) {
@@ -318,9 +423,103 @@ function mountScrollWorld(container, config) {
   window.addEventListener('pointerdown', onFirstGesture, { once: true, passive: true });
   window.addEventListener('touchstart', onFirstGesture, { once: true, passive: true });
 
+  // ---- snap input: wheel / touch / keys --------------------------------------
+  let acc = 0, accAt = 0;
+  function onWheel(e) {
+    if (e.ctrlKey) return;                                   // pinch-zoom stays the browser's
+    const dir = e.deltaY > 0 ? 1 : e.deltaY < 0 ? -1 : 0;
+    if (!dir || !hijack(dir)) return;
+    if (e.cancelable) e.preventDefault();
+    const now = performance.now();
+    // During a flight (and briefly after) everything is swallowed: one trackpad
+    // flick emits wheel events for most of a second, and each of them would
+    // otherwise book another section.
+    if (fly || now < coolUntil) { acc = 0; accAt = now; return; }
+    // deltaMode 1 = lines (Firefox on Windows/Linux), 2 = pages.
+    const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * vh : e.deltaY;
+    if (now - accAt > 220) acc = 0;                          // new gesture
+    accAt = now; acc += dy;
+    if (Math.abs(acc) < SNAP.wheelThreshold) return;         // stray trackpad twitch
+    acc = 0;
+    snapStep(dir);
+  }
+
+  // Touch: the world follows the finger for a fraction of the distance (so the drag
+  // feels alive and reversible) and the release either completes the flight or
+  // settles back. Direction is decided on the first move — after that iOS won't let
+  // us take the gesture back anyway.
+  let tLock = 0, tY0 = 0, tX0 = 0, tT0 = 0, tBase = 0, tDy = 0;
+  function onTouchStart(e) {
+    tLock = (e.touches.length === 1) ? 0 : -1;
+    if (tLock < 0) return;
+    tY0 = e.touches[0].clientY; tX0 = e.touches[0].clientX;
+    tT0 = performance.now(); tDy = 0; tBase = scrollPos();
+  }
+  function onTouchMove(e) {
+    if (tLock < 0 || e.touches.length !== 1) return;
+    const t = e.touches[0], dy = t.clientY - tY0, dx = t.clientX - tX0;
+    if (!tLock) {
+      if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;      // direction still unclear
+      if (Math.abs(dx) > Math.abs(dy) || !hijack(dy < 0 ? 1 : -1)) { tLock = -1; return; }
+      tLock = 1; cancelFly();
+      tY0 = t.clientY; tT0 = performance.now(); tBase = scrollPos();
+      return;
+    }
+    if (e.cancelable) e.preventDefault();
+    tDy = t.clientY - tY0;
+    const next = tDy < 0 ? stopAfter(tBase) : stopBefore(tBase);
+    const room = (next == null) ? 0 : Math.abs(next - tBase) * 0.38;
+    setY = Math.round(clamp(tBase + clamp(-tDy * SNAP.drag, -room, room), 0, maxScroll()));
+    window.scrollTo(0, setY);
+  }
+  function onTouchEnd() {
+    if (tLock !== 1) { tLock = 0; return; }
+    tLock = 0;
+    const v = Math.abs(tDy) / Math.max(1, performance.now() - tT0);   // px/ms
+    if ((Math.abs(tDy) > 46 || v > 0.35) && snapStep(tDy < 0 ? 1 : -1)) return;
+    flyTo(tBase, 420);                                       // not enough — settle back
+  }
+
+  function onKey(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target, tag = t && t.tagName;
+    if (t && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable)) return;
+    const k = e.key;
+    const space = (k === ' ' || k === 'Spacebar');
+    if (space && (tag === 'BUTTON' || tag === 'A')) return;  // space activates the control
+    let dir = 0, to = null;
+    if (k === 'ArrowDown' || k === 'PageDown') dir = 1;
+    else if (k === 'ArrowUp' || k === 'PageUp') dir = -1;
+    else if (space) dir = e.shiftKey ? -1 : 1;
+    else if (k === 'Home') to = 0;
+    else if (k === 'End') to = exitY;
+    else return;
+    if (to != null) { e.preventDefault(); cancelFly(); flyTo(to); return; }
+    if (!hijack(dir)) return;
+    e.preventDefault();
+    if (fly || performance.now() < coolUntil) return;
+    snapStep(dir);
+  }
+
+  if (SNAP) {
+    window.addEventListener('wheel', onWheel, { passive: false });
+    if (SNAP.keys) window.addEventListener('keydown', onKey);
+    if (SNAP.touch) {
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: false });
+      window.addEventListener('touchend', onTouchEnd, { passive: true });
+      window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    }
+  }
+
   // Particles are a per-frame cost we can't afford alongside video scrubbing on a phone.
   seedParticles(particles, reduce || coarse);
-  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(read); } }, { passive: true });
+  window.addEventListener('scroll', () => {
+    // Scrollbar drag, in-page search, browser restore: something moved the page
+    // that isn't our flight. Hand it back instead of fighting over the position.
+    if (fly && Math.abs(scrollPos() - setY) > 8) cancelFly();
+    if (!ticking) { ticking = true; requestAnimationFrame(read); }
+  }, { passive: true });
   // Mobile browsers fire `resize` every time the URL bar slides in/out. Re-running
   // layout() there rebuilds the track height and yanks the scroll position, so on
   // touch we ignore height-only changes and only relayout when the width actually
@@ -336,6 +535,15 @@ function mountScrollWorld(container, config) {
   layout();
   requestAnimationFrame(raf);
 
+  // Page code can reuse the same flight for its own links (see index.astro's
+  // epilog nav item) instead of teleporting past the whole camera move.
+  const api = {
+    jumpTo: jumpTo,
+    scrollTo: function (y, ms) { if (SNAP) { cancelFly(); flyTo(y, ms); } else window.scrollTo(0, y); },
+    stops: function () { return stops.slice(); },
+    layout: layout
+  };
+
   // ---- helpers ----
   function el(tag, cls) { const n = document.createElement(tag); if (cls) n.className = cls; return n; }
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -346,6 +554,8 @@ function mountScrollWorld(container, config) {
     if (cta.secondary) h += `<a class="sw-btn sw-btn--ghost" href="${esc(cta.secondary.href || '#')}">${esc(cta.secondary.label)}</a>`;
     return h;
   }
+
+  return api;
 }
 
 function seedParticles(host, reduce) {
