@@ -47,6 +47,23 @@ const config = {
   hint: "Scrollen für die Tour",
   nav: true,
   atmosphere: true,
+  // VERSUCH (Branch snappy-scroll): eine Scroll-Geste transportiert keine Pixel
+  // mehr, sondern startet einen Flug zur nächsten Szene. Grund: zwischen zwei
+  // Halten liegen ~15 Sekunden Film (Dive + Connector + halber Dive) — von Hand
+  // sind das rund 30 Mausrad-Rasten pro Szene, und wer nicht durchhält, sieht die
+  // Kernbotschaften nie. Jetzt genügt eine Raste, die Kamera fliegt selbst.
+  snap: {
+    // Ab dem Epilog scrollt die Seite wieder normal — dort steht Fließtext,
+    // Teamfoto, Video und Footer, das darf kein Sprungziel-Raster bekommen.
+    exit: "#epilog",
+    // ~1,6-2,7 s je Übergang (die Abstände liegen bei 1,9-3,25 vh). Zwischen zwei
+    // Halten liegen rund 15 s Film — der Flug läuft also mit gut 6-facher
+    // Geschwindigkeit. Deutlich schneller wirkt er wie ein harter Schnitt,
+    // deutlich langsamer verliert die Geste ihre Antwort.
+    perVh: 820,
+    min: 620,
+    max: 3000,
+  },
   sections: [
     {
       id: "liegenschaften",
@@ -893,7 +910,7 @@ const config = {
     <script is:inline src="/scrollworld/scrub-engine.js"></script>
     <script
       is:inline
-      set:html={`mountScrollWorld(document.getElementById('world'), ${JSON.stringify(config)});`}
+      set:html={`window.SW = mountScrollWorld(document.getElementById('world'), ${JSON.stringify(config)});`}
     />
 
     <script is:inline>
@@ -968,14 +985,34 @@ const config = {
         var target = document.getElementById("epilog");
         if (!nav || !target) return;
 
+        // Ziel absolut messen statt offsetTop: der Epilog liegt im normalen Fluss
+        // hinter dem Track-Spacer, sein offsetParent ist nicht garantiert der Body.
+        function epilogY() {
+          return Math.round(target.getBoundingClientRect().top + (window.scrollY || 0));
+        }
+
+        // Mit aktivem Snap denselben animierten Flug nehmen wie die Szenen-Navigation
+        // — sonst teleportiert ein Nav-Klick über den kompletten Kameraflug hinweg.
+        function goEpilog() {
+          if (window.SW && window.SW.scrollTo) window.SW.scrollTo(epilogY());
+          else window.scrollTo(0, epilogY());
+        }
+
         var b = document.createElement("button");
         b.type = "button";
         b.className = "sw-nav__item sw-nav__item--epilog";
         b.textContent = "Die Menschen";
-        b.addEventListener("click", function () {
-          window.scrollTo(0, target.offsetTop);
-        });
+        b.addEventListener("click", goEpilog);
         nav.appendChild(b);
+
+        // Gleiches Ziel, gleicher Weg: der Sekundär-Button der Schlussszene
+        // ("Die Menschen dahinter ↓") ist ein reiner #epilog-Anker.
+        document.querySelectorAll('a[href="#epilog"]').forEach(function (a) {
+          a.addEventListener("click", function (e) {
+            e.preventDefault();
+            goEpilog();
+          });
+        });
 
         // Die Engine rendert ihre Buttons ohne target. Externe Ziele (Calendly)
         // sollen einen neuen Tab öffnen — sonst landet der Zurück-Button auf der
