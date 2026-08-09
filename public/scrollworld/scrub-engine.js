@@ -75,6 +75,9 @@
          phone width keeps the desktop poster (clips still switch via isMobile()).
        - coalesces seeks (never issues a new currentTime while the decoder is still
          `seeking`) so fast flicks can't pile up and freeze the video.
+       - scrubs flights via fastSeek() where WebKit offers it (keyframe-precision,
+         no pipeline stall — THE reason the -g 4 encodes matter) and switches to
+         exact currentTime seeks near the stop for precise seam frames.
        - keeps only a window of ±`clipWindow` segments (default 1, so three) attached as
          real <video> elements and hands every other decoder back. iOS only keeps a
          handful of media elements decodable at once; past that limit a clip silently
@@ -105,7 +108,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-09e';
+var SW_ENGINE_REV = '2026-08-09f';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -346,7 +349,7 @@ function mountScrollWorld(container, config) {
   // departs and lands at rest — and its slope is continuous at the midpoint, so
   // there's no kick halfway through the flight.
   const easeIO = x => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
-  let fly = null, flyRAF = 0, setY = -1, coolUntil = 0;
+  let fly = null, flyRAF = 0, setY = -1, coolUntil = 0, dbgSeeks = 0;
 
   // FIX (iOS): window.scrollTo ist in WebKit nicht synchron. Das scroll-Event
   // meldet die Position 1–2 Frames NACHDEM sie gesetzt wurde — die rAF-Schleife
@@ -382,6 +385,7 @@ function mountScrollWorld(container, config) {
     const d = (dur != null) ? dur
       : clamp(Math.abs(y - from) / Math.max(1, vh) * SNAP.perVh, SNAP.min, SNAP.max);
     dlog('fly ' + Math.round(from) + '->' + y + ' dur=' + Math.round(d));
+    dbgSeeks = 0;
     pushSet(from);
     fly = { from: from, to: y, t0: performance.now(), dur: d };
     if (!flyRAF) flyRAF = requestAnimationFrame(stepFly);
@@ -393,7 +397,7 @@ function mountScrollWorld(container, config) {
     const p = clamp((now - fly.t0) / fly.dur);
     pushSet(Math.round(fly.from + (fly.to - fly.from) * easeIO(p)));
     window.scrollTo(0, setY);
-    if (p >= 1) { dlog('fly landed @' + setY); fly = null; coolUntil = now + SNAP.cooldown; return; }
+    if (p >= 1) { dlog('fly landed @' + setY + ' seeks=' + dbgSeeks); fly = null; coolUntil = now + SNAP.cooldown; return; }
     flyRAF = requestAnimationFrame(stepFly);
   }
 
@@ -585,7 +589,23 @@ function mountScrollWorld(container, config) {
       s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
       const dur = s.video.duration || 1;
       const t = clamp(s.cur, 0, 0.999) * dur;
-      if (Math.abs(s.video.currentTime - t) > eps) { try { s.video.currentTime = t; } catch (e) {} }
+      const d = Math.abs(s.video.currentTime - t);
+      if (d <= eps) continue;
+      // FIX (iOS, gehört zum -g-4-Re-Encode der m/-Kette): ein exakter
+      // currentTime-Seek flusht in WebKit die Decoder-Pipeline und dekodiert
+      // dann vom letzten Keyframe bis zum Zielframe durch. Bei GOP 20 und
+      // Flugtempo schaffte ein iPhone so nur ein paar Frames pro Sekunde —
+      // der Kameraflug war eine Diashow, während derselbe Code am Desktop
+      // butterweich lief. fastSeek() springt stattdessen auf den nächsten
+      // Keyframe: mit -g 4 maximal 2 Frames (~83 ms Film) daneben, bei rund
+      // 4-fachem Zeitraffer unsichtbar. Erst nahe am Ziel (< 0,25 s) wird
+      // wieder exakt gesetzt, damit der Halt auf dem präzisen Seam-Frame
+      // landet. Blink kennt kein fastSeek und bleibt auf dem alten Pfad.
+      try {
+        if (d > 0.25 && isMobile() && s.video.fastSeek) s.video.fastSeek(t);
+        else s.video.currentTime = t;
+        if (dbg) dbgSeeks++;
+      } catch (e) {}
     }
     requestAnimationFrame(raf);
   }
