@@ -101,7 +101,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-09c';
+var SW_ENGINE_REV = '2026-08-09d';
 
 function mountScrollWorld(container, config) {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -305,6 +305,33 @@ function mountScrollWorld(container, config) {
   const easeIO = x => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
   let fly = null, flyRAF = 0, setY = -1, coolUntil = 0;
 
+  // FIX (iOS): window.scrollTo ist in WebKit nicht synchron. Das scroll-Event
+  // meldet die Position 1–2 Frames NACHDEM sie gesetzt wurde — die rAF-Schleife
+  // hat dann längst das nächste Ziel gesetzt. Der alte Punktvergleich
+  // (|scrollPos − setY| > 8) hielt diesen eigenen Nachzügler für einen fremden
+  // Eingriff, sobald der Ease schneller als ~8px/Frame wurde (~0,4 s nach dem
+  // Start), und brach JEDEN Flug ab: eine Geste bewegte die Seite nur noch
+  // ~150px statt zur nächsten Szene. In Blink ist scrollTo synchron (Differenz
+  // immer 0) — deshalb war der Fehler in den DevTools per Definition unsichtbar
+  // und trat nur auf echten iPhones auf.
+  // Deshalb Spanne statt Punkt: die letzten selbst angefahrenen Positionen
+  // bleiben in setHist, und nur eine Position AUSSERHALB dieser Spanne gilt als
+  // fremd (Scrollbalken-Drag, Seitensuche, Browser-Restore — die sollen den
+  // Flug weiterhin abbrechen). Eigene Nachzügler liegen konstruktionsbedingt
+  // immer darin. Die Historie wird bei flyTo bewusst NICHT geleert: direkt nach
+  // einem Drag können noch verspätete Drag-Positionen eintreffen, auch die sind
+  // unsere. Tiefe 8 = ~7 Frames Rückstand abgedeckt (Kompositor-Pipeline liegt
+  // bei 1–3, auf 120Hz-Displays mit 60Hz-Event-Takt entsprechend mehr) — als
+  // Fenster trotzdem nur ~100 ms Eigenpfad, ein Scrollbalken-Sprung landet
+  // praktisch nie darin.
+  let setHist = [];
+  function pushSet(y) { setY = y; setHist.push(y); if (setHist.length > 8) setHist.shift(); }
+  function ownScroll(y) {
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < setHist.length; i++) { const v = setHist[i]; if (v < lo) lo = v; if (v > hi) hi = v; }
+    return y >= lo - 9 && y <= hi + 9;
+  }
+
   function flyTo(y, dur) {
     const from = scrollPos();
     y = clamp(Math.round(y), 0, maxScroll());
@@ -312,6 +339,7 @@ function mountScrollWorld(container, config) {
     const d = (dur != null) ? dur
       : clamp(Math.abs(y - from) / Math.max(1, vh) * SNAP.perVh, SNAP.min, SNAP.max);
     dlog('fly ' + Math.round(from) + '->' + y + ' dur=' + Math.round(d));
+    pushSet(from);
     fly = { from: from, to: y, t0: performance.now(), dur: d };
     if (!flyRAF) flyRAF = requestAnimationFrame(stepFly);
   }
@@ -320,7 +348,7 @@ function mountScrollWorld(container, config) {
     flyRAF = 0;
     if (!fly) return;
     const p = clamp((now - fly.t0) / fly.dur);
-    setY = Math.round(fly.from + (fly.to - fly.from) * easeIO(p));
+    pushSet(Math.round(fly.from + (fly.to - fly.from) * easeIO(p)));
     window.scrollTo(0, setY);
     if (p >= 1) { dlog('fly landed @' + setY); fly = null; coolUntil = now + SNAP.cooldown; return; }
     flyRAF = requestAnimationFrame(stepFly);
@@ -607,7 +635,7 @@ function mountScrollWorld(container, config) {
     tDy = t.clientY - tY0;
     const next = tDy < 0 ? stopAfter(tBase) : stopBefore(tBase);
     const room = (next == null) ? 0 : Math.abs(next - tBase) * 0.38;
-    setY = Math.round(clamp(tBase + clamp(-tDy * SNAP.drag, -room, room), 0, maxScroll()));
+    pushSet(Math.round(clamp(tBase + clamp(-tDy * SNAP.drag, -room, room), 0, maxScroll())));
     window.scrollTo(0, setY);
   }
   function onTouchEnd() {
@@ -656,7 +684,7 @@ function mountScrollWorld(container, config) {
   window.addEventListener('scroll', () => {
     // Scrollbar drag, in-page search, browser restore: something moved the page
     // that isn't our flight. Hand it back instead of fighting over the position.
-    if (fly && Math.abs(scrollPos() - setY) > 8) { dlog('fly overrun y=' + Math.round(scrollPos()) + ' set=' + setY); cancelFly(); }
+    if (fly && !ownScroll(scrollPos())) { dlog('fly overrun y=' + Math.round(scrollPos()) + ' hist=' + setHist.join(',')); cancelFly(); }
     if (!ticking) { ticking = true; requestAnimationFrame(read); }
   }, { passive: true });
   // Mobile browsers fire `resize` every time the URL bar slides in/out. Re-running
