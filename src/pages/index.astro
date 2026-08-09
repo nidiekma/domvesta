@@ -171,6 +171,12 @@ const config = {
     `${V}/m/conn3.mp4`,
     `${V}/m/conn4.mp4`,
   ],
+  // Cache-Buster für die Clip-Fetches (?av=…), Gegenstück zum ?v= an der
+  // Engine-Einbindung unten: bei JEDER Änderung an den Videodateien hochzählen,
+  // sonst serviert ein Telefon bis zu 10 Minuten alte Encodes aus dem
+  // HTTP-Cache und ein frisch deployter Asset-Fix wirkt wie wirkungslos.
+  // Stand 2: -g-4-Re-Encode der m/-Kette vom 2026-08-09.
+  assetRev: 2,
 };
 ---
 
@@ -1045,7 +1051,7 @@ const config = {
          darf sie bis zu 10 Minuten ungefragt weiterverwenden — und genau in so
          einem Fenster wirkt ein frisch deployter Fix wie "hat nichts gebracht".
          Neue URL = garantiert neue Datei, sobald das HTML frisch ist. -->
-    <script is:inline src="/scrollworld/scrub-engine.js?v=6"></script>
+    <script is:inline src="/scrollworld/scrub-engine.js?v=7"></script>
     <script
       is:inline
       set:html={`window.SW = mountScrollWorld(document.getElementById('world'), ${JSON.stringify(config)});`}

@@ -78,6 +78,13 @@
        - scrubs flights via fastSeek() where WebKit offers it (keyframe-precision,
          no pipeline stall — THE reason the -g 4 encodes matter) and switches to
          exact currentTime seeks near the stop for precise seam frames.
+       - background-prefetches the whole chain in flight order, one clip at a
+         time. The near-radius alone is tuned for desktop bandwidth; on phones
+         it requested each connector only on arrival at the previous stop, and
+         the ~1–2 s until departure were not enough on cellular.
+       - set `assetRev` (any string/number) to append ?av= to every clip fetch;
+         bump it whenever clip files change, or phones keep serving the old
+         encodes from HTTP cache for up to max-age after a deploy.
        - keeps only a window of ±`clipWindow` segments (default 1, so three) attached as
          real <video> elements and hands every other decoder back. iOS only keeps a
          handful of media elements decodable at once; past that limit a clip silently
@@ -108,7 +115,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-09f';
+var SW_ENGINE_REV = '2026-08-09g';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -461,9 +468,22 @@ function mountScrollWorld(container, config) {
     if (reduce || s.url || s.fetching || !s.clip || s.fails > 2) return;
     s.fetching = true;
     // Serve the lighter mobile encode on phones when one was provided.
-    const url = (isMobile() && s.clipM) ? s.clipM : s.clip;
+    const base = (isMobile() && s.clipM) ? s.clipM : s.clip;
+    // Asset-Cache-Buster, gleiche Konvention wie ?v= an der Engine selbst: die
+    // Clip-URLs sind über Deploys hinweg identisch, und ein Telefon darf eine
+    // alte Datei bis max-age ungefragt weiterverwenden — nach einem Re-Encode
+    // testet man sonst gegen Geister (alte GOP-20-Clips aus dem HTTP-Cache).
+    // config.assetRev bei jeder Asset-Änderung mitziehen.
+    const url = (config.assetRev != null)
+      ? base + (base.indexOf('?') < 0 ? '?av=' : '&av=') + config.assetRev
+      : base;
+    const t0 = performance.now();
     fetch(url).then(r => r.ok ? r.blob() : Promise.reject(new Error('404')))
-      .then(blob => { s.url = URL.createObjectURL(blob); s.fetching = false; read(); })
+      .then(blob => {
+        s.url = URL.createObjectURL(blob); s.fetching = false;
+        dlog('blob ' + s.kind + s.si + ' ' + Math.round(blob.size / 1024) + 'kB ' + Math.round(performance.now() - t0) + 'ms');
+        read();
+      })
       .catch(() => { s.fetching = false; s.fails = (s.fails || 0) + 1; dlog('fetch FAIL ' + s.kind + s.si + ' n=' + s.fails); });
   }
 
@@ -764,6 +784,25 @@ function mountScrollWorld(container, config) {
   window.addEventListener('load', layout);
   layout();
   requestAnimationFrame(raf);
+
+  // Telefone: der near-Radius (±1,6 vh) ist auf Desktop-Bandbreite gerechnet.
+  // Er fordert jeden Connector erst beim Eintreffen am vorigen Halt an — auf
+  // Mobilfunk sind die verbleibenden ~1–2 s bis zum Abflug zu wenig, der Clip
+  // ist beim Durchflug nicht da und die Szene steht still, obwohl der Besucher
+  // insgesamt längst genug Zeit auf der Seite verbracht hat (messbar: nach 10 s
+  // Verweilen bei Szene 2 waren erst 4 von 9 Clips überhaupt angefordert).
+  // Deshalb saugt eine Hintergrund-Queue die ganze Kette in Flugreihenfolge
+  // leer — einen Clip zur Zeit, damit die Downloads nicht untereinander um
+  // Bandbreite kämpfen und der als Nächstes gebrauchte zuerst fertig wird.
+  // fetchClip ist idempotent; near-Anfragen aus read() überholen einfach.
+  if (!reduce && isMobile()) {
+    const pumpT = setInterval(() => {
+      for (let i = 0; i < NSEG; i++) if (SEGMENTS[i].fetching) return;   // einer zur Zeit
+      const nxt = SEGMENTS.find(s => !s.url && s.clip && s.fails <= 2);
+      if (!nxt) { clearInterval(pumpT); dlog('prefetch done'); return; }
+      fetchClip(nxt);
+    }, 350);
+  }
 
   // Page code can reuse the same flight for its own links (see index.astro's
   // epilog nav item) instead of teleporting past the whole camera move.
