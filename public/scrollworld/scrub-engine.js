@@ -47,7 +47,10 @@
          keys: true,        // ↑/↓/PageUp/PageDown/Space/Home/End
          drag: 0.32,        // how far the world follows the finger during a drag
        }
-     Ignored under prefers-reduced-motion (native scrolling stays). mountScrollWorld
+     Ignored under prefers-reduced-motion (native scrolling stays; the segments
+     also shrink to short uniform widths — see DIVE_W_R at the segment chain — so
+     the still tour is a brief scroll instead of the full flight distance).
+     mountScrollWorld
      returns { jumpTo(i), scrollTo(y, ms?), stops(), layout() } so page code can use
      the same flight for its own links.
      With `touch`, the engine puts `.sw-nopan` on <html> while the visitor is inside
@@ -122,10 +125,18 @@ function mountScrollWorld(container, config) {
   container.classList.add('sw-root');
 
   // ---- build the interleaved segment chain: dive0, conn0, dive1, … diveN-1 ----
+  // Unter prefers-reduced-motion schrumpfen alle Segmente auf kurze, uniforme
+  // Strecken. Clips und Snap sind dort bewusst aus — die konfigurierten Weiten
+  // sind aber auf den Kameraflug gerechnet, übrig bliebe nur eine Wisch-Wüste
+  // aus Stills (bei Domvesta: ~13,8 Bildschirmhöhen, und durch die per-Section-
+  // Overrides samt linger fühlten sich spätere Szenen auch noch zäher an).
+  // Kurze Segmente machen daraus eine Wischgeste pro Szene; Copy-Kurven, Stops
+  // und Crossfade rechnen in Segmentanteilen und skalieren automatisch mit.
+  const DIVE_W_R = 0.6, CONN_W_R = 0.35;   // vh je Dive/Connector unter reduce
   const SEGMENTS = [];
   SECTIONS.forEach((s, i) => {
     const dive = { kind: 'dive', si: i, clip: s.clip, clipM: s.clipMobile, still: s.still, stillM: s.stillMobile,
-                   accent: s.accent, w: s.scroll || DIVE_W, linger: s.linger || 0 };
+                   accent: s.accent, w: reduce ? DIVE_W_R : (s.scroll || DIVE_W), linger: s.linger || 0 };
     SEGMENTS.push(dive);
     s._seg = dive;
     // A connector is optional: if connectors[i] is falsy, the two dives simply
@@ -134,7 +145,7 @@ function mountScrollWorld(container, config) {
     if (i < N - 1 && CONNECTORS[i]) {
       SEGMENTS.push({ kind: 'conn', si: i, clip: CONNECTORS[i], clipM: CONNECTORS_M[i],
                       still: SECTIONS[i + 1].still, stillM: SECTIONS[i + 1].stillMobile,
-                      accent: SECTIONS[i + 1].accent, w: CONN_W });
+                      accent: SECTIONS[i + 1].accent, w: reduce ? CONN_W_R : CONN_W });
     }
   });
   const NSEG = SEGMENTS.length;
