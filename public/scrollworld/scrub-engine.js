@@ -115,7 +115,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-09g';
+var SW_ENGINE_REV = '2026-08-09h';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -404,11 +404,23 @@ function mountScrollWorld(container, config) {
     const p = clamp((now - fly.t0) / fly.dur);
     pushSet(Math.round(fly.from + (fly.to - fly.from) * easeIO(p)));
     window.scrollTo(0, setY);
-    if (p >= 1) { dlog('fly landed @' + setY + ' seeks=' + dbgSeeks); fly = null; coolUntil = now + SNAP.cooldown; return; }
+    if (p >= 1) { dlog('fly landed @' + setY + ' seeks=' + dbgSeeks + (dbg ? ' | ' + vidState() : '')); fly = null; coolUntil = now + SNAP.cooldown; return; }
     flyRAF = requestAnimationFrame(stepFly);
   }
 
   function cancelFly() { if (fly) dlog('fly CANCEL @' + Math.round(scrollPos())); fly = null; if (flyRAF) { cancelAnimationFrame(flyRAF); flyRAF = 0; } }
+
+  // Momentaufnahme der angehängten Videos für die Landed-Zeile im HUD:
+  // "conn1:rs4" = readyState 4, ein "*" dahinter = hängt gerade in seeking.
+  // rs0/rs1 ohne data-Zeile heißt: iOS hat dem Element nie einen Frame erlaubt.
+  function vidState() {
+    const a = [];
+    for (let i = 0; i < NSEG; i++) {
+      const s = SEGMENTS[i];
+      if (s.video) a.push(s.kind + s.si + ':rs' + s.video.readyState + (s.video.seeking ? '*' : ''));
+    }
+    return a.join(' ');
+  }
 
   // Chained gestures count from the *target*, so a second flick during a flight
   // queues the section after the one we're heading to instead of the one we left.
@@ -510,7 +522,11 @@ function mountScrollWorld(container, config) {
     const reveal = () => { dlog('frame ' + s.kind + s.si); s.el.classList.add('has-clip'); };
     if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal);
     else v.addEventListener('seeked', reveal, { once: true });
-    v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
+    // Telemetrie für Geräte-Reports: feuert seek0 nie, hängt das Element im
+    // seeking-Deadlock (siehe FIX-Kommentar am Priming); fehlt data, hat iOS
+    // dem Element nie einen Frame dekodiert.
+    v.addEventListener('seeked', () => dlog('seek0 ok ' + s.kind + s.si), { once: true });
+    v.addEventListener('loadeddata', () => { dlog('data ' + s.kind + s.si); try { v.pause(); } catch (e) {} if (userReady) primeVideo(v, s); });
     s.el.appendChild(v); s.video = v; s.hasClip = true;
   }
 
@@ -630,23 +646,50 @@ function mountScrollWorld(container, config) {
     requestAnimationFrame(raf);
   }
 
-  // iOS needs a user gesture before a muted video will decode/paint reliably. On the
-  // first touch we prime every loaded clip (muted play→pause) so the first seek is
-  // instant instead of showing a blank frame. `userReady` also makes freshly-loaded
-  // clips prime themselves (see attachClip).
+  // iOS needs a user gesture before a muted video will decode/paint reliably.
+  //
+  // FIX (iOS, Geräte-Report 2026-08-09 23:35): "beim ersten Touch primen" reicht
+  // NICHT. Die Erlaubnis gibt WebKit nur einem play() im Gesten-Kontext — und
+  // die alte Fassung primte ausschließlich bei der ALLERERSTEN Geste (once:true)
+  // die bis dahin angehängten Videos. Jedes später angehängte Element verließ
+  // sich auf sein loadeddata-Priming, aber loadeddata feuert erst NACH dem
+  // ersten dekodierten Frame — den es ohne Erlaubnis nie gibt. Henne-Ei: der
+  // erzwungene Metadata-Seek wird nie fertig, seeking bleibt für immer true,
+  // die raf-Schleife überspringt das Element ewig (Report: seeks=0 auf jedem
+  // Flug, meta ohne data/frame). Auf schnellem Netz maskiert (Videos hängen
+  // vor der ersten Geste im DOM und werden in ihr geprimt — der eine
+  // "Zufallstreffer"), auf langsamem Netz systematisch.
+  // Deshalb primt jetzt JEDE Geste (Listener bleiben dran) alle Videos, die
+  // noch keinen Frame gezeigt haben oder im seeking-Deadlock stecken — Gesten
+  // gibt es auf einer Scroll-Seite im Sekundentakt. Nach erfolgreichem Unlock
+  // wird der hängende Seek einmal neu angestoßen (currentTime mitten in einem
+  // pending seek ist legal und startet den Seek-Algorithmus neu).
   let userReady = false;
-  function primeVideo(v) {
+  function primeVideo(v, s) {
     if (!isMobile() || !v) return;
-    try { const p = v.play(); if (p && p.then) p.then(() => { try { v.pause(); } catch (e) {} }).catch(() => {}); }
-    catch (e) {}
+    try {
+      const p = v.play();
+      if (p && p.then) p.then(() => {
+        try { v.pause(); } catch (e) {}
+        if (s) {
+          dlog('prime ok ' + s.kind + s.si);
+          if (s.ready) { try { v.currentTime = clamp(s.cur, 0.002, 0.999) * (v.duration || 1); } catch (e) {} }
+        }
+      }).catch(err => { if (s) dlog('prime FAIL ' + s.kind + s.si + ' ' + (err && err.name)); });
+    } catch (e) {}
   }
-  function onFirstGesture() {
-    if (userReady) return;
+  function primePending() {
+    for (let i = 0; i < NSEG; i++) {
+      const s = SEGMENTS[i];
+      if (s.video && (!s.el.classList.contains('has-clip') || s.video.seeking)) primeVideo(s.video, s);
+    }
+  }
+  function onGesture() {
     userReady = true;
-    SEGMENTS.forEach(s => primeVideo(s.video));
+    primePending();
   }
-  window.addEventListener('pointerdown', onFirstGesture, { once: true, passive: true });
-  window.addEventListener('touchstart', onFirstGesture, { once: true, passive: true });
+  window.addEventListener('pointerdown', onGesture, { passive: true });
+  window.addEventListener('touchstart', onGesture, { passive: true });
 
   // ---- snap input: wheel / touch / keys --------------------------------------
   let acc = 0, accAt = 0;
@@ -843,6 +886,9 @@ function makeDebugHud(rev) {
   btn.textContent = 'Report anzeigen';
   btn.style.cssText = 'pointer-events:auto;margin-top:6px;font:inherit;padding:5px 9px;border-radius:6px;border:0;background:#e8651b;color:#fff;';
   const hist = ['ua ' + navigator.userAgent];
+  // Volle Historie für Tooling (Headless-Tests, Remote-Inspector): das Panel
+  // zeigt nur die letzten 12 Zeilen, der Report und __swlog haben alles.
+  window.__swlog = hist;
   btn.addEventListener('click', () => {
     const ta = document.createElement('textarea');
     ta.value = 'rev ' + rev + '\n' + head.textContent + '\n' + hist.join('\n');
