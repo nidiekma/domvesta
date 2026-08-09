@@ -50,6 +50,10 @@
      Ignored under prefers-reduced-motion (native scrolling stays). mountScrollWorld
      returns { jumpTo(i), scrollTo(y, ms?), stops(), layout() } so page code can use
      the same flight for its own links.
+     With `touch`, the engine puts `.sw-nopan` on <html> while the visitor is inside
+     the world so the browser can't pan vertically on its own — without it iOS commits
+     the gesture to native scrolling on the first un-prevented touchmove and every
+     snap flight gets overrun by momentum. It is removed again at `exit`.
 
    MOBILE (the clipMobile/connectorsMobile variants are the opt-in mobile version;
    the rest of the phone handling below is always on)
@@ -64,6 +68,11 @@
          phone width keeps the desktop poster (clips still switch via isMobile()).
        - coalesces seeks (never issues a new currentTime while the decoder is still
          `seeking`) so fast flicks can't pile up and freeze the video.
+       - keeps only a window of ±`clipWindow` segments (default 1, so three) attached as
+         real <video> elements and hands every other decoder back. iOS only keeps a
+         handful of media elements decodable at once; past that limit a clip silently
+         never paints a frame and its scene looks like it has no animation at all. The
+         blob stays cached, so re-attaching costs no network. Desktop keeps them all.
        - keeps the still as a live poster until the clip actually paints its first frame,
          and primes each video (muted play→pause) on first touch — this is what stops iOS
          from showing a blank scene before the first seek.
@@ -172,7 +181,9 @@ function mountScrollWorld(container, config) {
     if (poster) img.src = poster;
     scene.appendChild(img); stage.appendChild(scene);
     s.el = scene; s.img = img; s.video = null; s.hasClip = false;
-    s.loading = false; s.ready = false; s.cur = 0; s.target = 0; s.visible = false;
+    // url = Blob-URL des Clips (überlebt ein releaseClip), fetching/fails = Netz-Zustand.
+    s.url = null; s.fetching = false; s.fails = 0;
+    s.ready = false; s.cur = 0; s.target = 0; s.visible = false;
   });
 
   // per-section copy / route / nav
@@ -295,6 +306,19 @@ function mountScrollWorld(container, config) {
     return true;
   }
 
+  // Solange wir in der Welt sind, bekommt der Browser das vertikale Pannen per
+  // touch-action ganz entzogen (siehe .sw-nopan im CSS und den FIX-Kommentar an
+  // onTouchMove) — sonst überfährt der native Scroll samt Momentum jeden Snap-Flug.
+  // pan-x und pinch-zoom bleiben erlaubt, Zoom als Bedienhilfe funktioniert also
+  // weiter. Ab dem Epilog fällt der Riegel: dort steht Fließtext, Teamfoto, Video
+  // und Footer, das muss ganz normal scrollen.
+  let noPan = false;
+  function setNoPan(on) {
+    if (on === noPan) return;
+    noPan = on;
+    document.documentElement.classList.toggle('sw-nopan', on);
+  }
+
   // Hijack only inside the world. Past the exit the page is ordinary content that
   // has to scroll normally; sitting exactly at the exit, an upward gesture is the
   // way back into the flight.
@@ -305,28 +329,72 @@ function mountScrollWorld(container, config) {
     return dir < 0 && y < exitY + 2;
   }
 
-  function loadClip(s) {
+  // ---- clip lifecycle: fetch (network) und attach (decoder) getrennt ----------
+  // Die beiden Ressourcen sind unterschiedlich knapp und wollen deshalb zu
+  // unterschiedlichen Zeitpunkten ausgegeben werden:
+  //   Bandbreite  FRÜH  — der Blob soll liegen, bevor das Segment sichtbar wird.
+  //   Decoder     SPÄT  — iOS hält nur eine Handvoll <video> gleichzeitig
+  //                       dekodierfähig. Ab dieser Grenze liefert das nächste
+  //                       Element schlicht keinen Frame: `seeked` feuert nie, die
+  //                       Engine lässt das Still stehen und die Szene sieht aus,
+  //                       als hätte sie gar keine Scroll-Animation. Am Desktop
+  //                       fällt das nicht auf, dort dürfen alle neun Clips leben.
+  // Auf Telefonen hängt darum immer nur ein Fenster von CLIP_WINDOW Segmenten um
+  // die aktuelle Position herum wirklich im DOM. Alle anderen geben ihren Decoder
+  // zurück und behalten nur die Blob-URL — ein späteres attachClip() kostet also
+  // kein Netz. Das Fenster ist mindestens ein volles Segment breit, ein wieder
+  // angehängter Clip hat seinen ersten Frame also lange vor dem Crossfade.
+  const CLIP_WINDOW = (config.clipWindow != null) ? config.clipWindow : 1;
+
+  function fetchClip(s) {
     // Under prefers-reduced-motion we never load the clips at all — the stills stay up
     // and simply cross-dissolve as you scroll. No scrubbed video motion, no decode cost.
-    if (reduce || s.loading || !s.clip) return;
-    s.loading = true;
+    if (reduce || s.url || s.fetching || !s.clip || s.fails > 2) return;
+    s.fetching = true;
     // Serve the lighter mobile encode on phones when one was provided.
     const url = (isMobile() && s.clipM) ? s.clipM : s.clip;
     fetch(url).then(r => r.ok ? r.blob() : Promise.reject(new Error('404')))
-      .then(blob => {
-        const v = document.createElement('video');
-        v.className = 'sw-scene__video';
-        v.muted = true; v.playsInline = true; v.preload = 'auto';
-        v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
-        v.src = URL.createObjectURL(blob);
-        v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
-        // Reveal the video (hide the still poster) only once a real frame has
-        // painted — on iOS a seeked-but-never-played muted video stays blank, so
-        // hiding the still on metadata alone would flash an empty scene.
-        v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
-        v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
-        s.el.appendChild(v); s.video = v; s.hasClip = true;
-      }).catch(() => { s.loading = false; });
+      .then(blob => { s.url = URL.createObjectURL(blob); s.fetching = false; read(); })
+      .catch(() => { s.fetching = false; s.fails = (s.fails || 0) + 1; });
+  }
+
+  function attachClip(s) {
+    if (reduce || s.video || !s.url) return;
+    const v = document.createElement('video');
+    v.className = 'sw-scene__video';
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    v.src = s.url;
+    v.addEventListener('loadedmetadata', () => {
+      s.ready = true;
+      // Erzwingt einen ersten echten Seek. Ohne ihn stünde currentTime auf 0, die
+      // raf-Schleife hätte (bei s.cur ≈ 0) nichts zu tun, und weder `seeked` noch
+      // requestVideoFrameCallback feuerten — das Still bliebe für immer stehen.
+      try { v.currentTime = clamp(s.cur, 0.002, 0.999) * (v.duration || 1); } catch (e) {}
+      read();
+    });
+    // Reveal the video (hide the still poster) only once a real frame has
+    // painted — on iOS a seeked-but-never-played muted video stays blank, so
+    // hiding the still on metadata alone would flash an empty scene.
+    // rVFC feuert genau bei der Frame-Präsentation; `seeked` ist der Fallback.
+    const reveal = () => { s.el.classList.add('has-clip'); };
+    if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal);
+    else v.addEventListener('seeked', reveal, { once: true });
+    v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
+    s.el.appendChild(v); s.video = v; s.hasClip = true;
+  }
+
+  // Decoder zurückgeben. Das Element nur aus dem DOM zu nehmen reicht in WebKit
+  // nicht — erst `src` leeren plus load() gibt die Media-Ressource frei.
+  function releaseClip(s) {
+    const v = s.video;
+    if (!v) return;
+    s.video = null; s.hasClip = false; s.ready = false;
+    s.el.classList.remove('has-clip');
+    try { v.pause(); } catch (e) {}
+    v.removeAttribute('src');
+    try { v.load(); } catch (e) {}
+    v.remove();
   }
 
   function read() {
@@ -335,9 +403,19 @@ function mountScrollWorld(container, config) {
     let ci = 0;
     for (let i = 0; i < NSEG; i++) if (y >= SEGMENTS[i].start) ci = i;
 
+    // Decoder-Budget (siehe attachClip). Freigeben passiert VOR dem Anhängen,
+    // damit beim Segmentwechsel nie kurzzeitig ein Element zu viel existiert —
+    // genau dieser eine Frame würde auf iOS den neuen Clip stumm scheitern lassen.
+    const budget = isMobile();
+    if (budget) {
+      for (let i = 0; i < NSEG; i++) if (Math.abs(i - ci) > CLIP_WINDOW) releaseClip(SEGMENTS[i]);
+    }
+
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      if (y > s.start - 1.6 * vh && y < s.end + 1.6 * vh) loadClip(s);
+      const near = y > s.start - 1.6 * vh && y < s.end + 1.6 * vh;
+      if (near) fetchClip(s);
+      if (budget ? Math.abs(i - ci) <= CLIP_WINDOW : near) attachClip(s);
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
@@ -381,6 +459,7 @@ function mountScrollWorld(container, config) {
       nav.querySelectorAll('.sw-nav__item').forEach((n, k) => n.classList.toggle('is-active', k === near));
       container.style.setProperty('--sw-accent', SECTIONS[near].accent || '');
     }
+    if (SNAP && SNAP.touch) setNoPan(y < exitY - 2);
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
     if (particles) particles.style.transform = `translate3d(0, ${-y * 0.05}px, 0)`;
@@ -408,7 +487,7 @@ function mountScrollWorld(container, config) {
   // iOS needs a user gesture before a muted video will decode/paint reliably. On the
   // first touch we prime every loaded clip (muted play→pause) so the first seek is
   // instant instead of showing a blank frame. `userReady` also makes freshly-loaded
-  // clips prime themselves (see loadClip).
+  // clips prime themselves (see attachClip).
   let userReady = false;
   function primeVideo(v) {
     if (!isMobile() || !v) return;
@@ -448,10 +527,27 @@ function mountScrollWorld(container, config) {
   // feels alive and reversible) and the release either completes the flight or
   // settles back. Direction is decided on the first move — after that iOS won't let
   // us take the gesture back anyway.
-  let tLock = 0, tY0 = 0, tX0 = 0, tT0 = 0, tBase = 0, tDy = 0;
+  //
+  // FIX (iOS): "danach lässt sich die Geste ohnehin nicht mehr zurückholen" ist
+  // wörtlicher gemeint, als es aussah. WebKit entscheidet beim ERSTEN touchmove,
+  // das ohne preventDefault durchläuft, dass diese Geste nativ scrollt; ab da sind
+  // alle weiteren touchmove-Events non-cancelable und preventDefault() wirkungslos.
+  // Genau das passierte hier: der erste Move (<6px, Richtung noch unklar) lief
+  // durch, danach scrollte die Seite nativ, unser window.scrollTo kämpfte dagegen
+  // und der Momentum-Scroll nach dem Loslassen brach über den scroll-Listener
+  // sofort jeden Snap-Flug ab. Am Desktop (auch in den DevTools) gibt es diese
+  // Regel nicht — deshalb funktionierte es dort. Zwei Gegenmaßnahmen:
+  //   1. tOwn: innerhalb der Welt gehört uns jede Geste, also schon der allererste
+  //      Move preventDefault — dann kommt WebKit gar nicht erst in den Scroll-Modus.
+  //   2. .sw-nopan (touch-action, siehe setNoPan) als robuster Riegel davor.
+  let tLock = 0, tOwn = false, tY0 = 0, tX0 = 0, tT0 = 0, tBase = 0, tDy = 0;
   function onTouchStart(e) {
     tLock = (e.touches.length === 1) ? 0 : -1;
     if (tLock < 0) return;
+    // Nur strikt INNERHALB der Welt vorab beanspruchen. Genau am Ausgang gehört
+    // uns nur die Aufwärtsgeste — dort muss die Abwärtsgeste nativ in den Epilog
+    // scrollen dürfen, also erst die Richtung abwarten.
+    tOwn = hijack(1);
     tY0 = e.touches[0].clientY; tX0 = e.touches[0].clientX;
     tT0 = performance.now(); tDy = 0; tBase = scrollPos();
   }
@@ -459,6 +555,7 @@ function mountScrollWorld(container, config) {
     if (tLock < 0 || e.touches.length !== 1) return;
     const t = e.touches[0], dy = t.clientY - tY0, dx = t.clientX - tX0;
     if (!tLock) {
+      if (tOwn && e.cancelable) e.preventDefault();
       if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;      // direction still unclear
       if (Math.abs(dx) > Math.abs(dy) || !hijack(dy < 0 ? 1 : -1)) { tLock = -1; return; }
       tLock = 1; cancelFly();
@@ -632,6 +729,10 @@ function injectCSS() {
   .sw-hint i::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--sw-accent);transform:translateX(-50%);animation:sw-wheel 1.7s ease-in-out infinite;}
   @keyframes sw-wheel{0%{opacity:0;top:6px}40%{opacity:1}100%{opacity:0;top:17px}}
   .sw-track{position:relative;z-index:1;width:100%;pointer-events:none;}
+  /* Snappy scroll auf Touch: solange die Klasse steht, pannt der Browser nicht
+     selbst vertikal — die Flüge kommen ausschließlich aus onTouchMove/flyTo.
+     Wird von setNoPan() ab dem Ausgang der Welt wieder entfernt. */
+  html.sw-nopan,html.sw-nopan body{touch-action:pan-x pinch-zoom;overscroll-behavior-y:none;}
   @media (max-width:860px){
     .sw-nav{display:none;}
     .sw-copylayer::before{width:100%;height:60%;top:auto;bottom:0;background:linear-gradient(0deg,var(--sw-bg) 8%,color-mix(in srgb,var(--sw-bg) 70%,transparent) 46%,transparent 100%);}

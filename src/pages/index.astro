@@ -353,14 +353,41 @@ const config = {
 
     <style is:global>
       /* Theme-Tokens der Engine auf die Domvesta-Palette (DESIGN.md) mappen.
-         Unlayered :root gewinnt gegen @layer sw der Engine — keine !important nötig. */
-      :root {
+         Unlayered gewinnt gegen @layer sw der Engine — keine !important nötig.
+
+         WICHTIG — .sw-root muss mit in den Selektor: die Engine deklariert ihre
+         Defaults nicht auf :root, sondern auf .sw-root (dem #world-Container).
+         Custom Properties werden vererbt, und dabei gewinnt immer der NÄHERE
+         Vorfahre; Cascade Layers entscheiden nur zwischen Deklarationen auf
+         DEMSELBEN Element. Ein Block allein auf :root war für alles innerhalb von
+         #world deshalb wirkungslos — Titel liefen in ui-rounded/SF Pro Rounded
+         statt Instrument Serif, --sw-ink war das kühle #241d2b der Engine statt
+         Espresso, und --sw-bg (Himmel, Copy-Verlauf) war #F5EDE0 statt Warm Paper.
+         Aufgefallen ist es nie, weil --sw-accent per Inline-Style aus der Config
+         kommt und html/body außerhalb von .sw-root liegen. */
+      :root,
+      .sw-root {
         --sw-bg: #fbf2e4;
         --sw-ink: #2a1c10;
         --sw-ink-soft: #6b5742;
         --sw-accent: #e8651b;
         --sw-font-display: "Instrument Serif", Georgia, serif;
         --sw-font-body: "Schibsted Grotesk", system-ui, sans-serif;
+      }
+
+      /* Instrument Serif gibt es nur in 400. Die Engine setzt ihre Display-Rollen
+         auf 700 — mit der echten Marken-Schrift wäre das ein synthetisch
+         gefetteter Serif und damit genau das, was DESIGN.md unter "The Serif
+         Speaks Rule" ausschließt. */
+      .sw-copy__title {
+        font-weight: 400;
+      }
+      /* Eyebrow und Markenname sind Label-Typografie, keine Display-Typografie:
+         Instrument Serif darf laut DESIGN.md nicht klein und nicht funktional
+         eingesetzt werden. */
+      .sw-copy__eyebrow,
+      .sw-brand__name {
+        font-family: var(--sw-font-body);
       }
       html,
       body {
@@ -595,13 +622,11 @@ const config = {
         .hero-cta {
           position: static;
           max-width: none;
-          margin-top: 22px;
-          /* Der Copy-Block hängt am unteren Rand — eine Untermarge am letzten
-             Kind schiebt ihn also nach oben. Nötig, weil die Engine ihn bei
-             pr=0 zusätzlich um +2vh nach unten schiebt und er damit auf kurzen
-             Displays (740px) genau in die Scroll-Hint läuft, die dort auf zwei
-             Zeilen umbricht. */
-          margin-bottom: 32px;
+          margin-top: 18px;
+          /* Der Abstand zur Scroll-Hint wird jetzt von der Karte selbst getragen
+             (.sw-copy:has(.hero-cta) weiter unten) — eine Untermarge hier läge
+             INNERHALB der Karte und risse dort ein totes Feld auf. */
+          margin-bottom: 0;
         }
         .hero-cta__in {
           align-items: flex-start;
@@ -618,6 +643,109 @@ const config = {
           justify-content: center;
           text-align: center;
           padding: 14px 20px;
+        }
+      }
+
+      /* ============ SZENEN-COPY AM TELEFON: PAPIERKARTE ============
+         Am Desktop steht die Copy links vor einem breiten Cream-Verlauf, der die
+         Dioramen-Details wegdämpft. Am Telefon gibt es diesen Platz nicht: dort
+         legt die Engine den Block über die volle Breite an den unteren Rand — also
+         mitten in die Szene. Der Verlauf allein trug das nicht, sobald darunter
+         etwas Kleinteiliges lag (die Ordnerstapel in "papierkram", die Kabelbäume
+         und Zähler in "energie"): Espresso-Ink auf Mitteltönen ist zu wenig
+         Kontrast, und der weiche text-shadow der Engine macht daraus Matsch statt
+         Trennung.
+
+         Statt den Verlauf weiter aufzudrehen (und die Szene damit zuzukleistern)
+         bekommt der Block die Signatur aus DESIGN.md: eine weiße Karte mit 2px
+         Espresso-Rand und hartem Offset-Schatten. Das ist im Papier-Diorama kein
+         Fremdkörper, sondern ein aufgelegtes Schild — und der Kontrast ist ab
+         jetzt vom Bild dahinter unabhängig.
+
+         Zwei Karten überlagern sich nie: die Opacity-Kurven in read() (Szene 0
+         fadet bis pr 0.62 aus, die mittleren sind an beiden Segmenträndern auf 0,
+         die letzte startet bei pr 0) lassen immer nur eine gleichzeitig sichtbar
+         sein. Unlayered schlägt @layer sw der Engine. */
+      @media (max-width: 860px) {
+        .sw-copy {
+          background: #fff;
+          border: 2px solid var(--sw-ink);
+          border-radius: 22px;
+          box-shadow: 6px 6px 0 var(--sw-ink);
+          padding: 1.15rem 1.2rem 1.3rem;
+          /* Rechts Platz für die Route-Rail: die sitzt am Telefon bei right:6px
+             und ist mit Touch-Trefferfläche 40px breit. Solange die Copy frei
+             schwebte, lagen die Punkte einfach über dem Bild; auf der deckenden
+             Karte säßen sie auf Rand und Schatten und läsen sich als Fehler.
+             50px = 46px Rail + 6px Karten-Schatten liegen damit knapp
+             nebeneinander, die Lücke ist als "die Karte macht der Navigation
+             Platz" lesbar. */
+          right: 50px;
+        }
+        /* Der Copy-Block hängt am unteren Rand — eine Untermarge schiebt ihn also
+           nach oben. Nur die Karte von Szene 01 braucht das: die Engine schiebt
+           sie bei pr=0 zusätzlich um +2vh nach unten, und mit dem Hero-CTA darin
+           liefe sie auf kurzen Displays (740px) in die Scroll-Hint, die dort auf
+           zwei Zeilen umbricht. */
+        .sw-copy:has(.hero-cta) {
+          margin-bottom: 26px;
+        }
+        /* Die Halos der Engine sind für freistehende Schrift gedacht; auf Weiß
+           sind sie nur ein schmutziger Schleier. */
+        .sw-copy__title,
+        .sw-copy__body {
+          text-shadow: none;
+        }
+        /* Die Innenabstände der Engine sind auf den luftigen Desktop-Block
+           gerechnet. In der Karte kostet jeder davon Höhe, und Szene 05 (Eyebrow,
+           Titel, Text, Bewertungs-Pill, zwei Buttons) läuft sonst auf einem
+           iPhone SE nach oben aus dem Bild. */
+        .sw-copy__eyebrow {
+          margin-top: 12px;
+        }
+        .sw-copy__body {
+          margin-top: 12px;
+        }
+        .sw-copy__tags {
+          margin-top: 16px;
+        }
+        .sw-copy__cta {
+          margin-top: 18px;
+        }
+        /* Der große Cream-Verlauf hat jetzt nur noch eine Aufgabe: den Fuß der
+           Szene beruhigen, wo Scroll-Hint und Home-Indicator liegen. Die Lesbarkeit
+           trägt die Karte — also darf deutlich mehr Diorama sichtbar bleiben. */
+        .sw-copylayer::before {
+          height: 42%;
+          background: linear-gradient(
+            0deg,
+            var(--sw-bg) 0%,
+            color-mix(in srgb, var(--sw-bg) 86%, transparent) 16%,
+            color-mix(in srgb, var(--sw-bg) 38%, transparent) 54%,
+            transparent 100%
+          );
+        }
+        /* Gegenstück oben. Am Desktop deckt der breite seitliche Verlauf der
+           Copylayer auch die Topbar ab; am Telefon liegt der Verlauf nur unten
+           und der Markenname stand blank auf der Szene — über den Ordnerstapeln
+           in "papierkram" war "Domvesta" praktisch unlesbar. Bewusst ein
+           weicher Verlauf statt der Cream-Leiste mit Ink-Kante aus DESIGN.md:
+           eine harte Linie quer über den Kameraflug nähme der Welt das
+           Schwebende. Liegt in der Copylayer (z20), also unter der Topbar (z50).
+           Kein backdrop-filter — Blur kostet neben dem Video-Scrubbing zu viel. */
+        .sw-copylayer::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: calc(112px + env(safe-area-inset-top, 0px));
+          background: linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--sw-bg) 92%, transparent) 0%,
+            color-mix(in srgb, var(--sw-bg) 62%, transparent) 46%,
+            transparent 100%
+          );
         }
       }
 
