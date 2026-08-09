@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Scroll-World Diagnose</title>
+<style>
+  body { font: 14px/1.55 -apple-system, system-ui, sans-serif; margin: 16px; background: #fbf2e4; color: #2a1c10; }
+  h1 { font-size: 1.15rem; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #fff; border: 2px solid #2a1c10;
+        border-radius: 12px; padding: 12px; box-shadow: 4px 4px 0 #2a1c10; font-size: 12px; }
+  #strip { height: 170px; overflow-y: auto; background: #fff; border: 2px dashed #e8651b;
+           border-radius: 12px; margin: 12px 0; }
+  #strip div { height: 700px; padding: 10px; color: #6b5742; }
+</style>
+</head>
+<body>
+<h1>Scroll-World Diagnose</h1>
+<p>Diese Seite ändert nichts — sie liest nur aus. Bitte <strong>Screenshot</strong> von allem machen (oder Text markieren &amp; kopieren).</p>
+<pre id="out">sammle…</pre>
+<p><strong>Touch-Test:</strong> im gestrichelten Feld einmal <em>vertikal wischen</em> — das Ergebnis erscheint oben in der Box.</p>
+<div id="strip"><div>⬍ hier wischen</div></div>
+<script>
+(function () {
+  var L = [];
+  var out = document.getElementById('out');
+  function render() { out.textContent = L.join('\n'); }
+  function mq(q) { return window.matchMedia(q).matches; }
+
+  L.push('Zeit: ' + new Date().toISOString());
+  L.push('UA: ' + navigator.userAgent);
+  L.push('Viewport: ' + innerWidth + 'x' + innerHeight + ' @' + devicePixelRatio + 'x');
+  // Die eine Zeile, an der alles hängt: meldet WebKit in DIESEM Browser reduce?
+  // (Quellen dafür: global "Bewegung reduzieren", Pro-App-Einstellungen für
+  // Chrome/Safari, evtl. Stromsparmodus — die Query ist die Wahrheit.)
+  L.push('prefers-reduced-motion: ' + (mq('(prefers-reduced-motion: reduce)') ? '*** REDUCE ***' : 'no-preference'));
+  L.push('hover:none + pointer:coarse: ' + mq('(hover: none) and (pointer: coarse)'));
+  L.push('max-width 860px: ' + mq('(max-width: 860px)'));
+  L.push('touch-action pan-x: ' + CSS.supports('touch-action', 'pan-x'));
+  L.push('color-mix: ' + CSS.supports('color', 'color-mix(in srgb, red, blue)'));
+  L.push('@layer: ' + (typeof CSSLayerBlockRule !== 'undefined'));
+  L.push('rVFC: ' + ('requestVideoFrameCallback' in HTMLVideoElement.prototype));
+  L.push('Engine: lade…');
+  render();
+
+  // Zwei Antworten in einer: Welche Revision liegt im HTTP-Cache des Telefons
+  // (so lädt die Startseite sie), und welche liefert der Server frisch aus?
+  var ei = L.length - 1;
+  function probeEngine(label, opts, i) {
+    fetch('/scrollworld/scrub-engine.js?v=3', opts)
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var rev = (t.match(/SW_ENGINE_REV = '([^']+)'/) || [])[1] || 'ALT (vor 2026-08-09c)';
+        L[i] = 'Engine ' + label + ': rev=' + rev + ' bytes=' + t.length +
+               ' nopanFix=' + (t.indexOf('sw-nopan') > -1) + ' compactReduce=' + (t.indexOf('DIVE_W_R') > -1);
+        render();
+      })
+      .catch(function (e) { L[i] = 'Engine ' + label + ': FETCH FAIL ' + e; render(); });
+  }
+  probeEngine('cache', {}, ei);
+  L.push('Engine frisch: lade…');
+  probeEngine('frisch', { cache: 'no-store' }, L.length - 1);
+  render();
+
+  // Der WebKit-Kernpunkt: ist der ERSTE touchmove einer Geste cancelable, und
+  // greift preventDefault? Genau daran hängt der Snappy Scroll der Engine.
+  var strip = document.getElementById('strip');
+  var logged = false, y0 = 0, sy0 = 0;
+  window.addEventListener('touchstart', function (e) {
+    if (strip.contains(e.target)) { y0 = e.touches[0].clientY; sy0 = strip.scrollTop; }
+  }, { passive: true });
+  window.addEventListener('touchmove', function (e) {
+    if (!strip.contains(e.target) || logged) return;
+    logged = true;
+    e.preventDefault();
+    L.push('Touch-Test: cancelable=' + e.cancelable + ' prevented=' + e.defaultPrevented);
+    render();
+    setTimeout(function () {
+      L.push('Touch-Test: Feld hat ' + (strip.scrollTop !== sy0 ? 'TROTZDEM gescrollt (preventDefault wirkungslos!)' : 'nicht gescrollt (preventDefault wirkt)'));
+      render();
+    }, 400);
+  }, { passive: false });
+})();
+</script>
+</body>
+</html>

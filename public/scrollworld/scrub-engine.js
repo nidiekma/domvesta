@@ -98,6 +98,11 @@
    NOT depend on HTTP byte-range support.
    ========================================================================== */
 
+// Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
+// und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
+// beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
+var SW_ENGINE_REV = '2026-08-09c';
+
 function mountScrollWorld(container, config) {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Phone detection. `coarse` is captured once (input type doesn't change mid-session);
@@ -124,6 +129,16 @@ function mountScrollWorld(container, config) {
   injectCSS();
   container.classList.add('sw-root');
 
+  // ---- Debug-HUD (nur mit ?swdebug in der URL) ------------------------------
+  // Auf dem Telefon gibt es keine Konsole, und genau dort liegen die Fälle, die
+  // die DevTools-Emulation nicht abbildet (Bedienhilfen wie Pro-App-"Bewegung
+  // reduzieren", Cache-Stand, WebKit-Gestenmodell). Das HUD zeigt die
+  // Entscheidungsgrundlagen der Engine als Statuszeile und loggt Gesten-,
+  // Flug- und Video-Ereignisse auf der Seite; "Report anzeigen" öffnet den
+  // kompletten Verlauf als markierbaren Text zum Kopieren/Screenshotten.
+  const dbg = /[?&#]swdebug/.test(location.href) ? makeDebugHud(SW_ENGINE_REV) : null;
+  const dlog = dbg ? dbg.log : function () {};
+
   // ---- build the interleaved segment chain: dive0, conn0, dive1, … diveN-1 ----
   // Unter prefers-reduced-motion schrumpfen alle Segmente auf kurze, uniforme
   // Strecken. Clips und Snap sind dort bewusst aus — die konfigurierten Weiten
@@ -149,6 +164,8 @@ function mountScrollWorld(container, config) {
     }
   });
   const NSEG = SEGMENTS.length;
+  dlog('mount: sections=' + N + ' segs=' + NSEG + ' reduce=' + (reduce ? 1 : 0) +
+       ' coarse=' + (coarse ? 1 : 0) + ' snap=' + (SNAP ? 1 : 0));
 
   // ---- DOM ----
   const sky = el('div', 'sw-sky');
@@ -239,6 +256,9 @@ function mountScrollWorld(container, config) {
     totalW = off;
     track.style.height = (totalW * vh + vh) + 'px';   // +1vh so the last flight completes
     buildStops();
+    if (dbg) dbg.status('reduce=' + (reduce ? 1 : 0) + ' coarse=' + (coarse ? 1 : 0) +
+      ' snap=' + (SNAP ? (SNAP.touch ? 'on+touch' : 'on') : 'OFF') +
+      ' vh=' + vh + ' track=' + (Math.round(totalW * 10) / 10) + 'vh exitY=' + exitY);
     read();
   }
 
@@ -291,6 +311,7 @@ function mountScrollWorld(container, config) {
     if (Math.abs(y - from) < 2) return;
     const d = (dur != null) ? dur
       : clamp(Math.abs(y - from) / Math.max(1, vh) * SNAP.perVh, SNAP.min, SNAP.max);
+    dlog('fly ' + Math.round(from) + '->' + y + ' dur=' + Math.round(d));
     fly = { from: from, to: y, t0: performance.now(), dur: d };
     if (!flyRAF) flyRAF = requestAnimationFrame(stepFly);
   }
@@ -301,17 +322,18 @@ function mountScrollWorld(container, config) {
     const p = clamp((now - fly.t0) / fly.dur);
     setY = Math.round(fly.from + (fly.to - fly.from) * easeIO(p));
     window.scrollTo(0, setY);
-    if (p >= 1) { fly = null; coolUntil = now + SNAP.cooldown; return; }
+    if (p >= 1) { dlog('fly landed @' + setY); fly = null; coolUntil = now + SNAP.cooldown; return; }
     flyRAF = requestAnimationFrame(stepFly);
   }
 
-  function cancelFly() { fly = null; if (flyRAF) { cancelAnimationFrame(flyRAF); flyRAF = 0; } }
+  function cancelFly() { if (fly) dlog('fly CANCEL @' + Math.round(scrollPos())); fly = null; if (flyRAF) { cancelAnimationFrame(flyRAF); flyRAF = 0; } }
 
   // Chained gestures count from the *target*, so a second flick during a flight
   // queues the section after the one we're heading to instead of the one we left.
   function snapStep(dir) {
     const base = fly ? fly.to : scrollPos();
     const t = dir > 0 ? stopAfter(base) : stopBefore(base);
+    dlog('snapStep dir=' + dir + ' base=' + Math.round(base) + ' -> ' + (t == null ? 'null' : Math.round(t)));
     if (t == null) return false;
     flyTo(t);
     return true;
@@ -327,6 +349,7 @@ function mountScrollWorld(container, config) {
   function setNoPan(on) {
     if (on === noPan) return;
     noPan = on;
+    dlog('nopan ' + (on ? 'ON' : 'off'));
     document.documentElement.classList.toggle('sw-nopan', on);
   }
 
@@ -366,7 +389,7 @@ function mountScrollWorld(container, config) {
     const url = (isMobile() && s.clipM) ? s.clipM : s.clip;
     fetch(url).then(r => r.ok ? r.blob() : Promise.reject(new Error('404')))
       .then(blob => { s.url = URL.createObjectURL(blob); s.fetching = false; read(); })
-      .catch(() => { s.fetching = false; s.fails = (s.fails || 0) + 1; });
+      .catch(() => { s.fetching = false; s.fails = (s.fails || 0) + 1; dlog('fetch FAIL ' + s.kind + s.si + ' n=' + s.fails); });
   }
 
   function attachClip(s) {
@@ -377,6 +400,7 @@ function mountScrollWorld(container, config) {
     v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
     v.src = s.url;
     v.addEventListener('loadedmetadata', () => {
+      dlog('meta ' + s.kind + s.si);
       s.ready = true;
       // Erzwingt einen ersten echten Seek. Ohne ihn stünde currentTime auf 0, die
       // raf-Schleife hätte (bei s.cur ≈ 0) nichts zu tun, und weder `seeked` noch
@@ -388,7 +412,7 @@ function mountScrollWorld(container, config) {
     // painted — on iOS a seeked-but-never-played muted video stays blank, so
     // hiding the still on metadata alone would flash an empty scene.
     // rVFC feuert genau bei der Frame-Präsentation; `seeked` ist der Fallback.
-    const reveal = () => { s.el.classList.add('has-clip'); };
+    const reveal = () => { dlog('frame ' + s.kind + s.si); s.el.classList.add('has-clip'); };
     if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal);
     else v.addEventListener('seeked', reveal, { once: true });
     v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
@@ -551,7 +575,7 @@ function mountScrollWorld(container, config) {
   //   1. tOwn: innerhalb der Welt gehört uns jede Geste, also schon der allererste
   //      Move preventDefault — dann kommt WebKit gar nicht erst in den Scroll-Modus.
   //   2. .sw-nopan (touch-action, siehe setNoPan) als robuster Riegel davor.
-  let tLock = 0, tOwn = false, tY0 = 0, tX0 = 0, tT0 = 0, tBase = 0, tDy = 0;
+  let tLock = 0, tOwn = false, tY0 = 0, tX0 = 0, tT0 = 0, tBase = 0, tDy = 0, tMoved = 0;
   function onTouchStart(e) {
     tLock = (e.touches.length === 1) ? 0 : -1;
     if (tLock < 0) return;
@@ -560,16 +584,22 @@ function mountScrollWorld(container, config) {
     // scrollen dürfen, also erst die Richtung abwarten.
     tOwn = hijack(1);
     tY0 = e.touches[0].clientY; tX0 = e.touches[0].clientX;
-    tT0 = performance.now(); tDy = 0; tBase = scrollPos();
+    tT0 = performance.now(); tDy = 0; tBase = scrollPos(); tMoved = 0;
+    dlog('tstart tOwn=' + (tOwn ? 1 : 0) + ' y=' + Math.round(tBase));
   }
   function onTouchMove(e) {
     if (tLock < 0 || e.touches.length !== 1) return;
     const t = e.touches[0], dy = t.clientY - tY0, dx = t.clientX - tX0;
     if (!tLock) {
       if (tOwn && e.cancelable) e.preventDefault();
+      // Der erste Move entscheidet in WebKit, wem die Geste gehört — genau die
+      // Werte, an denen jede iOS-Fehlersuche hängt, deshalb einmal pro Geste.
+      if (tMoved === 0) dlog('tmove1 cancelable=' + (e.cancelable ? 1 : 0) + ' prevented=' + (e.defaultPrevented ? 1 : 0));
+      tMoved++;
       if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;      // direction still unclear
-      if (Math.abs(dx) > Math.abs(dy) || !hijack(dy < 0 ? 1 : -1)) { tLock = -1; return; }
+      if (Math.abs(dx) > Math.abs(dy) || !hijack(dy < 0 ? 1 : -1)) { tLock = -1; dlog('t released (horiz/exit)'); return; }
       tLock = 1; cancelFly();
+      dlog('t locked ' + (dy < 0 ? 'fwd' : 'back'));
       tY0 = t.clientY; tT0 = performance.now(); tBase = scrollPos();
       return;
     }
@@ -584,6 +614,7 @@ function mountScrollWorld(container, config) {
     if (tLock !== 1) { tLock = 0; return; }
     tLock = 0;
     const v = Math.abs(tDy) / Math.max(1, performance.now() - tT0);   // px/ms
+    dlog('tend dy=' + Math.round(tDy) + ' v=' + v.toFixed(2));
     if ((Math.abs(tDy) > 46 || v > 0.35) && snapStep(tDy < 0 ? 1 : -1)) return;
     flyTo(tBase, 420);                                       // not enough — settle back
   }
@@ -625,7 +656,7 @@ function mountScrollWorld(container, config) {
   window.addEventListener('scroll', () => {
     // Scrollbar drag, in-page search, browser restore: something moved the page
     // that isn't our flight. Hand it back instead of fighting over the position.
-    if (fly && Math.abs(scrollPos() - setY) > 8) cancelFly();
+    if (fly && Math.abs(scrollPos() - setY) > 8) { dlog('fly overrun y=' + Math.round(scrollPos()) + ' set=' + setY); cancelFly(); }
     if (!ticking) { ticking = true; requestAnimationFrame(read); }
   }, { passive: true });
   // Mobile browsers fire `resize` every time the URL bar slides in/out. Re-running
@@ -664,6 +695,44 @@ function mountScrollWorld(container, config) {
   }
 
   return api;
+}
+
+// Debug-HUD für die Telefon-Fehlersuche (siehe Kommentar am dbg-Init im Mount).
+// Bewusst ohne jede Abhängigkeit von Engine-Zustand: nur eine Statuszeile, ein
+// Ringpuffer der letzten Ereignisse und ein Vollreport als <textarea> (der
+// versucht, sich selbst in die Zwischenablage zu kopieren — execCommand statt
+// navigator.clipboard, weil Letzteres im LAN ohne HTTPS nicht verfügbar ist).
+function makeDebugHud(rev) {
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:8px;top:calc(64px + env(safe-area-inset-top,0px));z-index:2000;' +
+    'max-width:80vw;font:10px/1.5 ui-monospace,Menlo,monospace;color:#fff;background:rgba(20,14,8,.85);' +
+    'padding:8px 10px;border-radius:10px;pointer-events:none;white-space:pre-wrap;word-break:break-word;';
+  const head = document.createElement('div'); head.style.color = '#ffb37a';
+  const pre = document.createElement('div');
+  const btn = document.createElement('button');
+  btn.textContent = 'Report anzeigen';
+  btn.style.cssText = 'pointer-events:auto;margin-top:6px;font:inherit;padding:5px 9px;border-radius:6px;border:0;background:#e8651b;color:#fff;';
+  const hist = ['ua ' + navigator.userAgent];
+  btn.addEventListener('click', () => {
+    const ta = document.createElement('textarea');
+    ta.value = 'rev ' + rev + '\n' + head.textContent + '\n' + hist.join('\n');
+    ta.readOnly = true;
+    ta.style.cssText = 'position:fixed;inset:6vh 4vw;z-index:2001;font:11px/1.4 ui-monospace,Menlo,monospace;' +
+      'background:#fff;color:#2a1c10;border:2px solid #2a1c10;border-radius:12px;padding:10px;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    ta.addEventListener('blur', () => ta.remove(), { once: true });
+  });
+  box.appendChild(head); box.appendChild(pre); box.appendChild(btn);
+  document.body.appendChild(box);
+  return {
+    status(s) { head.textContent = 'rev ' + rev + ' | ' + s; },
+    log() {
+      hist.push((performance.now() / 1000).toFixed(2) + 's ' + Array.prototype.slice.call(arguments).join(' '));
+      pre.textContent = hist.slice(-12).join('\n');
+    }
+  };
 }
 
 function seedParticles(host, reduce) {
