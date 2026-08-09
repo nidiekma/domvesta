@@ -50,6 +50,10 @@
      Ignored under prefers-reduced-motion (native scrolling stays; the segments
      also shrink to short uniform widths — see DIVE_W_R at the segment chain — so
      the still tour is a brief scroll instead of the full flight distance).
+     Those users also get a small fixed pill (.sw-motion) to opt INTO the full
+     flight — persisted as localStorage sw-motion=full, opting out removes it,
+     the switch re-mounts via reload. Nobody else ever sees the pill.
+     motionToggle:false disables it, motionToggle:{on,off} localizes the labels.
      mountScrollWorld
      returns { jumpTo(i), scrollTo(y, ms?), stops(), layout() } so page code can use
      the same flight for its own links.
@@ -101,10 +105,19 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-09d';
+var SW_ENGINE_REV = '2026-08-09e';
 
 function mountScrollWorld(container, config) {
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
+  // (prefers-reduced-motion), sw-motion=full in localStorage die bewusste
+  // Nutzerwahl über den .sw-motion-Schalter (siehe unten). Nur wer die
+  // Bedienhilfe aktiv hat, sieht den Schalter überhaupt — für alle anderen
+  // existiert das Feature nicht. `reduce` bleibt die eine Wahrheit für den
+  // Rest der Engine (Snap, Clips, Segmentweiten, Kurven, Partikel).
+  const sysReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let motionFull = false;
+  try { motionFull = localStorage.getItem('sw-motion') === 'full'; } catch (e) {}
+  const reduce = sysReduce && !motionFull;
   // Phone detection. `coarse` is captured once (input type doesn't change mid-session);
   // the ≤860px query is read live via isMobile() so a desktop resize/DevTools toggle
   // switches sources and seek behaviour without a reload.
@@ -123,6 +136,12 @@ function mountScrollWorld(container, config) {
     perVh: 900, min: 700, max: 3200, wheelThreshold: 18, cooldown: 240,
     touch: true, keys: true, drag: 0.32, exit: null
   }, config.snap === true ? {} : config.snap) : null;
+  // Opt-in/-out-Schalter für Nutzer mit aktiver Bedienhilfe (siehe sysReduce
+  // oben). motionToggle:false schaltet das Feature ab; {on,off} übersetzt die
+  // Beschriftungen (Defaults englisch, die Engine ist portabel).
+  const MOTION_T = (config.motionToggle !== false) ? Object.assign({
+    on: 'Turn animation on', off: 'Turn animation off'
+  }, config.motionToggle || {}) : null;
   const N = SECTIONS.length;
   if (!N) return;
 
@@ -201,6 +220,30 @@ function mountScrollWorld(container, config) {
 
   [sky, scrollbar, topbar, stage, copylayer, route, hint, track].forEach(n => container.appendChild(n));
 
+  // Der Animations-Schalter: startet die volle Fassung (Opt-in) bzw. kehrt zur
+  // Still-Tour zurück. Der Wechsel betrifft Segmentweiten, Listener und das
+  // Clip-Laden zugleich — ein Reload ist der ehrliche Re-Mount, die Wahl ist
+  // ohnehin persistiert. Ohne funktionierendes localStorage (dann wäre der
+  // Schalter eine Attrappe, die bei jedem Reload zurückspringt) erscheint er
+  // gar nicht erst.
+  if (sysReduce && MOTION_T) {
+    let canStore = false;
+    try { localStorage.setItem('sw-mt', '1'); localStorage.removeItem('sw-mt'); canStore = true; } catch (e) {}
+    if (canStore) {
+      const mt = el('button', 'sw-motion');
+      mt.type = 'button';
+      mt.textContent = reduce ? MOTION_T.on : MOTION_T.off;
+      mt.addEventListener('click', () => {
+        try {
+          if (reduce) localStorage.setItem('sw-motion', 'full');
+          else localStorage.removeItem('sw-motion');
+        } catch (e) {}
+        location.reload();
+      });
+      container.appendChild(mt);
+    }
+  }
+
   // segment scenes
   SEGMENTS.forEach(s => {
     const scene = el('div', 'sw-scene'); scene.style.setProperty('--sw-accent', s.accent || '');
@@ -256,7 +299,7 @@ function mountScrollWorld(container, config) {
     totalW = off;
     track.style.height = (totalW * vh + vh) + 'px';   // +1vh so the last flight completes
     buildStops();
-    if (dbg) dbg.status('reduce=' + (reduce ? 1 : 0) + ' coarse=' + (coarse ? 1 : 0) +
+    if (dbg) dbg.status('reduce=' + (reduce ? 1 : 0) + (sysReduce && motionFull ? '(override)' : '') + ' coarse=' + (coarse ? 1 : 0) +
       ' snap=' + (SNAP ? (SNAP.touch ? 'on+touch' : 'on') : 'OFF') +
       ' vh=' + vh + ' track=' + (Math.round(totalW * 10) / 10) + 'vh exitY=' + exitY);
     read();
@@ -837,6 +880,16 @@ function injectCSS() {
   .sw-hint i::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--sw-accent);transform:translateX(-50%);animation:sw-wheel 1.7s ease-in-out infinite;}
   @keyframes sw-wheel{0%{opacity:0;top:6px}40%{opacity:1}100%{opacity:0;top:17px}}
   .sw-track{position:relative;z-index:1;width:100%;pointer-events:none;}
+  /* Animations-Schalter: nur für Nutzer mit prefers-reduced-motion im DOM.
+     Oben links unter der Topbar — der ruhigste Platz während der ganzen Tour
+     (Route rechts, Copy unten/links-mittig, Hint unten mittig) und dauerhaft
+     erreichbar, damit der Rückweg ("ausschalten") nie verloren geht.
+     z44: über Stage/Copy/Route, unter Topbar (50) und Epilog (45 in der Seite —
+     im Epilog verschwindet der Schalter wie die übrige Welt-UI). */
+  .sw-motion{position:fixed;left:clamp(14px,3vw,28px);top:calc(clamp(66px,10vh,96px) + env(safe-area-inset-top,0px));z-index:44;font-family:var(--sw-font-body);font-size:.78rem;font-weight:600;color:var(--sw-ink);background:color-mix(in srgb,#fff 82%,transparent);border:1px solid color-mix(in srgb,var(--sw-accent) 35%,transparent);border-radius:999px;padding:8px 14px;cursor:pointer;box-shadow:0 4px 14px color-mix(in srgb,var(--sw-ink) 14%,transparent);}
+  .sw-motion::before{content:"✦";color:var(--sw-accent);margin-right:7px;}
+  .sw-motion:hover{background:#fff;}
+  .sw-motion:focus-visible{outline:3px solid var(--sw-ink);outline-offset:2px;}
   /* Snappy scroll auf Touch: solange die Klasse steht, pannt der Browser nicht
      selbst vertikal — die Flüge kommen ausschließlich aus onTouchMove/flyTo.
      Wird von setNoPan() ab dem Ausgang der Welt wieder entfernt. */
