@@ -112,7 +112,7 @@ export const services = [
     title: "Strom & Gas",
     claim: "Verwalten war gestern.",
     intro:
-      "Unterschiedliche Energieversorger, unübersichtliche Verträge und fehlerhafte Abrechnungen kosten Hausverwaltungen täglich Zeit und Nerven.",
+      "Unterschiedliche Energieversorger, unübersichtliche Verträge und uneinheitliche Abrechnungen kosten Hausverwaltungen täglich Zeit und Nerven.",
     points: [
       {
         k: "Preisprüfung & Rahmenverträge",
