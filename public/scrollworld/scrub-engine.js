@@ -115,7 +115,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-09h';
+var SW_ENGINE_REV = '2026-08-11a';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -695,6 +695,9 @@ function mountScrollWorld(container, config) {
   let acc = 0, accAt = 0;
   function onWheel(e) {
     if (e.ctrlKey) return;                                   // pinch-zoom stays the browser's
+    // Über dem Debug-HUD/Report gehört das Rad dem Overlay (Textarea scrollen),
+    // nicht dem Snap — sonst blättert jeder Scrollversuch im Report die Welt um.
+    if (dbg && e.target && e.target.closest && e.target.closest('.sw-dbg')) return;
     const dir = e.deltaY > 0 ? 1 : e.deltaY < 0 ? -1 : 0;
     if (!dir || !hijack(dir)) return;
     if (e.cancelable) e.preventDefault();
@@ -731,6 +734,11 @@ function mountScrollWorld(container, config) {
   //   2. .sw-nopan (touch-action, siehe setNoPan) als robuster Riegel davor.
   let tLock = 0, tOwn = false, tY0 = 0, tX0 = 0, tT0 = 0, tBase = 0, tDy = 0, tMoved = 0;
   function onTouchStart(e) {
+    // Gesten, die auf dem Debug-HUD/Report beginnen, bleiben beim Browser: dort
+    // muss markiert, gescrollt und getippt werden können. Ohne diese Ausnahme
+    // preventDefault-et onTouchMove jede Kopier-/Scrollgeste im Report-Overlay —
+    // genau daran ist der Report-Export auf dem Telefon gescheitert.
+    if (dbg && e.target && e.target.closest && e.target.closest('.sw-dbg')) { tLock = -1; return; }
     tLock = (e.touches.length === 1) ? 0 : -1;
     if (tLock < 0) return;
     // Nur strikt INNERHALB der Welt vorab beanspruchen. Genau am Ausgang gehört
@@ -877,6 +885,9 @@ function mountScrollWorld(container, config) {
 // navigator.clipboard, weil Letzteres im LAN ohne HTTPS nicht verfügbar ist).
 function makeDebugHud(rev) {
   const box = document.createElement('div');
+  // .sw-dbg markiert HUD und Report-Overlay für die Gesten-Ausnahmen der Engine
+  // (onTouchStart/onWheel): Berührungen hier drin gehören dem Browser.
+  box.className = 'sw-dbg';
   box.style.cssText = 'position:fixed;left:8px;top:calc(64px + env(safe-area-inset-top,0px));z-index:2000;' +
     'max-width:80vw;font:10px/1.5 ui-monospace,Menlo,monospace;color:#fff;background:rgba(20,14,8,.85);' +
     'padding:8px 10px;border-radius:10px;pointer-events:none;white-space:pre-wrap;word-break:break-word;';
@@ -889,16 +900,55 @@ function makeDebugHud(rev) {
   // Volle Historie für Tooling (Headless-Tests, Remote-Inspector): das Panel
   // zeigt nur die letzten 12 Zeilen, der Report und __swlog haben alles.
   window.__swlog = hist;
+  // Report-Export. Die alte Fassung (textarea + select() + execCommand beim
+  // Öffnen, Schließen bei blur) war auf iOS unbrauchbar: WebKit selektiert
+  // readonly-Textareas nicht zuverlässig, die Engine-Touch-Handler haben jede
+  // Markier-/Scrollgeste im Overlay preventDefault-et, und der erste Tap
+  // daneben (= blur) hat das Overlay sofort wieder abgeräumt. Deshalb jetzt
+  // explizite Buttons: Clipboard-API (braucht HTTPS — auf domvesta.de gegeben;
+  // vom iPhone aus landet der Text per Universal Clipboard direkt auf dem Mac),
+  // Share-Sheet (AirDrop/Notizen/Mail — der robusteste iOS-Weg), execCommand
+  // nur noch als Fallback fürs LAN ohne HTTPS. Schließen nur per Button.
   btn.addEventListener('click', () => {
+    const text = 'rev ' + rev + '\n' + head.textContent + '\n' + hist.join('\n');
+    const wrap = document.createElement('div');
+    wrap.className = 'sw-dbg';
+    wrap.style.cssText = 'position:fixed;inset:4vh 4vw calc(4vh + env(safe-area-inset-bottom,0px));z-index:2001;' +
+      'display:flex;flex-direction:column;gap:8px;';
     const ta = document.createElement('textarea');
-    ta.value = 'rev ' + rev + '\n' + head.textContent + '\n' + hist.join('\n');
-    ta.readOnly = true;
-    ta.style.cssText = 'position:fixed;inset:6vh 4vw;z-index:2001;font:11px/1.4 ui-monospace,Menlo,monospace;' +
-      'background:#fff;color:#2a1c10;border:2px solid #2a1c10;border-radius:12px;padding:10px;';
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    ta.addEventListener('blur', () => ta.remove(), { once: true });
+    ta.value = text; ta.readOnly = true;
+    ta.style.cssText = 'flex:1;min-height:0;font:12px/1.4 ui-monospace,Menlo,monospace;background:#fff;color:#2a1c10;' +
+      'border:2px solid #2a1c10;border-radius:12px;padding:10px;resize:none;' +
+      '-webkit-user-select:text;user-select:text;overscroll-behavior:contain;';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;';
+    const mkBtn = (label) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label;
+      b.style.cssText = 'flex:1;font:600 13px/1 -apple-system,system-ui,sans-serif;padding:13px 8px;' +
+        'border-radius:8px;border:0;background:#e8651b;color:#fff;';
+      row.appendChild(b);
+      return b;
+    };
+    const copyB = mkBtn('Kopieren');
+    copyB.addEventListener('click', () => {
+      const done = ok => { copyB.textContent = ok ? 'Kopiert ✓' : 'Fehler — Text bitte von Hand markieren'; };
+      const legacy = () => { try { ta.focus(); ta.select(); done(document.execCommand('copy')); } catch (e) { done(false); } };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => done(true), legacy);
+      } else legacy();
+    });
+    if (navigator.share) {
+      mkBtn('Teilen …').addEventListener('click', () => {
+        // Abbruch des Share-Sheets wirft — das ist kein Fehler.
+        navigator.share({ title: 'Scroll-World Report', text: text }).catch(() => {});
+      });
+    }
+    const closeB = mkBtn('Schließen');
+    closeB.style.background = '#6b5742';
+    closeB.addEventListener('click', () => wrap.remove());
+    wrap.appendChild(ta); wrap.appendChild(row);
+    document.body.appendChild(wrap);
   });
   box.appendChild(head); box.appendChild(pre); box.appendChild(btn);
   document.body.appendChild(box);
