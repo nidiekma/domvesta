@@ -115,7 +115,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-11a';
+var SW_ENGINE_REV = '2026-08-11b';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -265,6 +265,9 @@ function mountScrollWorld(container, config) {
     // url = Blob-URL des Clips (überlebt ein releaseClip), fetching/fails = Netz-Zustand.
     s.url = null; s.fetching = false; s.fails = 0;
     s.ready = false; s.cur = 0; s.target = 0; s.visible = false;
+    // seekAt = wann der letzte Seek angestoßen wurde (Watchdog in raf, siehe
+    // SEEK_STALL); priming = gerade ein play()/pause()-Zyklus unterwegs.
+    s.seekAt = 0; s.priming = false; s.primingAt = 0;
   });
 
   // per-section copy / route / nav
@@ -512,7 +515,7 @@ function mountScrollWorld(container, config) {
       // Erzwingt einen ersten echten Seek. Ohne ihn stünde currentTime auf 0, die
       // raf-Schleife hätte (bei s.cur ≈ 0) nichts zu tun, und weder `seeked` noch
       // requestVideoFrameCallback feuerten — das Still bliebe für immer stehen.
-      try { v.currentTime = clamp(s.cur, 0.002, 0.999) * (v.duration || 1); } catch (e) {}
+      try { s.seekAt = performance.now(); v.currentTime = clamp(s.cur, 0.002, 0.999) * (v.duration || 1); } catch (e) {}
       read();
     });
     // Reveal the video (hide the still poster) only once a real frame has
@@ -526,7 +529,12 @@ function mountScrollWorld(container, config) {
     // seeking-Deadlock (siehe FIX-Kommentar am Priming); fehlt data, hat iOS
     // dem Element nie einen Frame dekodiert.
     v.addEventListener('seeked', () => dlog('seek0 ok ' + s.kind + s.si), { once: true });
-    v.addEventListener('loadeddata', () => { dlog('data ' + s.kind + s.si); try { v.pause(); } catch (e) {} if (userReady) primeVideo(v, s); });
+    // Kein primeVideo mehr von hier (Geräte-Report 2026-08-11): auf Safari
+    // feuert loadeddata vor der Freischaltung ohnehin nie (Henne-Ei, siehe
+    // Priming-Kommentar), auf CriOS war es nur ein zusätzlicher Play/Pause-
+    // Störer mitten im Flug. pause() nur, wenn gerade kein Prime läuft — sonst
+    // bricht es dessen play() mit AbortError ab (die FAIL-Paare im Report).
+    v.addEventListener('loadeddata', () => { dlog('data ' + s.kind + s.si); if (!s.priming) { try { v.pause(); } catch (e) {} } });
     s.el.appendChild(v); s.video = v; s.hasClip = true;
   }
 
@@ -536,6 +544,7 @@ function mountScrollWorld(container, config) {
     const v = s.video;
     if (!v) return;
     s.video = null; s.hasClip = false; s.ready = false;
+    s.priming = false; s.seekAt = 0;
     s.el.classList.remove('has-clip');
     try { v.pause(); } catch (e) {}
     v.removeAttribute('src');
@@ -612,36 +621,71 @@ function mountScrollWorld(container, config) {
     ticking = false;
   }
 
-  function raf() {
+  // FIX (Geräte-Report 2026-08-11, iPhone/CriOS): Seeks können in WebKit
+  // VERKLEMMEN — `seeking` blieb dort über Sekunden bis Minuten true (conn1 war
+  // über drei Flüge hinweg ein Zombie und musste an jedem tstart neu geprimt
+  // werden). Der alte Guard "nie einen neuen Seek anstoßen, solange der alte
+  // läuft" wurde damit zur Endlosschleife: die raf-Schleife übersprang das
+  // Element für den GANZEN Flug, die Szene stand — "nur ein Frame zwischen den
+  // Sections". Deshalb der Watchdog: hängt ein Seek länger als SEEK_STALL,
+  // wird er neu angestoßen (currentTime mitten in einem pending seek ist legal
+  // und startet den Seek-Algorithmus neu). Ein Wedge kostet so maximal ~0,4 s
+  // statt des ganzen Flugs.
+  const SEEK_STALL = 400;
+  function raf(now) {
     const eps = isMobile() ? 0.02 : 0.008;   // coarser seek step on phones = fewer decodes
-    for (let i = 0; i < NSEG; i++) {
-      const s = SEGMENTS[i];
-      if (!s.hasClip || !s.ready || !s.video) continue;
-      // Never queue a seek while the decoder is still resolving the last one.
-      // On phones a fast flick would otherwise pile up seeks and freeze the clip;
-      // cur keeps lerping, so we snap to the latest target the moment it's free.
-      if (s.video.seeking) continue;
-      if (!s.visible && Math.abs(s.cur - s.target) < 0.002) continue;
-      s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
-      const dur = s.video.duration || 1;
-      const t = clamp(s.cur, 0, 0.999) * dur;
-      const d = Math.abs(s.video.currentTime - t);
-      if (d <= eps) continue;
-      // FIX (iOS, gehört zum -g-4-Re-Encode der m/-Kette): ein exakter
-      // currentTime-Seek flusht in WebKit die Decoder-Pipeline und dekodiert
-      // dann vom letzten Keyframe bis zum Zielframe durch. Bei GOP 20 und
-      // Flugtempo schaffte ein iPhone so nur ein paar Frames pro Sekunde —
-      // der Kameraflug war eine Diashow, während derselbe Code am Desktop
-      // butterweich lief. fastSeek() springt stattdessen auf den nächsten
-      // Keyframe: mit -g 4 maximal 2 Frames (~83 ms Film) daneben, bei rund
-      // 4-fachem Zeitraffer unsichtbar. Erst nahe am Ziel (< 0,25 s) wird
-      // wieder exakt gesetzt, damit der Halt auf dem präzisen Seam-Frame
-      // landet. Blink kennt kein fastSeek und bleibt auf dem alten Pfad.
-      try {
-        if (d > 0.25 && isMobile() && s.video.fastSeek) s.video.fastSeek(t);
-        else s.video.currentTime = t;
-        if (dbg) dbgSeeks++;
-      } catch (e) {}
+    // Zweiter Befund aus demselben Report: der iOS-Media-Stack serialisiert
+    // Seeks über Elemente hinweg. Liefen 3-4 gleichzeitig (Scrub auf zwei
+    // sichtbaren Clips + Metadata-Seeks frisch angehängter), verhungerten
+    // einzelne komplett — die Flüge mit seeks=1/2 hatten alle mehrere parallele
+    // Seeker, die mit seeks=55/91 nicht. Deshalb auf Telefonen: höchstens 2
+    // Elemente gleichzeitig im Seek, und Sichtbares (pass 0) ist zuerst dran,
+    // damit der gerade gescrubbte Clip nie hinter unsichtbarem Settling ansteht.
+    let busy = 0;
+    if (isMobile()) {
+      for (let i = 0; i < NSEG; i++) { const v = SEGMENTS[i].video; if (v && v.seeking) busy++; }
+    }
+    for (let pass = 0; pass < 2; pass++) {
+      for (let i = 0; i < NSEG; i++) {
+        const s = SEGMENTS[i];
+        if ((pass === 0) !== !!s.visible) continue;
+        if (!s.hasClip || !s.ready || !s.video) continue;
+        // Never queue a seek while the decoder is still resolving the last one.
+        // On phones a fast flick would otherwise pile up seeks and freeze the clip;
+        // cur keeps lerping, so we snap to the latest target the moment it's free.
+        if (s.video.seeking) {
+          if (now - s.seekAt > SEEK_STALL) {
+            s.seekAt = now;
+            try { s.video.currentTime = clamp(s.cur, 0, 0.999) * (s.video.duration || 1); } catch (e) {}
+            dlog('rekick ' + s.kind + s.si);
+          }
+          continue;
+        }
+        if (!s.visible && Math.abs(s.cur - s.target) < 0.002) continue;
+        if (isMobile() && busy >= 2) continue;
+        s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
+        const dur = s.video.duration || 1;
+        const t = clamp(s.cur, 0, 0.999) * dur;
+        const d = Math.abs(s.video.currentTime - t);
+        if (d <= eps) continue;
+        // FIX (iOS, gehört zum -g-4-Re-Encode der m/-Kette): ein exakter
+        // currentTime-Seek flusht in WebKit die Decoder-Pipeline und dekodiert
+        // dann vom letzten Keyframe bis zum Zielframe durch. Bei GOP 20 und
+        // Flugtempo schaffte ein iPhone so nur ein paar Frames pro Sekunde —
+        // der Kameraflug war eine Diashow, während derselbe Code am Desktop
+        // butterweich lief. fastSeek() springt stattdessen auf den nächsten
+        // Keyframe: mit -g 4 maximal 2 Frames (~83 ms Film) daneben, bei rund
+        // 4-fachem Zeitraffer unsichtbar. Erst nahe am Ziel (< 0,25 s) wird
+        // wieder exakt gesetzt, damit der Halt auf dem präzisen Seam-Frame
+        // landet. Blink kennt kein fastSeek und bleibt auf dem alten Pfad.
+        try {
+          if (d > 0.25 && isMobile() && s.video.fastSeek) s.video.fastSeek(t);
+          else s.video.currentTime = t;
+          s.seekAt = now;
+          busy++;
+          if (dbg) dbgSeeks++;
+        } catch (e) {}
+      }
     }
     requestAnimationFrame(raf);
   }
@@ -661,31 +705,54 @@ function mountScrollWorld(container, config) {
   // "Zufallstreffer"), auf langsamem Netz systematisch.
   // Deshalb primt jetzt JEDE Geste (Listener bleiben dran) alle Videos, die
   // noch keinen Frame gezeigt haben oder im seeking-Deadlock stecken — Gesten
-  // gibt es auf einer Scroll-Seite im Sekundentakt. Nach erfolgreichem Unlock
-  // wird der hängende Seek einmal neu angestoßen (currentTime mitten in einem
-  // pending seek ist legal und startet den Seek-Algorithmus neu).
-  let userReady = false;
+  // gibt es auf einer Scroll-Seite im Sekundentakt.
+  //
+  // NACHSCHÄRFUNG (Geräte-Report 2026-08-11): das Priming selbst war ein
+  // Störer. (1) pointerdown UND touchstart feuern für dieselbe Geste — der
+  // Doppel-play() erzeugte die AbortError-Paare im Report. (2) "oder seeking"
+  // traf auch Videos, die nur gerade gesund mitten im Scrub steckten — die
+  // bekamen an jedem tstart einen Play/Pause-Zyklus übergebraten (Report:
+  // "prime ok conn1" an jedem Gestenstart, während conn1 hätte scrubben
+  // sollen). Jetzt: nur nie-gemalte Elemente oder echte Zombies (> 500 ms im
+  // Seek verklemmt), ein Zyklus pro Element zur Zeit, eine Priming-Runde pro
+  // Geste. (3) Der Re-Seek direkt im pause()-Tick war Teil des Wedge-Musters —
+  // stattdessen seekAt=0: der Watchdog in raf() setzt im nächsten Frame neu
+  // an, außerhalb des Pause-Ticks.
   function primeVideo(v, s) {
     if (!isMobile() || !v) return;
+    if (s) {
+      // Ein hängendes play()-Promise (kommt vor, wenn WebKit das Element nie
+      // freigibt) darf spätere Rettungsversuche nicht ewig blockieren.
+      if (s.priming && performance.now() - s.primingAt < 3000) return;
+      s.priming = true; s.primingAt = performance.now();
+    }
     try {
       const p = v.play();
-      if (p && p.then) p.then(() => {
-        try { v.pause(); } catch (e) {}
-        if (s) {
-          dlog('prime ok ' + s.kind + s.si);
-          if (s.ready) { try { v.currentTime = clamp(s.cur, 0.002, 0.999) * (v.duration || 1); } catch (e) {} }
-        }
-      }).catch(err => { if (s) dlog('prime FAIL ' + s.kind + s.si + ' ' + (err && err.name)); });
-    } catch (e) {}
+      if (p && p.then) {
+        p.then(() => {
+          try { v.pause(); } catch (e) {}
+          if (s) {
+            s.priming = false;
+            dlog('prime ok ' + s.kind + s.si);
+            if (s.video === v) s.seekAt = 0;   // Watchdog: im nächsten Frame frisch seeken
+          }
+        }).catch(err => { if (s) { s.priming = false; } dlog('prime FAIL ' + (s ? s.kind + s.si : '?') + ' ' + (err && err.name)); });
+      } else if (s) s.priming = false;
+    } catch (e) { if (s) s.priming = false; }
   }
   function primePending() {
+    const n = performance.now();
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      if (s.video && (!s.el.classList.contains('has-clip') || s.video.seeking)) primeVideo(s.video, s);
+      if (!s.video) continue;
+      if (!s.el.classList.contains('has-clip') || (s.video.seeking && n - s.seekAt > 500)) primeVideo(s.video, s);
     }
   }
+  let gestureAt = 0;
   function onGesture() {
-    userReady = true;
+    const n = performance.now();
+    if (n - gestureAt < 80) return;   // pointerdown+touchstart derselben Geste
+    gestureAt = n;
     primePending();
   }
   window.addEventListener('pointerdown', onGesture, { passive: true });
