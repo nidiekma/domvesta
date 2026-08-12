@@ -73,11 +73,16 @@
          clipMobile renders so the poster matches the portrait video's first frame instead
          of flashing from a landscape crop). Chosen once at mount; a desktop resize into
          phone width keeps the desktop poster (clips still switch via isMobile()).
-       - coalesces seeks (never issues a new currentTime while the decoder is still
-         `seeking`) so fast flicks can't pile up and freeze the video.
-       - scrubs flights via fastSeek() where WebKit offers it (keyframe-precision,
-         no pipeline stall — THE reason the -g 4 encodes matter) and switches to
-         exact currentTime seeks near the stop for precise seam frames.
+       - PLAYS flights instead of scrubbing them (with `snap`): a gesture plays the
+         remaining dive, the connector and the target dive up to its stop at an
+         elevated playbackRate (snap.playRate {dive, conn} overrides), and the
+         scroll position follows the clip time every frame, so copy fades and
+         crossfades run unchanged. Videos are never seeked on phones — four
+         device-report rounds (2026-08-09..12) showed WebKit's seek pipeline to be
+         a per-element lottery there, while play() in a gesture context worked in
+         every single report. Legs park exactly on the frame the next flight
+         resumes from; backward and multi-section jumps fall back to the scroll
+         tween over the parked frames (still dissolves).
        - background-prefetches the whole chain in flight order, one clip at a
          time. The near-radius alone is tuned for desktop bandwidth; on phones
          it requested each connector only on arrival at the previous stop, and
@@ -115,7 +120,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-12a';
+var SW_ENGINE_REV = '2026-08-12b';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -265,13 +270,11 @@ function mountScrollWorld(container, config) {
     // url = Blob-URL des Clips (überlebt ein releaseClip), fetching/fails = Netz-Zustand.
     s.url = null; s.fetching = false; s.fails = 0;
     s.ready = false; s.cur = 0; s.target = 0; s.visible = false;
-    // seekAt = wann der letzte Seek angestoßen wurde (Watchdog in raf, siehe
-    // SEEK_STALL); priming = gerade ein play()/pause()-Zyklus unterwegs.
-    // framed/primed gelten pro Element-Inkarnation (Reset bei attach/release),
-    // warm gilt pro BLOB (überlebt jeden Release — siehe swapClip), swapN
-    // begrenzt Kettentausche innerhalb eines Attach-Zyklus.
-    s.seekAt = 0; s.priming = false; s.primingAt = 0;
-    s.framed = false; s.primed = false; s.warm = false; s.swapN = 0; s.attachAt = 0;
+    // seekAt: Desktop-Seek-Watchdog. framed: diese Element-Inkarnation hat einen
+    // Frame gezeigt. primed: Element wurde in einer Geste gesegnet (play() im
+    // Gestenkontext) und darf danach auch außerhalb von Gesten abspielen —
+    // playFlight braucht das für die späteren Legs.
+    s.seekAt = 0; s.framed = false; s.primed = false;
   });
 
   // per-section copy / route / nav
@@ -346,7 +349,11 @@ function mountScrollWorld(container, config) {
   function jumpTo(i) {
     const y = stops[i];
     if (y == null) return;
-    if (SNAP) { prepFlight(scrollPos(), y); flyTo(y); return; }
+    if (SNAP) {
+      if (isMobile()) playFlight(y);
+      else flyTo(y);
+      return;
+    }
     window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
   }
 
@@ -429,16 +436,9 @@ function mountScrollWorld(container, config) {
     return a.join(' ');
   }
 
-  // Geräte-Report 2026-08-11 (2. Runde): Elemente, die erst MID-FLIGHT vom
-  // wandernden Fenster angehängt werden, verpassen die Prime-Runde der Geste —
-  // auf Geräten, die ohne play() keinen Frame dekodieren, bleiben sie bis zur
-  // NÄCHSTEN Geste tot (dive3/conn3 hingen 4 s in rekicks, bis ausgerechnet der
-  // Tap auf den Report-Button sie freischaltete). Der Flug ist deterministisch,
-  // also werden seine Segmente schon IN der Geste angehängt und geprimt.
-  // Höchstens die ersten 3 in Flugrichtung: ein Ein-Halt-Flug (Dive, Connector,
-  // Ziel-Dive) ist damit komplett abgedeckt, bei langen Nav-Flügen übernimmt ab
-  // da wie bisher das wandernde Fenster. flightKeep schützt die Segmente vor
-  // dem Fenster-Release in read(), bis der Flug vorbei ist.
+  // Segmente der Flugstrecke schon in der Geste anhängen (dient dem
+  // Tween-Fallback von playFlight); flightKeep schützt sie bis zur Landung
+  // vor dem Fenster-Release in read().
   let flightKeep = null;
   function prepFlight(a, b) {
     if (!isMobile() || reduce) return;
@@ -449,31 +449,150 @@ function mountScrollWorld(container, config) {
     }
     const take = [], step = ib >= ia ? 1 : -1;
     for (let i = ia; take.length < 3 && i >= Math.min(ia, ib) && i <= Math.max(ia, ib); i += step) take.push(i);
-    // VORAUSWÄRMEN (Geräte-Report 2026-08-12): die einzige Invariante, die alle
-    // drei Reports überlebt hat — ein Flug ist genau dann sauber, wenn seine
-    // Elemente ihren Prime-Zyklus in einer FRÜHEREN Geste durchlaufen haben
-    // (Chrome: 4. Wisch seeks=141, Safari: seeks=172, alles rs4; dieselben
-    // Segmente eine Geste zuvor: seeks=4-5). Deshalb primt jede Geste auch das
-    // Paar HINTER dem Ziel mit: dessen Blobs sind beim übernächsten Flug warm,
-    // jedes Attach dekodiert dann spontan. Die Segmente liegen hinter dem Ziel
-    // und sind während des aktuellen Flugs nie im Bild.
-    for (let i = ib + step, n = 0; n < 2 && i >= 0 && i < NSEG; i += step, n++) take.push(i);
     flightKeep = take;
     take.forEach(i => { fetchClip(SEGMENTS[i]); attachClip(SEGMENTS[i]); });
-    // Läuft im touchend/click/keydown-Handler — dem Aktivierungskontext, in dem
-    // play() sicher erlaubt ist (touchstart ist es laut Spec streng genommen nicht).
-    primePending();
+  }
+
+  // ---- MOBILE PLAY-THROUGH ---------------------------------------------------
+  // Vier Geräte-Report-Runden Seek-Scrubbing auf iOS (2026-08-09 bis -12:
+  // Gesten-Priming, Seek-Watchdog, Element-Swaps, Vorauswärmen) endeten alle in
+  // derselben WebKit-Lotterie: identischer Code lieferte je nach Element-
+  // Vorgeschichte seeks=4-6 oder seeks=141-216. Was in JEDEM Report auf JEDEM
+  // Gerät zuverlässig war: play() im Gestenkontext und lineares Abspielen.
+  // Die Telefon-Fassung seekt deshalb überhaupt nicht mehr. Eine Geste SPIELT
+  // ihre Strecke ab — Rest des aktuellen Dives, Connector, Ziel-Dive bis zur
+  // Stop-Position — mit erhöhter Rate, ein Leg nach dem anderen. Die
+  // Scroll-Position folgt jeder Frame der Clip-Zeit (pro Leg linear kalibriert),
+  // read() macht Copy-Fades und Crossfades unverändert. Jedes Leg pausiert am
+  // Ziel und parkt damit exakt den Frame, ab dem der nächste Flug weiterspielt.
+  // Rückwärts-Gesten und weite Nav-Sprünge fallen auf den Scroll-Tween zurück:
+  // Still-Dissolves über die korrekt geparkten Frames — bewusst schlichter,
+  // dafür deterministisch.
+  const RATE = Object.assign({ dive: 3.0, conn: 2.4 }, (SNAP && SNAP.playRate) || {});
+  let pf = null, pfRAF = 0;
+  const segFrac = (seg, y) => clamp((y - seg.start) / (seg.end - seg.start), 0, 1);
+
+  function buildLegs(fromY, toY) {
+    if (toY <= fromY + 1) return null;                 // rückwärts: Tween über geparkte Frames
+    let ia = 0, ib = 0;
+    for (let i = 0; i < NSEG; i++) {
+      if (fromY >= SEGMENTS[i].start) ia = i;
+      if (toY >= SEGMENTS[i].start) ib = i;
+    }
+    if (ib - ia > 4) return null;                      // weite Nav-Sprünge: Tween
+    const legs = [];
+    for (let i = ia; i <= ib; i++) {
+      const s = SEGMENTS[i];
+      const to = (i === ib) ? segFrac(s, toY) : 1;
+      if (i === ib && to < 0.01) break;
+      if (!s.clip) return null;                        // Segment ohne Clip: Tween
+      legs.push({ s: s, to: to, t0: 0, y0: 0, y1: 0, lastT: -1, lastAdv: 0 });
+    }
+    return legs.length ? legs : null;
+  }
+
+  function playFlight(toY) {
+    toY = Math.round(clamp(toY, 0, maxScroll()));
+    cancelFly(); cancelPlay('replan');
+    const legs = buildLegs(scrollPos(), toY);
+    if (!legs) { prepFlight(scrollPos(), toY); flyTo(toY); return; }
+    flightKeep = legs.map(l => SEGMENTS.indexOf(l.s));
+    legs.forEach(l => { fetchClip(l.s); attachClip(l.s); });
+    // Spätere Legs JETZT segnen (play->pause im Gestenkontext): ihr echter
+    // play() kommt Sekunden später, außerhalb jeder Geste — ohne den Segen
+    // wäre er auf strengen Geräten verboten. Geseekt wird nie, der alte
+    // "Prime vergiftet das Element"-Effekt betrifft nur Seeks und ist hier
+    // bedeutungslos.
+    legs.forEach((l, i) => {
+      const s = l.s, v = s.video;
+      if (i === 0 || !v || s.primed) return;
+      s.primed = true;
+      try {
+        const p = v.play();
+        if (p && p.then) p.then(() => {
+          if (!(pf && pf.legs[pf.li] && pf.legs[pf.li].s === s)) { try { v.pause(); } catch (e) {} }
+        }).catch(err => { s.primed = false; dlog('bless FAIL ' + s.kind + s.si + ' ' + (err && err.name)); });
+      } catch (e) { s.primed = false; }
+    });
+    pf = { legs: legs, li: 0, toY: toY };
+    dlog('pflight ' + Math.round(scrollPos()) + '->' + toY + ' legs=' + legs.map(l => l.s.kind + l.s.si).join('+'));
+    legs[0].s.primed = true;                           // Leg 0 startet direkt in der Geste
+    startLeg();
+  }
+
+  function startLeg() {
+    const leg = pf.legs[pf.li], s = leg.s, v = s.video;
+    if (!v || !s.url) { degrade('noclip'); return; }
+    leg.t0 = v.currentTime || 0;
+    leg.y0 = scrollPos();
+    leg.y1 = (pf.li === pf.legs.length - 1) ? pf.toY : Math.round(s.end);
+    leg.lastT = -1; leg.lastAdv = performance.now();
+    try { v.playbackRate = (s.kind === 'conn' ? RATE.conn : RATE.dive); } catch (e) {}
+    try {
+      const p = v.play();
+      if (p && p.catch) p.catch(err => { dlog('play FAIL ' + s.kind + s.si + ' ' + (err && err.name)); degrade('denied'); });
+    } catch (e) { degrade('throw'); return; }
+    dlog('leg ' + s.kind + s.si + ' t0=' + leg.t0.toFixed(2) + ' to=' + leg.to.toFixed(2));
+    if (!pfRAF) pfRAF = requestAnimationFrame(stepPlay);
+  }
+
+  function stepPlay(now) {
+    pfRAF = 0;
+    if (!pf) return;
+    const leg = pf.legs[pf.li], v = leg.s.video;
+    if (!v) { degrade('lost'); return; }
+    const dur = v.duration || 0;
+    if (dur) {
+      const t1 = Math.max(leg.to * dur, leg.t0 + 0.05);
+      const t = Math.min(v.currentTime, t1);
+      const p = clamp((t - leg.t0) / (t1 - leg.t0));
+      pushSet(Math.round(leg.y0 + (leg.y1 - leg.y0) * p));
+      window.scrollTo(0, setY);
+      if (t !== leg.lastT) { leg.lastT = t; leg.lastAdv = now; }
+      if (p >= 1 || v.ended) { nextLeg(); return; }
+    }
+    // Kein Zeitfortschritt (Low-Power-Mode, stiller Decoder-Streik): Tween-Rest.
+    if (now - leg.lastAdv > 1500) { degrade('stall'); return; }
+    pfRAF = requestAnimationFrame(stepPlay);
+  }
+
+  function nextLeg() {
+    const leg = pf.legs[pf.li], v = leg.s.video;
+    if (v) { try { v.pause(); } catch (e) {} }         // parkt exakt den Anschluss-Frame
+    pf.li++;
+    if (pf.li < pf.legs.length) { startLeg(); return; }
+    const y = pf.toY;
+    pf = null; flightKeep = null;
+    pushSet(y); window.scrollTo(0, y);
+    coolUntil = performance.now() + SNAP.cooldown;
+    dlog('pflight landed @' + y + (dbg ? ' | ' + vidState() : ''));
+  }
+
+  function degrade(why) {
+    const y = pf ? pf.toY : scrollPos();
+    dlog('pflight degrade(' + why + ') -> tween');
+    cancelPlay('degrade');
+    flyTo(y);
+  }
+
+  function cancelPlay(why) {
+    if (!pf) return;
+    const leg = pf.legs[pf.li], v = leg && leg.s.video;
+    if (v) { try { v.pause(); } catch (e) {} }
+    if (why !== 'replan' && why !== 'degrade') dlog('pflight CANCEL ' + (why || '') + ' @' + Math.round(scrollPos()));
+    pf = null; flightKeep = null;
+    if (pfRAF) { cancelAnimationFrame(pfRAF); pfRAF = 0; }
   }
 
   // Chained gestures count from the *target*, so a second flick during a flight
   // queues the section after the one we're heading to instead of the one we left.
   function snapStep(dir) {
-    const base = fly ? fly.to : scrollPos();
+    const base = fly ? fly.to : (pf ? pf.toY : scrollPos());
     const t = dir > 0 ? stopAfter(base) : stopBefore(base);
     dlog('snapStep dir=' + dir + ' base=' + Math.round(base) + ' -> ' + (t == null ? 'null' : Math.round(t)));
     if (t == null) return false;
-    prepFlight(scrollPos(), t);
-    flyTo(t);
+    if (isMobile()) playFlight(t);
+    else flyTo(t);
     return true;
   }
 
@@ -554,10 +673,11 @@ function mountScrollWorld(container, config) {
       if (s.video !== v) return;
       dlog('meta ' + s.kind + s.si);
       s.ready = true;
-      // Erzwingt einen ersten echten Seek. Ohne ihn stünde currentTime auf 0, die
-      // raf-Schleife hätte (bei s.cur ≈ 0) nichts zu tun, und weder `seeked` noch
-      // requestVideoFrameCallback feuerten — das Still bliebe für immer stehen.
-      try { s.seekAt = performance.now(); v.currentTime = clamp(s.cur, 0.002, 0.999) * (v.duration || 1); } catch (e) {}
+      // Desktop (Scrub-Pfad): erzwungener erster Seek, damit seeked/rVFC feuern
+      // und das Still weichen kann. Auf Telefonen wird grundsätzlich NICHT
+      // geseekt — dort liefert das erste Abspielen (Play-Through) den ersten
+      // Frame; bis dahin steht bewusst das Still bzw. der geparkte Frame.
+      if (!isMobile()) { try { s.seekAt = performance.now(); v.currentTime = clamp(s.cur, 0.002, 0.999) * (v.duration || 1); } catch (e) {} }
       read();
     });
     // Reveal the video (hide the still poster) only once a real frame has
@@ -565,13 +685,10 @@ function mountScrollWorld(container, config) {
     // hiding the still on metadata alone would flash an empty scene.
     // rVFC feuert genau bei der Frame-Präsentation; `seeked` ist der Fallback.
     const reveal = () => {
-      if (s.video !== v) return;   // Inkarnation wurde inzwischen getauscht
-      s.framed = true; s.warm = true;
+      if (s.video !== v) return;   // Element wurde inzwischen ersetzt
+      s.framed = true;
       dlog('frame ' + s.kind + s.si);
       s.el.classList.add('has-clip');
-      // Ein geprimtes Element hat mit seinem ersten Frame seinen Job (Blob
-      // wärmen) erledigt — scrubben kann erst sein frischer Nachfolger.
-      if (s.primed) swapClip(s);
     };
     if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal);
     else v.addEventListener('seeked', reveal, { once: true });
@@ -579,45 +696,11 @@ function mountScrollWorld(container, config) {
     // seeking-Deadlock (siehe FIX-Kommentar am Priming); fehlt data, hat iOS
     // dem Element nie einen Frame dekodiert.
     v.addEventListener('seeked', () => dlog('seek0 ok ' + s.kind + s.si), { once: true });
-    // Kein primeVideo mehr von hier (Geräte-Report 2026-08-11): auf Safari
-    // feuert loadeddata vor der Freischaltung ohnehin nie (Henne-Ei, siehe
-    // Priming-Kommentar), auf CriOS war es nur ein zusätzlicher Play/Pause-
-    // Störer mitten im Flug. pause() nur, wenn gerade kein Prime läuft — sonst
-    // bricht es dessen play() mit AbortError ab (die FAIL-Paare im Report).
-    v.addEventListener('loadeddata', () => { if (s.video === v) dlog('data ' + s.kind + s.si); if (!s.priming) { try { v.pause(); } catch (e) {} } });
+    v.addEventListener('loadeddata', () => { if (s.video === v) dlog('data ' + s.kind + s.si); });
     s.el.appendChild(v); s.video = v; s.hasClip = true;
-    s.framed = false; s.primed = false; s.attachAt = performance.now();
+    s.framed = false; s.primed = false;
   }
 
-  // Geräte-Report 2026-08-11, 2. Runde — der Kernbefund: das play()/pause()-
-  // Priming weckt ein Element auf (ohne play() dekodiert WebKit hier gar keinen
-  // ersten Frame), aber danach hängt JEDER weitere Seek genau dieses Elements
-  // dauerhaft. Ein FRISCHES Element auf demselben Blob dekodiert dagegen sofort
-  // spontan und scrubbt einwandfrei. Der Prime "wärmt" also den Blob und
-  // vergiftet das Element — sobald ein geprimtes Element seinen ersten Frame
-  // gezeigt hat, wird es deshalb gegen ein frisches getauscht.
-  //
-  // Report 3 (rev c, Chrome+Safari) hat die erste Swap-Fassung widerlegt: sie
-  // ließ das alte Element als Anti-Flacker-Standbild weiterleben, bis der
-  // Nachfolger seinen Frame hat — und genau davor warnt der Budget-Kommentar
-  // an attachClip seit jeher ("ein Element zu viel, und der neue Clip
-  // scheitert STUMM"). Ergebnis: die frische Inkarnation blieb bei rs1 hängen
-  // (meta, irgendwann seek0, nie data/frame), während jedes Re-Attach nach
-  // einem ECHTEN releaseClip in 30-150 ms spontan dekodierte — in beiden
-  // Browsern, in beiden Reports, ausnahmslos. Deshalb jetzt hart: erst
-  // vollständig freigeben, dann anhängen. Der Preis ist ein kurzer Rückfall
-  // aufs Still (~200 ms), aber Swaps treffen ab jetzt fast nur unsichtbare
-  // Segmente: die eigene Strecke wird am Gestenbeginn geprimt (da steht das
-  // Still ohnehin noch), das Vorauswärm-Paar (prepFlight) liegt hinter dem
-  // Ziel und ist nie im Bild.
-  function swapClip(s) {
-    if (!s.video || !s.url || s.swapN > 2) return;   // Kettentausch begrenzen
-    const n = s.swapN + 1;
-    dlog('swap ' + s.kind + s.si);
-    releaseClip(s);
-    s.swapN = n;   // releaseClip nullt den Zähler — innerhalb eines Swaps zählt er weiter
-    attachClip(s);
-  }
 
   // Decoder zurückgeben. Das Element nur aus dem DOM zu nehmen reicht in WebKit
   // nicht — erst `src` leeren plus load() gibt die Media-Ressource frei.
@@ -625,8 +708,7 @@ function mountScrollWorld(container, config) {
     const v = s.video;
     if (!v) return;
     s.video = null; s.hasClip = false; s.ready = false;
-    s.priming = false; s.seekAt = 0;
-    s.framed = false; s.primed = false; s.swapN = 0;   // s.warm bleibt: gilt pro Blob
+    s.seekAt = 0; s.framed = false; s.primed = false;
     s.el.classList.remove('has-clip');
     try { v.pause(); } catch (e) {}
     v.removeAttribute('src');
@@ -707,169 +789,43 @@ function mountScrollWorld(container, config) {
     ticking = false;
   }
 
-  // FIX (Geräte-Report 2026-08-11, iPhone/CriOS): Seeks können in WebKit
-  // VERKLEMMEN — `seeking` blieb dort über Sekunden bis Minuten true (conn1 war
-  // über drei Flüge hinweg ein Zombie und musste an jedem tstart neu geprimt
-  // werden). Der alte Guard "nie einen neuen Seek anstoßen, solange der alte
-  // läuft" wurde damit zur Endlosschleife: die raf-Schleife übersprang das
-  // Element für den GANZEN Flug, die Szene stand — "nur ein Frame zwischen den
-  // Sections". Deshalb der Watchdog: hängt ein Seek länger als SEEK_STALL,
-  // wird er neu angestoßen (currentTime mitten in einem pending seek ist legal
-  // und startet den Seek-Algorithmus neu). Ein Wedge kostet so maximal ~0,4 s
-  // statt des ganzen Flugs.
+  // Desktop-Scrub. Telefone spielen ab (siehe MOBILE PLAY-THROUGH) und seeken
+  // nie — die komplette Priming-/Watchdog-/Swap-Maschinerie der Reports
+  // 2026-08-09 bis -12 ist damit Geschichte (Details in der Git-Historie).
+  // Der schlanke Watchdog bleibt: auch am Desktop kann ein Seek theoretisch
+  // hängen; nach SEEK_STALL wird er neu angestoßen (currentTime mitten in
+  // einem pending seek ist legal und startet den Seek-Algorithmus neu).
   const SEEK_STALL = 400;
   function raf(now) {
-    const eps = isMobile() ? 0.02 : 0.008;   // coarser seek step on phones = fewer decodes
-    // Zweiter Befund aus demselben Report: der iOS-Media-Stack serialisiert
-    // Seeks über Elemente hinweg. Liefen 3-4 gleichzeitig (Scrub auf zwei
-    // sichtbaren Clips + Metadata-Seeks frisch angehängter), verhungerten
-    // einzelne komplett — die Flüge mit seeks=1/2 hatten alle mehrere parallele
-    // Seeker, die mit seeks=55/91 nicht. Deshalb auf Telefonen: höchstens 2
-    // Elemente gleichzeitig im Seek, und Sichtbares (pass 0) ist zuerst dran,
-    // damit der gerade gescrubbte Clip nie hinter unsichtbarem Settling ansteht.
-    let busy = 0;
-    if (isMobile()) {
-      for (let i = 0; i < NSEG; i++) { const v = SEGMENTS[i].video; if (v && v.seeking) busy++; }
-    }
-    for (let pass = 0; pass < 2; pass++) {
-      for (let i = 0; i < NSEG; i++) {
-        const s = SEGMENTS[i];
-        if ((pass === 0) !== !!s.visible) continue;
-        if (!s.hasClip || !s.ready || !s.video) continue;
-        // Never queue a seek while the decoder is still resolving the last one.
-        // On phones a fast flick would otherwise pile up seeks and freeze the clip;
-        // cur keeps lerping, so we snap to the latest target the moment it's free.
-        if (s.video.seeking) {
-          // Rekick nur, wenn das Element (oder sein Blob) schon mal einen Frame
-          // geliefert hat. Kalte, nie geprimte Elemente dekodieren hier ohne
-          // play() gar nicht — die Rekick-Stürme im Report (10+ Stück über 4 s)
-          // liefen komplett ins Leere; solche Elemente wartet die nächste
-          // Prime-Runde ab (prepFlight/onGesture).
-          if ((s.framed || s.warm) && now - s.seekAt > SEEK_STALL) {
-            s.seekAt = now;
-            try { s.video.currentTime = clamp(s.cur, 0, 0.999) * (s.video.duration || 1); } catch (e) {}
-            dlog('rekick ' + s.kind + s.si);
-          }
-          continue;
-        }
-        if (!s.visible && Math.abs(s.cur - s.target) < 0.002) continue;
-        if (isMobile() && busy >= 2) continue;
-        s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
-        const dur = s.video.duration || 1;
-        const t = clamp(s.cur, 0, 0.999) * dur;
-        const d = Math.abs(s.video.currentTime - t);
-        if (d <= eps) continue;
-        // FIX (iOS, gehört zum -g-4-Re-Encode der m/-Kette): ein exakter
-        // currentTime-Seek flusht in WebKit die Decoder-Pipeline und dekodiert
-        // dann vom letzten Keyframe bis zum Zielframe durch. Bei GOP 20 und
-        // Flugtempo schaffte ein iPhone so nur ein paar Frames pro Sekunde —
-        // der Kameraflug war eine Diashow, während derselbe Code am Desktop
-        // butterweich lief. fastSeek() springt stattdessen auf den nächsten
-        // Keyframe: mit -g 4 maximal 2 Frames (~83 ms Film) daneben, bei rund
-        // 4-fachem Zeitraffer unsichtbar. Erst nahe am Ziel (< 0,25 s) wird
-        // wieder exakt gesetzt, damit der Halt auf dem präzisen Seam-Frame
-        // landet. Blink kennt kein fastSeek und bleibt auf dem alten Pfad.
-        try {
-          if (d > 0.25 && isMobile() && s.video.fastSeek) s.video.fastSeek(t);
-          else s.video.currentTime = t;
+    if (isMobile()) { requestAnimationFrame(raf); return; }
+    const eps = 0.008;
+    for (let i = 0; i < NSEG; i++) {
+      const s = SEGMENTS[i];
+      if (!s.hasClip || !s.ready || !s.video) continue;
+      // Never queue a seek while the decoder is still resolving the last one;
+      // cur keeps lerping, so we snap to the latest target the moment it's free.
+      if (s.video.seeking) {
+        if (s.framed && now - s.seekAt > SEEK_STALL) {
           s.seekAt = now;
-          busy++;
-          if (dbg) dbgSeeks++;
-        } catch (e) {}
+          try { s.video.currentTime = clamp(s.cur, 0, 0.999) * (s.video.duration || 1); } catch (e) {}
+          dlog('rekick ' + s.kind + s.si);
+        }
+        continue;
       }
+      if (!s.visible && Math.abs(s.cur - s.target) < 0.002) continue;
+      s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
+      const dur = s.video.duration || 1;
+      const t = clamp(s.cur, 0, 0.999) * dur;
+      const d = Math.abs(s.video.currentTime - t);
+      if (d <= eps) continue;
+      try {
+        s.video.currentTime = t;
+        s.seekAt = now;
+        if (dbg) dbgSeeks++;
+      } catch (e) {}
     }
     requestAnimationFrame(raf);
   }
-
-  // iOS needs a user gesture before a muted video will decode/paint reliably.
-  //
-  // FIX (iOS, Geräte-Report 2026-08-09 23:35): "beim ersten Touch primen" reicht
-  // NICHT. Die Erlaubnis gibt WebKit nur einem play() im Gesten-Kontext — und
-  // die alte Fassung primte ausschließlich bei der ALLERERSTEN Geste (once:true)
-  // die bis dahin angehängten Videos. Jedes später angehängte Element verließ
-  // sich auf sein loadeddata-Priming, aber loadeddata feuert erst NACH dem
-  // ersten dekodierten Frame — den es ohne Erlaubnis nie gibt. Henne-Ei: der
-  // erzwungene Metadata-Seek wird nie fertig, seeking bleibt für immer true,
-  // die raf-Schleife überspringt das Element ewig (Report: seeks=0 auf jedem
-  // Flug, meta ohne data/frame). Auf schnellem Netz maskiert (Videos hängen
-  // vor der ersten Geste im DOM und werden in ihr geprimt — der eine
-  // "Zufallstreffer"), auf langsamem Netz systematisch.
-  // Deshalb primt jetzt JEDE Geste (Listener bleiben dran) alle Videos, die
-  // noch keinen Frame gezeigt haben oder im seeking-Deadlock stecken — Gesten
-  // gibt es auf einer Scroll-Seite im Sekundentakt.
-  //
-  // NACHSCHÄRFUNG (Geräte-Report 2026-08-11): das Priming selbst war ein
-  // Störer. (1) pointerdown UND touchstart feuern für dieselbe Geste — der
-  // Doppel-play() erzeugte die AbortError-Paare im Report. (2) "oder seeking"
-  // traf auch Videos, die nur gerade gesund mitten im Scrub steckten — die
-  // bekamen an jedem tstart einen Play/Pause-Zyklus übergebraten (Report:
-  // "prime ok conn1" an jedem Gestenstart, während conn1 hätte scrubben
-  // sollen). Jetzt: nur nie-gemalte Elemente oder echte Zombies (> 500 ms im
-  // Seek verklemmt), ein Zyklus pro Element zur Zeit, eine Priming-Runde pro
-  // Geste. (3) Der Re-Seek direkt im pause()-Tick war Teil des Wedge-Musters —
-  // stattdessen seekAt=0: der Watchdog in raf() setzt im nächsten Frame neu
-  // an, außerhalb des Pause-Ticks.
-  function primeVideo(v, s) {
-    if (!isMobile() || !v) return;
-    if (s) {
-      // Ein hängendes play()-Promise (kommt vor, wenn WebKit das Element nie
-      // freigibt) darf spätere Rettungsversuche nicht ewig blockieren.
-      if (s.priming && performance.now() - s.primingAt < 3000) return;
-      s.priming = true; s.primingAt = performance.now();
-    }
-    try {
-      const p = v.play();
-      if (p && p.then) {
-        p.then(() => {
-          try { v.pause(); } catch (e) {}
-          if (s) {
-            s.priming = false;
-            dlog('prime ok ' + s.kind + s.si);
-            if (s.video === v) {
-              // Ab jetzt gilt dieses Element als vergiftet (siehe swapClip):
-              // sobald sein erster Frame da ist, wird getauscht. Kam der Frame
-              // schon vor der Promise-Auflösung, sofort tauschen.
-              s.primed = true;
-              s.seekAt = 0;   // Watchdog: im nächsten Frame frisch seeken
-              if (s.framed) swapClip(s);
-            }
-          }
-        }).catch(err => { if (s) { s.priming = false; } dlog('prime FAIL ' + (s ? s.kind + s.si : '?') + ' ' + (err && err.name)); });
-      } else if (s) s.priming = false;
-    } catch (e) { if (s) s.priming = false; }
-  }
-  function primePending() {
-    const n = performance.now();
-    for (let i = 0; i < NSEG; i++) {
-      const s = SEGMENTS[i];
-      if (!s.video) continue;
-      // s.framed statt has-clip-Klasse: die Klasse bleibt beim Swap absichtlich
-      // stehen (das alte Standbild deckt die Szene), Wahrheit ist die Inkarnation.
-      // Drei Fälle brauchen ein play():
-      //   cold       — Erstkontakt des Blobs; ohne play() dekodiert WebKit nie.
-      //   stuckFresh — warmer Blob, aber der Spontanpfad kam nach 1,5 s nicht
-      //                (sonst NICHT anfassen: sofortiges Priming würde die
-      //                frische Inkarnation gleich wieder vergiften — warme
-      //                Blobs framen von selbst in ~30-150 ms).
-      //   zombie     — lief schon, hängt aber > 500 ms in einem Seek fest.
-      // !s.primed: ist der Prime dieser Inkarnation schon gelungen (wartet nur
-      // noch auf seinen Frame), darf keine zweite Runde dazwischenfunken — die
-      // Doppel-primes im Report-3-Log kamen aus touchstart + click derselben Tap-Geste.
-      const cold = !s.framed && !s.warm && !s.primed;
-      const stuckFresh = !s.framed && s.warm && !s.primed && n - s.attachAt > 1500;
-      const zombie = s.framed && s.video.seeking && n - s.seekAt > 500;
-      if (cold || stuckFresh || zombie) primeVideo(s.video, s);
-    }
-  }
-  let gestureAt = 0;
-  function onGesture() {
-    const n = performance.now();
-    if (n - gestureAt < 80) return;   // pointerdown+touchstart derselben Geste
-    gestureAt = n;
-    primePending();
-  }
-  window.addEventListener('pointerdown', onGesture, { passive: true });
-  window.addEventListener('touchstart', onGesture, { passive: true });
 
   // ---- snap input: wheel / touch / keys --------------------------------------
   let acc = 0, accAt = 0;
@@ -885,7 +841,7 @@ function mountScrollWorld(container, config) {
     // During a flight (and briefly after) everything is swallowed: one trackpad
     // flick emits wheel events for most of a second, and each of them would
     // otherwise book another section.
-    if (fly || now < coolUntil) { acc = 0; accAt = now; return; }
+    if (fly || pf || now < coolUntil) { acc = 0; accAt = now; return; }
     // deltaMode 1 = lines (Firefox on Windows/Linux), 2 = pages.
     const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * vh : e.deltaY;
     if (now - accAt > 220) acc = 0;                          // new gesture
@@ -940,7 +896,7 @@ function mountScrollWorld(container, config) {
       tMoved++;
       if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;      // direction still unclear
       if (Math.abs(dx) > Math.abs(dy) || !hijack(dy < 0 ? 1 : -1)) { tLock = -1; dlog('t released (horiz/exit)'); return; }
-      tLock = 1; cancelFly();
+      tLock = 1; cancelFly(); cancelPlay('drag');
       dlog('t locked ' + (dy < 0 ? 'fwd' : 'back'));
       tY0 = t.clientY; tT0 = performance.now(); tBase = scrollPos();
       return;
@@ -975,10 +931,10 @@ function mountScrollWorld(container, config) {
     else if (k === 'Home') to = 0;
     else if (k === 'End') to = exitY;
     else return;
-    if (to != null) { e.preventDefault(); cancelFly(); flyTo(to); return; }
+    if (to != null) { e.preventDefault(); cancelFly(); cancelPlay('key'); flyTo(to); return; }
     if (!hijack(dir)) return;
     e.preventDefault();
-    if (fly || performance.now() < coolUntil) return;
+    if (fly || pf || performance.now() < coolUntil) return;
     snapStep(dir);
   }
 
@@ -998,7 +954,7 @@ function mountScrollWorld(container, config) {
   window.addEventListener('scroll', () => {
     // Scrollbar drag, in-page search, browser restore: something moved the page
     // that isn't our flight. Hand it back instead of fighting over the position.
-    if (fly && !ownScroll(scrollPos())) { dlog('fly overrun y=' + Math.round(scrollPos()) + ' hist=' + setHist.join(',')); cancelFly(); }
+    if ((fly || pf) && !ownScroll(scrollPos())) { dlog('fly overrun y=' + Math.round(scrollPos()) + ' hist=' + setHist.join(',')); cancelFly(); cancelPlay('overrun'); }
     if (!ticking) { ticking = true; requestAnimationFrame(read); }
   }, { passive: true });
   // Mobile browsers fire `resize` every time the URL bar slides in/out. Re-running
@@ -1039,7 +995,7 @@ function mountScrollWorld(container, config) {
   // epilog nav item) instead of teleporting past the whole camera move.
   const api = {
     jumpTo: jumpTo,
-    scrollTo: function (y, ms) { if (SNAP) { cancelFly(); flyTo(y, ms); } else window.scrollTo(0, y); },
+    scrollTo: function (y, ms) { if (SNAP) { cancelFly(); cancelPlay('api'); flyTo(y, ms); } else window.scrollTo(0, y); },
     stops: function () { return stops.slice(); },
     layout: layout
   };
