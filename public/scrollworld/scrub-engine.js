@@ -115,7 +115,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-11c';
+var SW_ENGINE_REV = '2026-08-12a';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -449,8 +449,17 @@ function mountScrollWorld(container, config) {
     }
     const take = [], step = ib >= ia ? 1 : -1;
     for (let i = ia; take.length < 3 && i >= Math.min(ia, ib) && i <= Math.max(ia, ib); i += step) take.push(i);
+    // VORAUSWÄRMEN (Geräte-Report 2026-08-12): die einzige Invariante, die alle
+    // drei Reports überlebt hat — ein Flug ist genau dann sauber, wenn seine
+    // Elemente ihren Prime-Zyklus in einer FRÜHEREN Geste durchlaufen haben
+    // (Chrome: 4. Wisch seeks=141, Safari: seeks=172, alles rs4; dieselben
+    // Segmente eine Geste zuvor: seeks=4-5). Deshalb primt jede Geste auch das
+    // Paar HINTER dem Ziel mit: dessen Blobs sind beim übernächsten Flug warm,
+    // jedes Attach dekodiert dann spontan. Die Segmente liegen hinter dem Ziel
+    // und sind während des aktuellen Flugs nie im Bild.
+    for (let i = ib + step, n = 0; n < 2 && i >= 0 && i < NSEG; i += step, n++) take.push(i);
     flightKeep = take;
-    take.forEach(i => attachClip(SEGMENTS[i]));
+    take.forEach(i => { fetchClip(SEGMENTS[i]); attachClip(SEGMENTS[i]); });
     // Läuft im touchend/click/keydown-Handler — dem Aktivierungskontext, in dem
     // play() sicher erlaubt ist (touchstart ist es laut Spec streng genommen nicht).
     primePending();
@@ -534,7 +543,7 @@ function mountScrollWorld(container, config) {
       .catch(() => { s.fetching = false; s.fails = (s.fails || 0) + 1; dlog('fetch FAIL ' + s.kind + s.si + ' n=' + s.fails); });
   }
 
-  function attachClip(s, onReveal) {
+  function attachClip(s) {
     if (reduce || s.video || !s.url) return;
     const v = document.createElement('video');
     v.className = 'sw-scene__video';
@@ -560,7 +569,6 @@ function mountScrollWorld(container, config) {
       s.framed = true; s.warm = true;
       dlog('frame ' + s.kind + s.si);
       s.el.classList.add('has-clip');
-      if (onReveal) onReveal();
       // Ein geprimtes Element hat mit seinem ersten Frame seinen Job (Blob
       // wärmen) erledigt — scrubben kann erst sein frischer Nachfolger.
       if (s.primed) swapClip(s);
@@ -584,29 +592,31 @@ function mountScrollWorld(container, config) {
   // Geräte-Report 2026-08-11, 2. Runde — der Kernbefund: das play()/pause()-
   // Priming weckt ein Element auf (ohne play() dekodiert WebKit hier gar keinen
   // ersten Frame), aber danach hängt JEDER weitere Seek genau dieses Elements
-  // dauerhaft — die rekick-Stürme im Report liefen sekundenlang ins Leere, der
-  // Connector (die eigentliche Übergangsanimation) stand in JEDEM Flug. Ein
-  // FRISCHES Element auf demselben Blob dekodiert dagegen sofort spontan und
-  // scrubbt einwandfrei: alle guten Flüge (seeks=58-79) wurden ausschließlich
-  // von Re-Attaches gefüttert (seek0+data+frame binnen 30 ms, ganz ohne Geste).
-  // Der Prime "wärmt" also den Blob und vergiftet das Element. Konsequenz:
-  // sobald ein geprimtes Element seinen ersten Frame gezeigt hat, wird es gegen
-  // ein frisches getauscht. Das alte bleibt als Standbild im DOM stehen, bis
-  // der Nachfolger seinen ersten Frame präsentiert — kein Flackern, nur ~200 ms
-  // eingefrorenes Bild statt eines komplett eingefrorenen Flugs.
+  // dauerhaft. Ein FRISCHES Element auf demselben Blob dekodiert dagegen sofort
+  // spontan und scrubbt einwandfrei. Der Prime "wärmt" also den Blob und
+  // vergiftet das Element — sobald ein geprimtes Element seinen ersten Frame
+  // gezeigt hat, wird es deshalb gegen ein frisches getauscht.
+  //
+  // Report 3 (rev c, Chrome+Safari) hat die erste Swap-Fassung widerlegt: sie
+  // ließ das alte Element als Anti-Flacker-Standbild weiterleben, bis der
+  // Nachfolger seinen Frame hat — und genau davor warnt der Budget-Kommentar
+  // an attachClip seit jeher ("ein Element zu viel, und der neue Clip
+  // scheitert STUMM"). Ergebnis: die frische Inkarnation blieb bei rs1 hängen
+  // (meta, irgendwann seek0, nie data/frame), während jedes Re-Attach nach
+  // einem ECHTEN releaseClip in 30-150 ms spontan dekodierte — in beiden
+  // Browsern, in beiden Reports, ausnahmslos. Deshalb jetzt hart: erst
+  // vollständig freigeben, dann anhängen. Der Preis ist ein kurzer Rückfall
+  // aufs Still (~200 ms), aber Swaps treffen ab jetzt fast nur unsichtbare
+  // Segmente: die eigene Strecke wird am Gestenbeginn geprimt (da steht das
+  // Still ohnehin noch), das Vorauswärm-Paar (prepFlight) liegt hinter dem
+  // Ziel und ist nie im Bild.
   function swapClip(s) {
     if (!s.video || !s.url || s.swapN > 2) return;   // Kettentausch begrenzen
-    s.swapN++;
+    const n = s.swapN + 1;
     dlog('swap ' + s.kind + s.si);
-    const old = s.video;
-    s.video = null; s.hasClip = false; s.ready = false;
-    s.priming = false; s.primed = false; s.framed = false; s.seekAt = 0;
-    attachClip(s, () => {
-      try { old.pause(); } catch (e) {}
-      old.removeAttribute('src');
-      try { old.load(); } catch (e) {}
-      old.remove();
-    });
+    releaseClip(s);
+    s.swapN = n;   // releaseClip nullt den Zähler — innerhalb eines Swaps zählt er weiter
+    attachClip(s);
   }
 
   // Decoder zurückgeben. Das Element nur aus dem DOM zu nehmen reicht in WebKit
@@ -842,8 +852,11 @@ function mountScrollWorld(container, config) {
       //                frische Inkarnation gleich wieder vergiften — warme
       //                Blobs framen von selbst in ~30-150 ms).
       //   zombie     — lief schon, hängt aber > 500 ms in einem Seek fest.
-      const cold = !s.framed && !s.warm;
-      const stuckFresh = !s.framed && s.warm && n - s.attachAt > 1500;
+      // !s.primed: ist der Prime dieser Inkarnation schon gelungen (wartet nur
+      // noch auf seinen Frame), darf keine zweite Runde dazwischenfunken — die
+      // Doppel-primes im Report-3-Log kamen aus touchstart + click derselben Tap-Geste.
+      const cold = !s.framed && !s.warm && !s.primed;
+      const stuckFresh = !s.framed && s.warm && !s.primed && n - s.attachAt > 1500;
       const zombie = s.framed && s.video.seeking && n - s.seekAt > 500;
       if (cold || stuckFresh || zombie) primeVideo(s.video, s);
     }
