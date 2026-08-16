@@ -171,6 +171,17 @@ const config = {
     `${V}/m/conn3.mp4`,
     `${V}/m/conn4.mp4`,
   ],
+  // Rückwärts-Encodes derselben Connectoren (ffmpeg -vf reverse, 2026-08-16):
+  // iOS kann Video nicht rückwärts abspielen, und die Play-Through-Engine
+  // seekt auf Telefonen grundsätzlich nicht — ein GESPIELTER Rückflug braucht
+  // also eigene Dateien. Die Engine lädt sie mit niedrigster Priorität nach
+  // der Hauptkette; solange sie fehlen, ist rückwärts ein Dissolve-Tween.
+  connectorsMobileRev: [
+    `${V}/m/conn1r.mp4`,
+    `${V}/m/conn2r.mp4`,
+    `${V}/m/conn3r.mp4`,
+    `${V}/m/conn4r.mp4`,
+  ],
   // Cache-Buster für die Clip-Fetches (?av=…), Gegenstück zum ?v= an der
   // Engine-Einbindung unten: bei JEDER Änderung an den Videodateien hochzählen,
   // sonst serviert ein Telefon bis zu 10 Minuten alte Encodes aus dem
@@ -1051,7 +1062,7 @@ const config = {
          darf sie bis zu 10 Minuten ungefragt weiterverwenden — und genau in so
          einem Fenster wirkt ein frisch deployter Fix wie "hat nichts gebracht".
          Neue URL = garantiert neue Datei, sobald das HTML frisch ist. -->
-    <script is:inline src="/scrollworld/scrub-engine.js?v=13"></script>
+    <script is:inline src="/scrollworld/scrub-engine.js?v=14"></script>
     <script
       is:inline
       set:html={`window.SW = mountScrollWorld(document.getElementById('world'), ${JSON.stringify(config)});`}
