@@ -120,7 +120,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-16a';
+var SW_ENGINE_REV = '2026-08-16b';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -501,8 +501,21 @@ function mountScrollWorld(container, config) {
       if (fromY >= SEGMENTS[i].start) ia = i;
       if (toY >= SEGMENTS[i].start) ib = i;
     }
-    if (ib - ia > 4) return null;                      // weite Nav-Sprünge: Tween
     const legs = [];
+    if (ib - ia > 2) {
+      // Navbar-Sprung über mehrere Halte (Feedback 2026-08-16: der reine Tween
+      // "überspringt die Videos"): die Zwischenszenen als schneller Tween über
+      // die geparkten Frames, die ANKUNFT aber gespielt — letzter Connector +
+      // Ziel-Dive. So endet auch ein weiter Sprung mit dem echten Kameraflug
+      // in die Szene.
+      let ci = -1;
+      for (let i = ib - 1; i > ia; i--) if (SEGMENTS[i].kind === 'conn') { ci = i; break; }
+      if (ci < 0) return null;
+      const conn = SEGMENTS[ci];
+      legs.push({ tw: Math.round(clamp((conn.start - fromY) / Math.max(1, vh) * 150, 300, 900)), y1: Math.round(conn.start) });
+      fromY = conn.start;
+      ia = ci;
+    }
     for (let i = ia; i <= ib; i++) {
       const s = SEGMENTS[i];
       const to = (i === ib) ? segFrac(s, toY) : 1;
@@ -522,15 +535,14 @@ function mountScrollWorld(container, config) {
       if (fromY >= SEGMENTS[i].start) ia = i;
       if (toY >= SEGMENTS[i].start) ib = i;
     }
+    // Bei Mehrfach-Sprüngen zählt der Connector direkt ÜBER dem Ziel — die
+    // Strecke davor läuft als schneller Tween, die Ankunft wird gespielt
+    // (Spiegelbild des Vorwärts-Nav-Sprungs).
     let conn = null;
-    for (let i = ib; i <= ia; i++) {
-      if (SEGMENTS[i].kind !== 'conn') continue;
-      if (conn) return null;                           // mehr als ein Connector: Tween
-      conn = SEGMENTS[i];
-    }
+    for (let i = ib; i <= ia; i++) if (SEGMENTS[i].kind === 'conn') { conn = SEGMENTS[i]; break; }
     if (!conn || !conn.clipR || !conn.urlR) return null;
     return [
-      { tw: 350, y1: Math.round(conn.end) },
+      { tw: Math.round(clamp((fromY - conn.end) / Math.max(1, vh) * 150, 300, 900)), y1: Math.round(conn.end) },
       { s: conn, rev: true, to: 1, y1: Math.round(conn.start), film: filmGuess(conn) },
       { tw: 400, y1: toY },
     ];
@@ -553,6 +565,7 @@ function mountScrollWorld(container, config) {
     if (!settle) return;
     const v = settle.v, dur = v.duration || 0;
     if (!v.isConnected) { settle = null; return; }
+    if (Math.abs(v.playbackRate - 2.5) > 0.05) { try { v.playbackRate = 2.5; } catch (e) {} }
     if (dur && (v.currentTime >= settle.to * dur || v.ended)) {
       try { v.pause(); } catch (e) {}
       dlog('settle done');
@@ -574,7 +587,7 @@ function mountScrollWorld(container, config) {
     if ((v.currentTime || 0) >= frac * (v.duration || 99)) return;   // steht schon tief genug
     stopSettle();
     s.primed = true;
-    try { v.playbackRate = 2.5; } catch (e) {}
+    try { v.defaultPlaybackRate = 2.5; v.playbackRate = 2.5; } catch (e) {}
     try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { return; }
     settle = { v: v, to: frac };
     dlog('settle ' + s.kind + s.si + ' ->' + frac.toFixed(2));
@@ -644,7 +657,12 @@ function mountScrollWorld(container, config) {
     leg.t0 = v.currentTime || 0;
     if (leg.y1 == null) leg.y1 = (pf.li === pf.legs.length - 1) ? pf.toY : Math.round(s.end);
     leg.lastT = -1; leg.lastAdv = performance.now();
-    try { v.playbackRate = pf.rate; } catch (e) {}
+    // BEIDE Raten setzen: WebKit setzt playbackRate beim (Nach-)Laden auf
+    // defaultPlaybackRate zurück. Ein frisch erzeugtes R-/Leg-Element, dessen
+    // Metadaten NACH dem Setzen eintreffen, fiele sonst still auf 1x zurück —
+    // der Rückflug dauerte dann 5 s statt 1,5 s ("sehr langsam",
+    // Nutzer-Feedback 2026-08-16). stepPlay hält die Rate zusätzlich nach.
+    try { v.defaultPlaybackRate = pf.rate; v.playbackRate = pf.rate; } catch (e) {}
     try {
       const p = v.play();
       if (p && p.catch) p.catch(err => { dlog('play FAIL ' + (leg.rev ? 'R-' : '') + s.kind + s.si + ' ' + (err && err.name)); degrade('denied'); });
@@ -669,6 +687,7 @@ function mountScrollWorld(container, config) {
         pfRAF = requestAnimationFrame(stepPlay);
         return;
       }
+      if (Math.abs(v.playbackRate - pf.rate) > 0.05) { try { v.playbackRate = pf.rate; } catch (e) {} }
       const t1 = Math.max(leg.to * dur, leg.t0 + 0.05);
       const t = Math.min(v.currentTime, t1);
       p = clamp((t - leg.t0) / (t1 - leg.t0));
