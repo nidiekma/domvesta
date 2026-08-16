@@ -120,7 +120,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-12b';
+var SW_ENGINE_REV = '2026-08-16a';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -142,6 +142,10 @@ function mountScrollWorld(container, config) {
   const SECTIONS = config.sections || [];
   const CONNECTORS = config.connectors || [];
   const CONNECTORS_M = config.connectorsMobile || [];
+  // Rückwärts encodierte Connector-Fassungen (nur Telefone): iOS kann Video
+  // nicht rückwärts abspielen, und der Play-Through-Pfad seekt nie — für einen
+  // gespielten Rückflug braucht es deshalb eigene Dateien (ffmpeg -vf reverse).
+  const CONNECTORS_MR = config.connectorsMobileRev || [];
   const DIVE_W = config.diveScroll || 1.3;
   const CONN_W = config.connScroll || 0.9;
   const CROSSFADE = (config.crossfade != null) ? config.crossfade : 0.12;  // seam dissolve width (vh)
@@ -193,6 +197,7 @@ function mountScrollWorld(container, config) {
     // connector can't be generated (e.g. a content-filter false-positive).
     if (i < N - 1 && CONNECTORS[i]) {
       SEGMENTS.push({ kind: 'conn', si: i, clip: CONNECTORS[i], clipM: CONNECTORS_M[i],
+                      clipR: CONNECTORS_MR[i],
                       still: SECTIONS[i + 1].still, stillM: SECTIONS[i + 1].stillMobile,
                       accent: SECTIONS[i + 1].accent, w: reduce ? CONN_W_R : CONN_W });
     }
@@ -275,6 +280,9 @@ function mountScrollWorld(container, config) {
     // Gestenkontext) und darf danach auch außerhalb von Gesten abspielen —
     // playFlight braucht das für die späteren Legs.
     s.seekAt = 0; s.framed = false; s.primed = false;
+    // Rückwärts-Fassung (nur Connectoren mit clipR): eigener Blob + eigenes,
+    // nur bei Bedarf existierendes Element.
+    s.urlR = null; s.fetchingR = false; s.failsR = 0; s.videoR = null;
   });
 
   // per-section copy / route / nav
@@ -465,15 +473,29 @@ function mountScrollWorld(container, config) {
   // Scroll-Position folgt jeder Frame der Clip-Zeit (pro Leg linear kalibriert),
   // read() macht Copy-Fades und Crossfades unverändert. Jedes Leg pausiert am
   // Ziel und parkt damit exakt den Frame, ab dem der nächste Flug weiterspielt.
-  // Rückwärts-Gesten und weite Nav-Sprünge fallen auf den Scroll-Tween zurück:
-  // Still-Dissolves über die korrekt geparkten Frames — bewusst schlichter,
-  // dafür deterministisch.
-  const RATE = Object.assign({ dive: 3.0, conn: 2.4 }, (SNAP && SNAP.playRate) || {});
+  // Rückwärts spielt seit rev 2026-08-16a ebenfalls: eigene Rückwärts-Encodes
+  // der Connectoren (connectorsMobileRev, iOS kann nicht rückwärts abspielen),
+  // eingerahmt von zwei kurzen Scroll-Tweens für die Dive-Hälften; parallel
+  // "schwebt" der Ziel-Dive vorwärts bis zur Stop-Position ein (settle), damit
+  // die Landung wieder mitten in der Szene steht statt auf dem Anflug-Frame.
+  // Ohne Rückwärts-Blob (noch nicht geladen / nicht konfiguriert) und bei
+  // weiten Nav-Sprüngen: Scroll-Tween über die geparkten Frames + settle.
+  //
+  // TEMPO (Nutzer-Feedback 2026-08-16): identisch zum alten Tween — Zielzeit
+  // aus perVh/min/max, daraus EINE einheitliche Abspielrate für alle Legs des
+  // Flugs (konstante Kamera-Eile). playRateMax deckelt; liegt die nötige Rate
+  // darüber, dauert der Flug entsprechend länger, landet aber trotzdem exakt
+  // (der Scroll folgt der Clip-Zeit, nicht der Wanduhr). Die leg-done-Zeilen
+  // im HUD loggen die EFFEKTIVE Rate — dort sieht man, ob ein Gerät die
+  // gewünschte Rate still deckelt.
+  const RATE_MAX = (SNAP && SNAP.playRateMax) || 8;
   let pf = null, pfRAF = 0;
   const segFrac = (seg, y) => clamp((y - seg.start) / (seg.end - seg.start), 0, 1);
+  const filmGuess = s => (s.video && s.video.duration) || (s.kind === 'conn' ? 5 : 6.5);
+  const flightSecs = (fromY, toY) =>
+    clamp(Math.abs(toY - fromY) / Math.max(1, vh) * SNAP.perVh, SNAP.min, SNAP.max) / 1000;
 
   function buildLegs(fromY, toY) {
-    if (toY <= fromY + 1) return null;                 // rückwärts: Tween über geparkte Frames
     let ia = 0, ib = 0;
     for (let i = 0; i < NSEG; i++) {
       if (fromY >= SEGMENTS[i].start) ia = i;
@@ -486,83 +508,196 @@ function mountScrollWorld(container, config) {
       const to = (i === ib) ? segFrac(s, toY) : 1;
       if (i === ib && to < 0.01) break;
       if (!s.clip) return null;                        // Segment ohne Clip: Tween
-      legs.push({ s: s, to: to, t0: 0, y0: 0, y1: 0, lastT: -1, lastAdv: 0 });
+      legs.push({ s: s, to: to, film: (to - (i === ia ? segFrac(s, fromY) : 0)) * filmGuess(s) });
     }
     return legs.length ? legs : null;
   }
 
+  // Rückflug zum direkten Nachbar-Stop: [Tween ans Connector-Ende] ->
+  // [Rückwärts-Connector spielt, Scroll läuft dessen Spanne abwärts] ->
+  // [Tween zum Stop]. Der Ziel-Dive settlet währenddessen parallel (playFlight).
+  function buildLegsBack(fromY, toY) {
+    let ia = 0, ib = 0;
+    for (let i = 0; i < NSEG; i++) {
+      if (fromY >= SEGMENTS[i].start) ia = i;
+      if (toY >= SEGMENTS[i].start) ib = i;
+    }
+    let conn = null;
+    for (let i = ib; i <= ia; i++) {
+      if (SEGMENTS[i].kind !== 'conn') continue;
+      if (conn) return null;                           // mehr als ein Connector: Tween
+      conn = SEGMENTS[i];
+    }
+    if (!conn || !conn.clipR || !conn.urlR) return null;
+    return [
+      { tw: 350, y1: Math.round(conn.end) },
+      { s: conn, rev: true, to: 1, y1: Math.round(conn.start), film: filmGuess(conn) },
+      { tw: 400, y1: toY },
+    ];
+  }
+
+  // Einschweben: den Dive, in dem `toY` liegt, einmal vorwärts bis zur
+  // Stop-Position spielen — rein visuell, ohne Scroll-Bewegung. Nach einem
+  // Rückflug parkt ein frisch angehängtes Element sonst auf Frame 0 (Anflug von
+  // außen), die Landung sähe aus wie nie angekommen. Läuft parallel zum Flug;
+  // das play() passiert hier noch im Gestenkontext.
+  let settle = null, settleRAF = 0;
+  function stopSettle() {
+    if (!settle) return;
+    try { settle.v.pause(); } catch (e) {}
+    settle = null;
+    if (settleRAF) { cancelAnimationFrame(settleRAF); settleRAF = 0; }
+  }
+  function stepSettle() {
+    settleRAF = 0;
+    if (!settle) return;
+    const v = settle.v, dur = v.duration || 0;
+    if (!v.isConnected) { settle = null; return; }
+    if (dur && (v.currentTime >= settle.to * dur || v.ended)) {
+      try { v.pause(); } catch (e) {}
+      dlog('settle done');
+      settle = null;
+      return;
+    }
+    settleRAF = requestAnimationFrame(stepSettle);
+  }
+  function startSettle(toY) {
+    let i = 0;
+    for (let k = 0; k < NSEG; k++) if (toY >= SEGMENTS[k].start) i = k;
+    const s = SEGMENTS[i];
+    if (s.kind !== 'dive') return;
+    const frac = segFrac(s, toY);
+    if (frac < 0.05) return;                           // Stop am Segmentanfang (Sektion 1)
+    fetchClip(s); attachClip(s);
+    const v = s.video;
+    if (!v || !s.url) return;
+    if ((v.currentTime || 0) >= frac * (v.duration || 99)) return;   // steht schon tief genug
+    stopSettle();
+    s.primed = true;
+    try { v.playbackRate = 2.5; } catch (e) {}
+    try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { return; }
+    settle = { v: v, to: frac };
+    dlog('settle ' + s.kind + s.si + ' ->' + frac.toFixed(2));
+    if (!settleRAF) settleRAF = requestAnimationFrame(stepSettle);
+  }
+
   function playFlight(toY) {
     toY = Math.round(clamp(toY, 0, maxScroll()));
-    cancelFly(); cancelPlay('replan');
-    const legs = buildLegs(scrollPos(), toY);
-    if (!legs) { prepFlight(scrollPos(), toY); flyTo(toY); return; }
-    flightKeep = legs.map(l => SEGMENTS.indexOf(l.s));
-    legs.forEach(l => { fetchClip(l.s); attachClip(l.s); });
+    cancelFly(); cancelPlay('replan'); stopSettle();
+    const fromY = scrollPos();
+    const back = toY < fromY;
+    const legs = back ? buildLegsBack(fromY, toY) : buildLegs(fromY, toY);
+    if (back) startSettle(toY);                        // parallel zum Flug (auch zum Tween-Fallback)
+    if (!legs) { prepFlight(fromY, toY); flyTo(toY); return; }
+    flightKeep = legs.filter(l => l.s).map(l => SEGMENTS.indexOf(l.s));
+    if (back) {
+      // Der settelnde Ziel-Dive liegt außerhalb des ±1-Fensters um die
+      // Startposition — ohne Schutz würde read() ihn mitten im Einschweben freigeben.
+      let ti = 0;
+      for (let k = 0; k < NSEG; k++) if (toY >= SEGMENTS[k].start) ti = k;
+      flightKeep.push(ti);
+    }
+    legs.forEach(l => { if (!l.s) return; if (l.rev) { fetchClipR(l.s); attachR(l.s); } else { fetchClip(l.s); attachClip(l.s); } });
+    // Zielzeit wie der alte Tween; eine Rate für alle Legs. Tween-Legs gehen
+    // von der verfügbaren Zeit ab.
+    const twSecs = legs.reduce((a, l) => a + (l.tw || 0), 0) / 1000;
+    const film = legs.reduce((a, l) => a + (l.film || 0), 0);
+    const rate = clamp(film / Math.max(0.4, flightSecs(fromY, toY) - twSecs), 1, RATE_MAX);
     // Spätere Legs JETZT segnen (play->pause im Gestenkontext): ihr echter
-    // play() kommt Sekunden später, außerhalb jeder Geste — ohne den Segen
-    // wäre er auf strengen Geräten verboten. Geseekt wird nie, der alte
-    // "Prime vergiftet das Element"-Effekt betrifft nur Seeks und ist hier
-    // bedeutungslos.
-    legs.forEach((l, i) => {
-      const s = l.s, v = s.video;
-      if (i === 0 || !v || s.primed) return;
-      s.primed = true;
+    // play() kommt außerhalb jeder Geste — ohne den Segen wäre er auf strengen
+    // Geräten verboten. Geseekt wird nie, der alte "Prime vergiftet das
+    // Element"-Effekt betraf nur Seeks.
+    let firstPlay = true;
+    legs.forEach(l => {
+      if (!l.s) return;
+      const s = l.s, v = l.rev ? s.videoR : s.video;
+      const startsInGesture = firstPlay && !legs[0].tw;
+      firstPlay = false;
+      if (!v || startsInGesture || (!l.rev && s.primed)) return;
+      if (!l.rev) s.primed = true;
       try {
         const p = v.play();
         if (p && p.then) p.then(() => {
-          if (!(pf && pf.legs[pf.li] && pf.legs[pf.li].s === s)) { try { v.pause(); } catch (e) {} }
-        }).catch(err => { s.primed = false; dlog('bless FAIL ' + s.kind + s.si + ' ' + (err && err.name)); });
-      } catch (e) { s.primed = false; }
+          if (!(pf && pf.activeV === v)) { try { v.pause(); } catch (e) {} }
+        }).catch(err => { if (!l.rev) s.primed = false; dlog('bless FAIL ' + s.kind + s.si + ' ' + (err && err.name)); });
+      } catch (e) { if (!l.rev) s.primed = false; }
     });
-    pf = { legs: legs, li: 0, toY: toY };
-    dlog('pflight ' + Math.round(scrollPos()) + '->' + toY + ' legs=' + legs.map(l => l.s.kind + l.s.si).join('+'));
-    legs[0].s.primed = true;                           // Leg 0 startet direkt in der Geste
+    pf = { legs: legs, li: 0, toY: toY, rate: Math.round(rate * 10) / 10, activeV: null };
+    dlog('pflight ' + Math.round(fromY) + '->' + toY + ' rate=' + pf.rate +
+         ' legs=' + legs.map(l => l.tw ? 'tw' + l.tw : (l.rev ? 'R-' : '') + l.s.kind + l.s.si).join('+'));
+    if (legs[0].s && !legs[0].rev) legs[0].s.primed = true;   // Leg 0 spielt direkt in der Geste
     startLeg();
   }
 
   function startLeg() {
-    const leg = pf.legs[pf.li], s = leg.s, v = s.video;
-    if (!v || !s.url) { degrade('noclip'); return; }
-    leg.t0 = v.currentTime || 0;
+    const leg = pf.legs[pf.li];
     leg.y0 = scrollPos();
-    leg.y1 = (pf.li === pf.legs.length - 1) ? pf.toY : Math.round(s.end);
+    leg.t0w = performance.now();
+    if (leg.tw) {
+      pf.activeV = null;
+      if (!pfRAF) pfRAF = requestAnimationFrame(stepPlay);
+      return;
+    }
+    const s = leg.s, v = leg.rev ? s.videoR : s.video;
+    if (!v || !(leg.rev ? s.urlR : s.url)) { degrade('noclip'); return; }
+    leg.v = v; pf.activeV = v;
+    leg.t0 = v.currentTime || 0;
+    if (leg.y1 == null) leg.y1 = (pf.li === pf.legs.length - 1) ? pf.toY : Math.round(s.end);
     leg.lastT = -1; leg.lastAdv = performance.now();
-    try { v.playbackRate = (s.kind === 'conn' ? RATE.conn : RATE.dive); } catch (e) {}
+    try { v.playbackRate = pf.rate; } catch (e) {}
     try {
       const p = v.play();
-      if (p && p.catch) p.catch(err => { dlog('play FAIL ' + s.kind + s.si + ' ' + (err && err.name)); degrade('denied'); });
+      if (p && p.catch) p.catch(err => { dlog('play FAIL ' + (leg.rev ? 'R-' : '') + s.kind + s.si + ' ' + (err && err.name)); degrade('denied'); });
     } catch (e) { degrade('throw'); return; }
-    dlog('leg ' + s.kind + s.si + ' t0=' + leg.t0.toFixed(2) + ' to=' + leg.to.toFixed(2));
+    dlog('leg ' + (leg.rev ? 'R-' : '') + s.kind + s.si + ' t0=' + leg.t0.toFixed(2) + ' to=' + leg.to.toFixed(2));
     if (!pfRAF) pfRAF = requestAnimationFrame(stepPlay);
   }
 
   function stepPlay(now) {
     pfRAF = 0;
     if (!pf) return;
-    const leg = pf.legs[pf.li], v = leg.s.video;
-    if (!v) { degrade('lost'); return; }
-    const dur = v.duration || 0;
-    if (dur) {
+    const leg = pf.legs[pf.li];
+    let p;
+    if (leg.tw) {
+      p = clamp((now - leg.t0w) / leg.tw);
+    } else {
+      const v = leg.v;
+      if (!v || !v.isConnected) { degrade('lost'); return; }
+      const dur = v.duration || 0;
+      if (!dur) {
+        if (now - leg.lastAdv > 1500) { degrade('stall'); return; }
+        pfRAF = requestAnimationFrame(stepPlay);
+        return;
+      }
       const t1 = Math.max(leg.to * dur, leg.t0 + 0.05);
       const t = Math.min(v.currentTime, t1);
-      const p = clamp((t - leg.t0) / (t1 - leg.t0));
-      pushSet(Math.round(leg.y0 + (leg.y1 - leg.y0) * p));
-      window.scrollTo(0, setY);
+      p = clamp((t - leg.t0) / (t1 - leg.t0));
       if (t !== leg.lastT) { leg.lastT = t; leg.lastAdv = now; }
-      if (p >= 1 || v.ended) { nextLeg(); return; }
+      else if (now - leg.lastAdv > 1500) { degrade('stall'); return; }
+      if (v.ended) p = 1;
     }
-    // Kein Zeitfortschritt (Low-Power-Mode, stiller Decoder-Streik): Tween-Rest.
-    if (now - leg.lastAdv > 1500) { degrade('stall'); return; }
+    pushSet(Math.round(leg.y0 + (leg.y1 - leg.y0) * p));
+    window.scrollTo(0, setY);
+    if (p >= 1) { nextLeg(); return; }
     pfRAF = requestAnimationFrame(stepPlay);
   }
 
   function nextLeg() {
-    const leg = pf.legs[pf.li], v = leg.s.video;
-    if (v) { try { v.pause(); } catch (e) {} }         // parkt exakt den Anschluss-Frame
+    const leg = pf.legs[pf.li];
+    if (leg.v) {
+      try { leg.v.pause(); } catch (e) {}              // parkt exakt den Anschluss-Frame
+      // Effektive Rate loggen: weicht sie deutlich von pf.rate ab, deckelt das
+      // Gerät die playbackRate still — genau das braucht der nächste Report.
+      const wall = (performance.now() - leg.t0w) / 1000;
+      const played = (leg.lastT < 0 ? 0 : leg.lastT) - leg.t0;
+      if (wall > 0.05) dlog('leg done ' + (leg.rev ? 'R-' : '') + leg.s.kind + leg.s.si + ' eff=' + (played / wall).toFixed(1));
+    }
+    pf.activeV = null;
     pf.li++;
     if (pf.li < pf.legs.length) { startLeg(); return; }
-    const y = pf.toY;
+    const y = pf.toY, legsDone = pf.legs;
     pf = null; flightKeep = null;
+    legsDone.forEach(l => { if (l.rev && l.s) releaseR(l.s); });   // Rückwärts-Element sofort freigeben
     pushSet(y); window.scrollTo(0, y);
     coolUntil = performance.now() + SNAP.cooldown;
     dlog('pflight landed @' + y + (dbg ? ' | ' + vidState() : ''));
@@ -577,8 +712,9 @@ function mountScrollWorld(container, config) {
 
   function cancelPlay(why) {
     if (!pf) return;
-    const leg = pf.legs[pf.li], v = leg && leg.s.video;
-    if (v) { try { v.pause(); } catch (e) {} }
+    const leg = pf.legs[pf.li];
+    if (leg && leg.v) { try { leg.v.pause(); } catch (e) {} }
+    pf.legs.forEach(l => { if (l.rev && l.s) releaseR(l.s); });
     if (why !== 'replan' && why !== 'degrade') dlog('pflight CANCEL ' + (why || '') + ' @' + Math.round(scrollPos()));
     pf = null; flightKeep = null;
     if (pfRAF) { cancelAnimationFrame(pfRAF); pfRAF = 0; }
@@ -662,6 +798,47 @@ function mountScrollWorld(container, config) {
       .catch(() => { s.fetching = false; s.fails = (s.fails || 0) + 1; dlog('fetch FAIL ' + s.kind + s.si + ' n=' + s.fails); });
   }
 
+  // Rückwärts-Blob laden (gleiche Cache-Buster-Konvention wie fetchClip).
+  function fetchClipR(s) {
+    if (reduce || s.urlR || s.fetchingR || !s.clipR || s.failsR > 2) return;
+    s.fetchingR = true;
+    const url = (config.assetRev != null)
+      ? s.clipR + (s.clipR.indexOf('?') < 0 ? '?av=' : '&av=') + config.assetRev
+      : s.clipR;
+    fetch(url).then(r => r.ok ? r.blob() : Promise.reject(new Error('404')))
+      .then(blob => { s.urlR = URL.createObjectURL(blob); s.fetchingR = false; dlog('blobR ' + s.kind + s.si + ' ' + Math.round(blob.size / 1024) + 'kB'); })
+      .catch(() => { s.fetchingR = false; s.failsR = (s.failsR || 0) + 1; dlog('fetchR FAIL ' + s.kind + s.si); });
+  }
+
+  // Rückwärts-Element: existiert nur während eines Rückflugs, liegt im DOM über
+  // dem vorwärts geparkten Element und wird erst sichtbar, wenn es echte Frames
+  // liefert. Das vorwärts geparkte Element bleibt unangetastet — sein
+  // Park-Frame ist der Anschluss für den nächsten Vorwärtsflug.
+  function attachR(s) {
+    if (reduce || s.videoR || !s.urlR) return;
+    const v = document.createElement('video');
+    v.className = 'sw-scene__video';
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    v.src = s.urlR;
+    v.style.opacity = '0';
+    const on = () => { if (s.videoR === v) { v.style.opacity = ''; s.el.classList.add('has-clip'); } };
+    if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(on);
+    else v.addEventListener('playing', on, { once: true });
+    v.addEventListener('loadedmetadata', () => dlog('metaR ' + s.kind + s.si), { once: true });
+    s.el.appendChild(v); s.videoR = v;
+  }
+
+  function releaseR(s) {
+    const v = s.videoR;
+    if (!v) return;
+    s.videoR = null;
+    try { v.pause(); } catch (e) {}
+    v.removeAttribute('src');
+    try { v.load(); } catch (e) {}
+    v.remove();
+  }
+
   function attachClip(s) {
     if (reduce || s.video || !s.url) return;
     const v = document.createElement('video');
@@ -709,6 +886,7 @@ function mountScrollWorld(container, config) {
     if (!v) return;
     s.video = null; s.hasClip = false; s.ready = false;
     s.seekAt = 0; s.framed = false; s.primed = false;
+    releaseR(s);
     s.el.classList.remove('has-clip');
     try { v.pause(); } catch (e) {}
     v.removeAttribute('src');
@@ -984,10 +1162,15 @@ function mountScrollWorld(container, config) {
   // fetchClip ist idempotent; near-Anfragen aus read() überholen einfach.
   if (!reduce && isMobile()) {
     const pumpT = setInterval(() => {
-      for (let i = 0; i < NSEG; i++) if (SEGMENTS[i].fetching) return;   // einer zur Zeit
+      for (let i = 0; i < NSEG; i++) if (SEGMENTS[i].fetching || SEGMENTS[i].fetchingR) return;   // einer zur Zeit
       const nxt = SEGMENTS.find(s => !s.url && s.clip && s.fails <= 2);
-      if (!nxt) { clearInterval(pumpT); dlog('prefetch done'); return; }
-      fetchClip(nxt);
+      if (nxt) { fetchClip(nxt); return; }
+      // Hauptkette komplett — danach mit niedrigster Priorität die
+      // Rückwärts-Connectoren (erst ab jetzt kann ein Rückflug gespielt werden;
+      // vorher fällt er auf den Dissolve-Tween zurück).
+      const nxtR = SEGMENTS.find(s => s.clipR && !s.urlR && s.failsR <= 2);
+      if (nxtR) { fetchClipR(nxtR); return; }
+      clearInterval(pumpT); dlog('prefetch done');
     }, 350);
   }
 
