@@ -120,7 +120,7 @@
 // Bei jeder Engine-Änderung mitziehen (und ?v= in index.astro): das Debug-HUD
 // und /sw-debug.html zeigen die Revision an — nur so ist auf einem Telefon
 // beweisbar, WELCHER Stand dort wirklich läuft (HTTP-Cache, Tab-Restore).
-var SW_ENGINE_REV = '2026-08-16b';
+var SW_ENGINE_REV = '2026-08-17a';
 
 function mountScrollWorld(container, config) {
   // Bedienhilfe respektieren, aber überstimmbar: sysReduce ist der OS-Wunsch
@@ -565,7 +565,11 @@ function mountScrollWorld(container, config) {
     if (!settle) return;
     const v = settle.v, dur = v.duration || 0;
     if (!v.isConnected) { settle = null; return; }
-    if (Math.abs(v.playbackRate - 2.5) > 0.05) { try { v.playbackRate = 2.5; } catch (e) {} }
+    if (settle.rateFix == null) settle.rateFix = 0;
+    if (settle.rateFix < 3 && Math.abs(v.playbackRate - 2.5) > 0.05) {
+      settle.rateFix++;
+      try { v.playbackRate = 2.5; } catch (e) {}
+    }
     if (dur && (v.currentTime >= settle.to * dur || v.ended)) {
       try { v.pause(); } catch (e) {}
       dlog('settle done');
@@ -687,7 +691,16 @@ function mountScrollWorld(container, config) {
         pfRAF = requestAnimationFrame(stepPlay);
         return;
       }
-      if (Math.abs(v.playbackRate - pf.rate) > 0.05) { try { v.playbackRate = pf.rate; } catch (e) {} }
+      // Rate nachhalten, aber BEGRENZT: deckelt ein Gerät die playbackRate hart,
+      // würde eine Zuweisung pro Frame (jede ein Pipeline-Resync) das Abspielen
+      // selbst ruckelig machen. Drei Versuche decken den Reset-beim-Laden-Fall
+      // ab; danach akzeptieren wir die Geräte-Rate (Flug dauert dann länger,
+      // landet aber exakt — und "leg done eff=" zeigt die Wahrheit).
+      if (leg.rateFix == null) leg.rateFix = 0;
+      if (leg.rateFix < 3 && Math.abs(v.playbackRate - pf.rate) > 0.05) {
+        leg.rateFix++;
+        try { v.playbackRate = pf.rate; } catch (e) {}
+      }
       const t1 = Math.max(leg.to * dur, leg.t0 + 0.05);
       const t = Math.min(v.currentTime, t1);
       p = clamp((t - leg.t0) / (t1 - leg.t0));
