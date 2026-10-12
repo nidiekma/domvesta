@@ -336,10 +336,26 @@ function radialTexture() {
 // smaller orb). Must match the page's --cy on portrait.
 // landscapeFit: visible world height on landscape (larger = smaller orb);
 // the page's ring sizes should scale with it.
+// colors: per-page tint of the cage and the haze; the core stays orange.
+// setFrame() (on the returned handle) places the orb explicitly instead: centre
+// y and cage diameter in CSS px of the canvas, e.g. to fit a measured gap.
+export type OrbColors = { shell: number; inner: number; nodes: number; smoke: number; edgeGlow: number };
+const DEFAULT_COLORS: OrbColors = { shell: 0x232323, inner: 0x2e2a28, nodes: 0x1c1c1c, smoke: 0x241812, edgeGlow: 0xffa04a };
+// World units a setFrame() size spans: the cage's diameter (radius 0.95 plus
+// its noise displacement).
+const FRAME_SPAN = 2;
+
 export function mountOrb(
   canvas: HTMLCanvasElement,
-  opts: { introDrop?: [number, number]; portraitLift?: number; portraitFit?: number; landscapeFit?: number } = {},
+  opts: {
+    introDrop?: [number, number];
+    portraitLift?: number;
+    portraitFit?: number;
+    landscapeFit?: number;
+    colors?: Partial<OrbColors>;
+  } = {},
 ) {
+  const colors = { ...DEFAULT_COLORS, ...opts.colors };
   const [dropLandscape, dropPortrait] = opts.introDrop ?? [0.14, 0.3];
   const portraitLift = opts.portraitLift ?? 0.12;
   const portraitFit = opts.portraitFit ?? 1.15;
@@ -367,7 +383,7 @@ export function mountOrb(
         uAmp: { value: amp },
         uFreq: { value: freq },
         uColor: { value: new THREE.Color(color) },
-        uGlow: { value: new THREE.Color(0xffa04a) },
+        uGlow: { value: new THREE.Color(colors.edgeGlow) },
         uOpacity: { value: opacity },
         uIntensity: intensity,
       },
@@ -385,7 +401,7 @@ export function mountOrb(
         uFreq: { value: freq },
         uPixelRatio: { value: pixelRatio },
         uSize: { value: size },
-        uColor: { value: new THREE.Color(0x1c1c1c) },
+        uColor: { value: new THREE.Color(colors.nodes) },
         uOpacity: { value: opacity },
       },
       transparent: true,
@@ -394,12 +410,12 @@ export function mountOrb(
 
   // Outer faceted shell + its vertex nodes.
   const outerGeo = facetedIcosphere(0.95, 3, 0.55);
-  const outer = new THREE.LineSegments(new THREE.WireframeGeometry(outerGeo), shellMaterial(0x232323, 0.85, 0.11, 1.6));
+  const outer = new THREE.LineSegments(new THREE.WireframeGeometry(outerGeo), shellMaterial(colors.shell, 0.85, 0.11, 1.6));
   const outerNodes = new THREE.Points(outerGeo, nodeMaterial(0.11, 1.6, 2.6, 0.8));
 
   // Inner tangle: smaller, noisier, counter-rotating.
   const innerGeo = facetedIcosphere(0.5, 2, 0.2);
-  const inner = new THREE.LineSegments(new THREE.WireframeGeometry(innerGeo), shellMaterial(0x2e2a28, 0.5, 0.32, 2.6));
+  const inner = new THREE.LineSegments(new THREE.WireframeGeometry(innerGeo), shellMaterial(colors.inner, 0.5, 0.32, 2.6));
 
   const shell = new THREE.Group();
   shell.add(outer, outerNodes);
@@ -409,7 +425,7 @@ export function mountOrb(
   // Smoky dark haze behind the core.
   const glowTex = radialTexture();
   const smoke = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: glowTex, color: 0x241812, opacity: 0.55, transparent: true, depthWrite: false }),
+    new THREE.SpriteMaterial({ map: glowTex, color: colors.smoke, opacity: 0.55, transparent: true, depthWrite: false }),
   );
   smoke.scale.setScalar(1.35);
 
@@ -496,6 +512,7 @@ export function mountOrb(
   let visibleH = 2.65;
   let baseY = 0;
   let introDrop = dropLandscape;
+  let frame: { y: number; size: number } | null = null;
   const resize = () => {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
@@ -507,6 +524,10 @@ export function mountOrb(
     visibleH = aspect < 1.15 ? 2.65 * (Math.max(1.15, aspect < 1 ? portraitFit : 1.15) / aspect) : landscapeFit;
     baseY = aspect < 1 ? visibleH * portraitLift : 0;
     introDrop = aspect < 1 ? dropPortrait : dropLandscape;
+    if (frame) {
+      visibleH = (FRAME_SPAN * h) / frame.size;
+      baseY = ((h / 2 - frame.y) / h) * visibleH;
+    }
     camera.position.z = visibleH / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     camera.updateProjectionMatrix();
     if (reducedMotion) render(6);
@@ -572,6 +593,10 @@ export function mountOrb(
   else start();
 
   return {
+    setFrame(f: { y: number; size: number } | null) {
+      frame = f;
+      resize();
+    },
     setProgress(intro: number, cover: number) {
       progress.intro = intro;
       progress.cover = cover;

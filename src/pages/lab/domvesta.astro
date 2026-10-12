@@ -7,7 +7,11 @@
 // A pinned, full-viewport stage scrubs the opening like Optimind, minus its
 // intro panel: one orb hero (headline left, lede + CTA right) → the benefit
 // panel wipes up with its cards and embossed icons already in place.
-// Everything after that scrolls normally in the same grey/amber/wide-type style.
+// Everything after that scrolls normally in the same wide-type style.
+//
+// Colours follow the Domvesta brand (DESIGN.md), not Optimind's grey: warm
+// paper and espresso ink, orange acts (CTAs, glows, progress), blue reassures
+// (the orb's cage like the logo's cubes, numbering, trust, the dark band).
 import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource/schibsted-grotesk/400.css";
 
@@ -134,28 +138,39 @@ const faq = [
       <!-- ============ 001–002: pinned opening (hero → benefit cards) ============ -->
       <div class="track" id="top">
         <div class="pin" style="--t2:0">
-          <div class="hero-bg" aria-hidden="true"></div>
-          <div class="rings" aria-hidden="true"><span></span><span></span></div>
-          <div class="bokeh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-          <canvas class="orb" aria-hidden="true"></canvas>
-          <div class="hero-text">
-            <section class="hero-main" aria-labelledby="hero-title">
-              <span class="eyebrow">Für Hausverwaltungen</span>
-              <h1 id="hero-title">
-                Strom. Gas.<br />Versicherung.<br />Ein Ansprechpartner.<br />Mehr Übersicht.<br />Weniger Aufwand.
-              </h1>
-            </section>
-            <div class="hero-side">
-              <p class="hero-lede">
-                Bündeln Sie Ihre Energieverträge, digitalisieren Sie Ihre Verwaltung und optimieren Sie die Absicherung Ihrer
-                Immobilien. Domvesta verbindet passende Rahmenvertragslösungen mit persönlicher Betreuung – damit Sie mehr
-                Zeit für Ihr Kerngeschäft haben.
-              </p>
-              <a class="btn btn-dark" href={cta}>Unverbindliches Erstgespräch vereinbaren</a>
+          <div class="hero">
+            <div class="hero-bg" aria-hidden="true"></div>
+            <div class="rings" aria-hidden="true"><span></span><span></span></div>
+            <div class="bokeh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <canvas class="orb" aria-hidden="true"></canvas>
+            <div class="hero-text">
+              <section class="hero-main" aria-labelledby="hero-title">
+                <span class="eyebrow">Für Hausverwaltungen</span>
+                <h1 id="hero-title">
+                  Strom. Gas.<br />Versicherung.<br /><em>Ein Ansprechpartner.</em><br />Mehr Übersicht.<br />Weniger Aufwand.
+                </h1>
+              </section>
+              <div class="hero-side">
+                <p class="hero-lede">
+                  Bündeln Sie Ihre Energieverträge, digitalisieren Sie Ihre Verwaltung und optimieren Sie die Absicherung Ihrer
+                  Immobilien. Domvesta verbindet passende Rahmenvertragslösungen mit persönlicher Betreuung – damit Sie mehr
+                  Zeit für Ihr Kerngeschäft haben.
+                </p>
+                <a class="btn btn-solid" href={cta}>Unverbindliches Erstgespräch vereinbaren</a>
+              </div>
+            </div>
+
+            <span class="count count-fixed" aria-hidden="true">001 / {TOTAL}</span>
+            <div class="scroll-cue" aria-hidden="true">
+              <svg viewBox="0 0 14 22" width="14" height="22">
+                <rect x="0.75" y="0.75" width="12.5" height="20.5" rx="6.25" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+                <rect class="wheel" x="6.2" y="5" width="1.6" height="4" rx="0.8" fill="currentColor"></rect>
+              </svg>
             </div>
           </div>
 
           <section class="services" id="leistungen" aria-labelledby="leistungen-title">
+            <span class="count services-count" aria-hidden="true">002 / {TOTAL}</span>
             <header class="services-head">
               <h2 id="leistungen-title">Viele Liegenschaften.<br />Eine klare Lösung.</h2>
               <p>
@@ -166,7 +181,7 @@ const faq = [
             </header>
             <div class="cards">
               {
-                benefits.map((b, i) => (
+                benefits.map((b) => (
                   <article class="card">
                     <canvas class="icon" data-icon={b.icon} aria-hidden="true" />
                     <div class="card-copy">
@@ -178,14 +193,6 @@ const faq = [
               }
             </div>
           </section>
-
-          <span class="count count-fixed" aria-hidden="true">001 / {TOTAL}</span>
-          <div class="scroll-cue" aria-hidden="true">
-            <svg viewBox="0 0 14 22" width="14" height="22">
-              <rect x="0.75" y="0.75" width="12.5" height="20.5" rx="6.25" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
-              <rect class="wheel" x="6.2" y="5" width="1.6" height="4" rx="0.8" fill="currentColor"></rect>
-            </svg>
-          </div>
         </div>
       </div>
 
@@ -380,7 +387,7 @@ const faq = [
             Lassen Sie uns gemeinsam herausfinden, wie Sie Strom, Gas und Versicherungen in Ihrem Bestand einfacher organisieren
             können.
           </p>
-          <a class="btn btn-dark reveal" href={cta}>Unverbindliches Erstgespräch vereinbaren</a>
+          <a class="btn btn-solid reveal" href={cta}>Unverbindliches Erstgespräch vereinbaren</a>
           <p class="reveal mail">Oder schreiben Sie uns: <a href={`mailto:${mail}`}>{mail}</a></p>
         </div>
       </section>
@@ -389,8 +396,8 @@ const faq = [
     <footer class="foot">
       <span>© Domvesta</span>
       <nav aria-label="Rechtliches">
-        <a href="/impressum">Impressum</a>
-        <a href="/datenschutz">Datenschutz</a>
+        <a href="/lab/domvesta/impressum">Impressum</a>
+        <a href="/lab/domvesta/datenschutz">Datenschutz</a>
       </nav>
     </footer>
 
@@ -401,7 +408,12 @@ const faq = [
       const track = document.querySelector<HTMLElement>(".track")!;
       const pin = document.querySelector<HTMLElement>(".pin")!;
       const nav = document.querySelector<HTMLElement>(".nav")!;
+      const hero = document.querySelector<HTMLElement>(".hero")!;
+      const heroMain = document.querySelector<HTMLElement>(".hero-main")!;
+      const services = document.querySelector<HTMLElement>(".services")!;
       const countFixed = document.querySelector<HTMLElement>(".count-fixed")!;
+      // Same query as the CSS phone block: no scrubbed wipe there (see placeOrb, update).
+      const phoneMq = window.matchMedia("(max-aspect-ratio: 1/1), (max-width: 720px)");
       const navLinks = document.querySelectorAll<HTMLElement>("[data-nav]");
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -416,10 +428,39 @@ const faq = [
       }
       const orbCanvas = document.querySelector<HTMLCanvasElement>("canvas.orb")!;
       // Smaller orb than Optimind so the hero text has room on both sides (rings
-      // shrink to match); on phones it sits up top with the text below (--cy: 27%).
-      const orb = safeMount("orb", () => mountOrb(orbCanvas, { portraitLift: 0.23, portraitFit: 1.6, landscapeFit: 3.1 }));
+      // shrink to match); on phones placeOrb() sizes it to the gap above the text.
+      const orb = safeMount("orb", () => mountOrb(orbCanvas, {
+          landscapeFit: 3.1,
+          // Navy cage around the orange core, like the logo's cubes around the hexagon.
+          colors: { shell: 0x1f4e8c, inner: 0x4a72aa, nodes: 0x173b6b, smoke: 0x9a3d0c, edgeGlow: 0xff8a3a },
+        }));
       if (!orb) orbCanvas.remove();
-      const icons = safeMount("icons", () => mountIcons([...document.querySelectorAll<HTMLCanvasElement>("canvas.icon")]));
+      const icons = safeMount("icons", () => mountIcons([...document.querySelectorAll<HTMLCanvasElement>("canvas.icon")], {
+          colors: { body: 0xe8d3b4, ground: 0xd9c2a3, shadow: 0x3a220c },
+        }));
+
+      // Phones: the orb fills the gap between the counter and the headline, as wide
+      // as the screen allows. On short screens it keeps a minimum size and tucks
+      // under the headline (the paper halo on the h1 keeps that legible).
+      // Rings and the background glow follow via --cy / --orb.
+      function placeOrb() {
+        if (!phoneMq.matches) {
+          pin.style.removeProperty("--cy");
+          pin.style.removeProperty("--orb");
+          orb?.setFrame(null);
+          return;
+        }
+        const box = hero.getBoundingClientRect();
+        const top = countFixed.getBoundingClientRect().bottom - box.top + 12;
+        const free = heroMain.getBoundingClientRect().top - box.top - 16 - top;
+        const size = Math.min(box.width * 0.86, Math.max(free, box.width * 0.52));
+        const y = top + Math.max(free, size) / 2;
+        pin.style.setProperty("--cy", `${y.toFixed(1)}px`);
+        pin.style.setProperty("--orb", `${size.toFixed(1)}px`);
+        orb?.setFrame({ y, size });
+      }
+      placeOrb();
+      document.fonts.ready.then(placeOrb);
 
       // --- pinned opening: p runs 0→1 over the track: short hold on the hero, then the wipe
       const clamp = (v: number) => Math.min(1, Math.max(0, v));
@@ -438,22 +479,25 @@ const faq = [
       let queued = false;
       function update() {
         queued = false;
+        const phone = phoneMq.matches;
         const max = maxScroll();
         const p = max > 0 ? clamp((window.scrollY - track.offsetTop) / max) : 0;
-        const t2 = seg(p, 0.2, 0.75);
+        // Phones: no wipe; t2 is simply how far the cards have covered the hero.
+        const t2 = phone ? clamp((window.scrollY - track.offsetTop) / hero.offsetHeight) : seg(p, 0.2, 0.75);
         pin.style.setProperty("--t2", t2.toFixed(4));
-        countFixed.textContent = t2 > 0.5 ? "002 / 009" : "001 / 009";
+        countFixed.textContent = !phone && t2 > 0.5 ? "002 / 009" : "001 / 009";
 
+        const cards = services.getBoundingClientRect();
         // Pin still on screen? (It scrolls away once the track ends.)
         const pinOnScreen = window.scrollY < track.offsetTop + track.offsetHeight;
         orb?.setProgress(0, t2);
         // Icons are simply there (fully revealed); they only follow the pointer.
-        icons?.set(1, t2 > 0 && pinOnScreen);
+        icons?.set(1, phone ? cards.top < window.innerHeight && cards.bottom > 0 : t2 > 0 && pinOnScreen);
 
         // Transparent over the pinned opening (like Optimind), frosted once
-        // normal sections start scrolling underneath.
-        nav.classList.toggle("solid", window.scrollY > track.offsetTop + max - 1);
-        pinnedActive = t2 > 0.5 ? "leistungen" : null;
+        // normal sections (on phones: the cards) start scrolling underneath.
+        nav.classList.toggle("solid", phone ? cards.top < nav.offsetHeight : window.scrollY > track.offsetTop + max - 1);
+        pinnedActive = !phone && t2 > 0.5 ? "leistungen" : null;
         if (!visible.size) setActive(pinnedActive);
       }
       const queue = () => {
@@ -463,17 +507,35 @@ const faq = [
         }
       };
       window.addEventListener("scroll", queue, { passive: true });
-      window.addEventListener("resize", queue);
+      window.addEventListener("resize", () => {
+        placeOrb();
+        queue();
+      });
+      phoneMq.addEventListener("change", () => {
+        placeOrb();
+        queue();
+      });
       update();
 
-      // Jumps into the pinned timeline go to a progress value, not an element.
+      // Jumps into the pinned timeline go to a progress value, not an element
+      // (on phones the cards are a normal section after the hero).
+      const gotoTop = (step: number) =>
+        step === 1 && phoneMq.matches
+          ? services.getBoundingClientRect().top + window.scrollY
+          : track.offsetTop + step * maxScroll();
       document.querySelectorAll<HTMLElement>("[data-goto]").forEach((el) =>
         el.addEventListener("click", (e) => {
           e.preventDefault();
-          const top = track.offsetTop + Number(el.dataset.goto) * maxScroll();
-          window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+          window.scrollTo({ top: gotoTop(Number(el.dataset.goto)), behavior: reduce ? "auto" : "smooth" });
         }),
       );
+      // Same for arriving with #leistungen (e.g. from the legal pages): the cards
+      // live inside the pinned stage, so the browser's own anchor jump stays on the hero.
+      const jumpToHash = () => {
+        if (location.hash === "#leistungen") window.scrollTo({ top: gotoTop(1), behavior: "instant" });
+      };
+      jumpToHash();
+      window.addEventListener("load", jumpToHash, { once: true });
 
       // --- active nav link: whichever section crosses the middle of the viewport
       const sections = [...document.querySelectorAll<HTMLElement>("main > section[id]")];
@@ -503,7 +565,7 @@ const faq = [
 
     <style is:global>
       html {
-        background: #c8c8c8;
+        background: #f6e8d3;
         scroll-padding-top: 90px;
       }
       @media (prefers-reduced-motion: no-preference) {
@@ -513,7 +575,7 @@ const faq = [
       }
       body {
         margin: 0;
-        color: #1d1d1d;
+        color: #2a1c10;
         font-family: "Schibsted Grotesk", system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
@@ -522,11 +584,13 @@ const faq = [
     <style>
       :root {
         --pad: 3.6vw;
-        --panel: #c8c8c8;
-        --ink: #1d1d1d;
-        --muted: #5c5c5c;
-        --line: rgb(0 0 0 / 0.16);
-        --amber: #ffb04a;
+        --panel: #f6e8d3;
+        --ink: #2a1c10;
+        --text: #4a3826;
+        --muted: #6b5742;
+        --line: rgb(42 28 16 / 0.14);
+        --orange: #e8651b;
+        --blue: #1f4e8c;
       }
 
       /* --- type --- */
@@ -550,12 +614,12 @@ const faq = [
       .lede {
         font-size: clamp(14px, 1.15vw, 18px);
         line-height: 1.55;
-        color: #474747;
+        color: var(--text);
       }
       .count {
         font: clamp(8px, 0.62vw, 10px) / 1 "Archivo Variable", sans-serif;
         letter-spacing: 0.06em;
-        color: rgb(0 0 0 / 0.6);
+        color: rgb(42 28 16 / 0.6);
       }
       .dots {
         display: flex;
@@ -566,13 +630,16 @@ const faq = [
         width: 4px;
         height: 4px;
         border-radius: 50%;
-        background: var(--ink);
+        background: var(--orange);
+      }
+      .dots i + i {
+        background: var(--blue);
       }
       .row-num {
         font: clamp(9px, 0.7vw, 11px) / 1 "Archivo Variable", sans-serif;
         font-stretch: 125%;
         letter-spacing: 0.08em;
-        color: rgb(0 0 0 / 0.5);
+        color: var(--blue);
       }
 
       /* --- buttons --- */
@@ -592,29 +659,34 @@ const faq = [
         text-decoration: none;
         transition: box-shadow 0.3s, background-color 0.3s;
       }
-      .btn-dark {
+      /* Signal orange like the live site's CTA; the deeper bottom keeps white
+         text legible (the live site accepts 3.3:1 on flat #e8651b). */
+      .btn-solid {
         color: #fff;
-        background: #0d0d0d;
-        border: 1px solid rgb(255 176 74 / 0.75);
+        background: linear-gradient(180deg, #ee7430, #cc520e);
+        border: 1px solid rgb(255 196 140 / 0.6);
         box-shadow:
-          0 -3px 12px -2px rgb(255 160 50 / 0.55),
-          inset 0 1px 0 rgb(255 200 120 / 0.5);
+          0 -3px 14px -2px rgb(255 140 50 / 0.5),
+          0 12px 26px -14px rgb(204 82 14 / 0.8),
+          inset 0 1px 0 rgb(255 222 186 / 0.55);
       }
-      .btn-dark:hover {
+      .btn-solid:hover {
         box-shadow:
-          0 -3px 18px 0 rgb(255 160 50 / 0.75),
-          inset 0 1px 0 rgb(255 200 120 / 0.7);
+          0 -3px 20px 0 rgb(255 140 50 / 0.7),
+          0 14px 30px -12px rgb(204 82 14 / 0.9),
+          inset 0 1px 0 rgb(255 222 186 / 0.75);
       }
       .btn-line {
-        color: #2a2a2a;
-        border: 1px solid rgb(0 0 0 / 0.35);
+        color: var(--blue);
+        border: 1px solid rgb(31 78 140 / 0.5);
       }
       .btn-line:hover {
-        background: rgb(255 255 255 / 0.25);
+        color: #fff;
+        background: var(--blue);
       }
       a:focus-visible,
       summary:focus-visible {
-        outline: 2px solid var(--amber);
+        outline: 2px solid var(--orange);
         outline-offset: 3px;
       }
 
@@ -630,7 +702,7 @@ const faq = [
         font-family: "Archivo Variable", system-ui, sans-serif;
         font-stretch: 112%;
         text-transform: uppercase;
-        color: #1f1f1f;
+        color: var(--ink);
         transition: background-color 0.4s, backdrop-filter 0.4s, padding 0.4s;
       }
       .nav::after {
@@ -643,7 +715,7 @@ const faq = [
         background: var(--line);
       }
       .nav.solid {
-        background: rgb(200 200 200 / 0.72);
+        background: rgb(246 232 211 / 0.94);
         backdrop-filter: blur(16px) saturate(1.1);
         -webkit-backdrop-filter: blur(16px) saturate(1.1);
       }
@@ -683,8 +755,8 @@ const faq = [
         height: 2px;
         translate: -50% 50%;
         border-radius: 2px;
-        background: linear-gradient(90deg, transparent, #ffc070 30%, var(--amber) 70%, transparent);
-        box-shadow: 0 0 10px 2px rgb(255 170 60 / 0.6);
+        background: linear-gradient(90deg, transparent, #ff9a55 30%, var(--orange) 70%, transparent);
+        box-shadow: 0 0 10px 2px rgb(240 120 40 / 0.5);
         opacity: 0;
         transition: opacity 0.4s;
       }
@@ -703,14 +775,21 @@ const faq = [
         height: 100svh;
         overflow: hidden;
       }
-      .pin > * {
+      .pin > *,
+      .hero > * {
         position: absolute;
+      }
+      .hero {
+        inset: 0;
+      }
+      .services-count {
+        display: none; /* desktop: .count-fixed switches to 002 instead */
       }
       .hero-bg {
         inset: 0;
         background:
-          radial-gradient(55% 70% at 52% var(--cy), rgb(240 240 240 / 0.5), transparent 70%),
-          linear-gradient(100deg, #9d9d9d 0%, #bdbdbd 38%, #d6d6d6 72%, #e0e0e0 100%);
+          radial-gradient(55% 70% at 52% var(--cy), rgb(255 196 140 / 0.45), transparent 70%),
+          linear-gradient(100deg, #ecd2b2 0%, #f2e0c8 38%, #f8ebda 72%, #fbf2e4 100%);
       }
       .rings,
       .bokeh {
@@ -729,20 +808,19 @@ const faq = [
       }
       .rings span:first-child {
         width: min(72svh, 80vw);
-        border: 1px solid rgb(255 255 255 / 0.4);
-        box-shadow: 0 0 0 1px rgb(0 0 0 / 0.04);
+        border: 1px solid rgb(232 101 27 / 0.3);
       }
       .rings span:last-child {
         width: min(63svh, 70vw);
-        border: 1px solid rgb(255 255 255 / 0.22);
-        background: radial-gradient(closest-side, rgb(255 255 255 / 0.18), transparent);
+        border: 1px solid rgb(31 78 140 / 0.16);
+        background: radial-gradient(closest-side, rgb(255 255 255 / 0.3), transparent);
       }
       .bokeh i {
         position: absolute;
         aspect-ratio: 1;
         border-radius: 50%;
-        background: radial-gradient(circle, rgb(255 214 160 / 0.4), rgb(255 200 140 / 0.12) 60%, transparent 72%);
-        border: 1px solid rgb(255 225 190 / 0.22);
+        background: radial-gradient(circle, rgb(255 170 100 / 0.42), rgb(255 160 90 / 0.12) 60%, transparent 72%);
+        border: 1px solid rgb(255 190 130 / 0.32);
         filter: blur(0.6px);
       }
       .bokeh i:nth-child(1) { left: 18%; top: 37%; width: 7.5svh; }
@@ -756,8 +834,8 @@ const faq = [
         display: block;
         pointer-events: none;
       }
-      /* Hero: headline left (white, over the orb's edge like Optimind),
-         lede + CTA right of the orb (dark, on the light side of the gradient). */
+      /* Hero: headline left (over the orb's edge like Optimind, one line in
+         orange like the live site), lede + CTA right of the orb. */
       .hero-text {
         inset: 0;
         z-index: 2;
@@ -770,12 +848,14 @@ const faq = [
       .hero-text a {
         pointer-events: auto;
       }
-      .hero-main {
-        color: #fff;
-      }
       .hero-main h1 {
         font-size: clamp(22px, 2.2vw, 42px);
-        text-shadow: 0 1px 18px rgb(0 0 0 / 0.14);
+        /* Paper halo lifts the type off the cage lines it overlaps. */
+        text-shadow: 0 0 14px rgb(251 242 228 / 0.9);
+      }
+      .hero-main em {
+        font-style: normal;
+        color: #d9580f;
       }
       .eyebrow {
         display: block;
@@ -784,7 +864,7 @@ const faq = [
         font-stretch: 125%;
         letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: rgb(255 255 255 / 0.85);
+        color: var(--blue);
       }
       .eyebrow::before {
         content: "";
@@ -793,8 +873,8 @@ const faq = [
         height: 6px;
         margin-right: 10px;
         border-radius: 50%;
-        background: var(--amber);
-        box-shadow: 0 0 8px 2px rgb(255 170 60 / 0.6);
+        background: var(--orange);
+        box-shadow: 0 0 8px 2px rgb(240 120 40 / 0.5);
         vertical-align: 1px;
       }
       .hero-side {
@@ -807,7 +887,7 @@ const faq = [
         margin: 0;
         font-size: clamp(13px, 1vw, 17px);
         line-height: 1.6;
-        color: #3c3c3c;
+        color: var(--text);
       }
       .count-fixed {
         left: var(--pad);
@@ -838,7 +918,7 @@ const faq = [
         margin: 0;
         font-size: clamp(12px, 0.95vw, 15px);
         line-height: 1.6;
-        color: #4a4a4a;
+        color: var(--muted);
       }
       .cards {
         flex: 1;
@@ -851,9 +931,9 @@ const faq = [
         position: relative;
         display: flex;
         flex-direction: column;
-        border: 1px solid rgb(0 0 0 / 0.17);
+        border: 1px solid rgb(42 28 16 / 0.14);
         border-radius: 16px;
-        background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02));
+        background: linear-gradient(180deg, rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.2));
         overflow: hidden;
       }
       .icon {
@@ -876,14 +956,14 @@ const faq = [
         min-height: 3.2em; /* 2 lines, so titles line up across cards */
         font-size: clamp(11px, 0.85vw, 14px);
         line-height: 1.6;
-        color: #666;
+        color: var(--muted);
       }
       .scroll-cue {
         z-index: 10;
         left: 50%;
         bottom: 3.2svh;
         translate: -50% 0;
-        color: rgb(0 0 0 / 0.45);
+        color: rgb(42 28 16 / 0.45);
         opacity: calc(1 - var(--t2) * 3);
       }
       .wheel {
@@ -963,7 +1043,7 @@ const faq = [
         max-width: 40em;
         font-size: clamp(12px, 0.85vw, 14px);
         line-height: 1.6;
-        color: rgb(0 0 0 / 0.5);
+        color: rgb(42 28 16 / 0.55);
       }
 
       /* tiles (Versicherungen) */
@@ -983,9 +1063,9 @@ const faq = [
         row-gap: 2svh;
         padding: 3.4svh 2vw;
         box-sizing: border-box;
-        border: 1px solid rgb(0 0 0 / 0.17);
+        border: 1px solid rgb(42 28 16 / 0.14);
         border-radius: 16px;
-        background: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02));
+        background: linear-gradient(180deg, rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.2));
       }
       .tile h3 {
         margin-bottom: 0;
@@ -994,17 +1074,17 @@ const faq = [
         margin: 8svh 0 0;
         max-width: 26em;
         padding-left: 1.6vw;
-        border-left: 2px solid var(--amber);
+        border-left: 2px solid var(--orange);
         font-size: clamp(16px, 1.5vw, 24px);
         line-height: 1.45;
         color: var(--ink);
       }
 
-      /* dark decision section */
+      /* dark decision section: trust blue with the orange glow */
       .dark {
         overflow: hidden;
-        background: #121212;
-        color: #f2f2f2;
+        background: linear-gradient(160deg, #1f4e8c 0%, #18406f 45%, #112c4f 100%);
+        color: #f8f0e6;
         border-top: 0;
       }
       .dark > .count {
@@ -1017,7 +1097,9 @@ const faq = [
         width: 60vw;
         aspect-ratio: 1;
         border-radius: 50%;
-        background: radial-gradient(closest-side, rgb(255 150 50 / 0.28), rgb(255 120 30 / 0.08) 55%, transparent);
+        /* Light-blue sheen, not orange: orange over navy only mixes to brown.
+           The warmth stays in the orange numbers and the closing line. */
+        background: radial-gradient(closest-side, rgb(110 160 225 / 0.28), rgb(80 130 200 / 0.08) 55%, transparent);
         filter: blur(20px);
         pointer-events: none;
       }
@@ -1029,7 +1111,7 @@ const faq = [
         list-style: none;
         margin: 8svh 0 0;
         padding: 0;
-        border-top: 1px solid rgb(255 255 255 / 0.14);
+        border-top: 1px solid rgb(255 255 255 / 0.16);
       }
       .questions li {
         display: grid;
@@ -1037,12 +1119,12 @@ const faq = [
         gap: 1vw;
         align-items: baseline;
         padding: 3.2svh 0;
-        border-bottom: 1px solid rgb(255 255 255 / 0.14);
+        border-bottom: 1px solid rgb(255 255 255 / 0.16);
         font-size: clamp(17px, 1.7vw, 28px);
         line-height: 1.35;
       }
       .questions .row-num {
-        color: var(--amber);
+        color: #ff9a55;
       }
       .dark-foot {
         position: relative;
@@ -1056,12 +1138,12 @@ const faq = [
         max-width: 32em;
         font-size: clamp(14px, 1.05vw, 17px);
         line-height: 1.6;
-        color: rgb(255 255 255 / 0.7);
+        color: rgb(255 255 255 / 0.78);
       }
       .glow-text {
         grid-column: 2;
-        color: #ffd29a !important;
-        text-shadow: 0 0 24px rgb(255 160 60 / 0.35);
+        color: #ffc690 !important;
+        text-shadow: 0 0 24px rgb(255 140 50 / 0.4);
       }
 
       /* team */
@@ -1080,9 +1162,9 @@ const faq = [
         border-radius: 20px;
         overflow: hidden;
         background:
-          radial-gradient(60% 55% at 50% 62%, rgb(255 190 110 / 0.45), transparent 70%),
-          linear-gradient(100deg, #9d9d9d 0%, #bdbdbd 40%, #d9d9d9 100%);
-        border: 1px solid rgb(255 255 255 / 0.4);
+          radial-gradient(60% 55% at 50% 62%, rgb(255 170 100 / 0.5), transparent 70%),
+          linear-gradient(100deg, #ecd2b2 0%, #f2e0c8 40%, #f8ebda 100%);
+        border: 1px solid rgb(42 28 16 / 0.12);
       }
       .team-rings {
         position: absolute;
@@ -1091,17 +1173,17 @@ const faq = [
       }
       .team-rings span:first-child {
         width: 86%;
-        border: 1px solid rgb(255 255 255 / 0.45);
+        border: 1px solid rgb(232 101 27 / 0.3);
       }
       .team-rings span:last-child {
         width: 70%;
-        border: 1px solid rgb(255 255 255 / 0.25);
+        border: 1px solid rgb(31 78 140 / 0.16);
       }
       .team-photo img {
         position: relative;
         width: 92%;
         height: auto;
-        filter: saturate(0.85) drop-shadow(0 20px 30px rgb(0 0 0 / 0.18));
+        filter: drop-shadow(0 20px 30px rgb(42 28 16 / 0.2));
       }
       .team-copy h2 {
         margin-bottom: 4svh;
@@ -1114,7 +1196,7 @@ const faq = [
         color: var(--muted);
       }
       .team-copy .lede {
-        color: #3a3a3a;
+        color: var(--text);
       }
       .team-copy strong {
         font-weight: 500;
@@ -1131,8 +1213,9 @@ const faq = [
         flex-direction: column;
         gap: 1.2svh;
         padding: 2.6svh 1.6vw;
-        border: 1px solid rgb(0 0 0 / 0.17);
+        border: 1px solid rgb(42 28 16 / 0.14);
         border-radius: 14px;
+        background: rgb(255 255 255 / 0.35);
       }
       .person-name {
         font: 400 clamp(12px, 0.95vw, 16px) / 1.2 "Archivo Variable", sans-serif;
@@ -1142,7 +1225,7 @@ const faq = [
       }
       .person-role {
         font-size: clamp(12px, 0.85vw, 14px);
-        color: var(--muted);
+        color: var(--blue);
       }
       .trust {
         display: flex;
@@ -1151,9 +1234,9 @@ const faq = [
         gap: 3vw;
         margin-top: 10svh;
         padding: 3.6svh 2.4vw;
-        border: 1px solid rgb(0 0 0 / 0.17);
+        border: 1px solid rgb(31 78 140 / 0.18);
         border-radius: 16px;
-        background: linear-gradient(90deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.03));
+        background: linear-gradient(90deg, #dbe6f3, rgb(219 230 243 / 0.45));
       }
       .trust h3 {
         font-size: clamp(16px, 1.35vw, 22px);
@@ -1197,8 +1280,8 @@ const faq = [
       }
       .step::after {
         width: 0;
-        background: linear-gradient(90deg, #ffc070, var(--amber));
-        box-shadow: 0 0 10px 1px rgb(255 170 60 / 0.55);
+        background: linear-gradient(90deg, #ff9a55, var(--orange));
+        box-shadow: 0 0 10px 1px rgb(240 120 40 / 0.45);
         transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--d, 0) * 0.25s + 0.2s);
       }
       .step.in::after {
@@ -1209,8 +1292,8 @@ const faq = [
         margin-bottom: 3svh;
         font: 300 clamp(48px, 6vw, 104px) / 0.9 "Archivo Variable", sans-serif;
         font-stretch: 125%;
-        color: rgb(255 255 255 / 0.55);
-        -webkit-text-stroke: 1px rgb(0 0 0 / 0.18);
+        color: #fff;
+        -webkit-text-stroke: 1px rgb(31 78 140 / 0.5);
       }
       .step h3 {
         margin-bottom: 1.6svh;
@@ -1249,7 +1332,7 @@ const faq = [
         flex: none;
         width: 28px;
         height: 28px;
-        border: 1px solid rgb(0 0 0 / 0.3);
+        border: 1px solid rgb(42 28 16 / 0.3);
         border-radius: 50%;
         transition: transform 0.35s, background-color 0.35s, border-color 0.35s;
       }
@@ -1269,10 +1352,10 @@ const faq = [
       }
       .faq details[open] .plus {
         transform: rotate(45deg);
-        background: #0d0d0d;
-        border-color: rgb(255 176 74 / 0.75);
+        background: var(--orange);
+        border-color: var(--orange);
         color: #fff;
-        box-shadow: 0 0 10px rgb(255 160 50 / 0.45);
+        box-shadow: 0 0 10px rgb(240 120 40 / 0.45);
       }
       .faq details p {
         margin: 0;
@@ -1292,8 +1375,8 @@ const faq = [
         place-items: center;
         text-align: center;
         background:
-          radial-gradient(55% 70% at 50% 50%, rgb(240 240 240 / 0.5), transparent 70%),
-          linear-gradient(100deg, #9d9d9d 0%, #bdbdbd 38%, #d6d6d6 72%, #e0e0e0 100%);
+          radial-gradient(55% 70% at 50% 50%, rgb(255 196 140 / 0.35), transparent 70%),
+          linear-gradient(100deg, #ecd2b2 0%, #f2e0c8 38%, #f8ebda 72%, #fbf2e4 100%);
       }
       .contact-rings {
         position: absolute;
@@ -1302,12 +1385,12 @@ const faq = [
       }
       .contact-rings span:first-child {
         width: min(96svh, 96vw);
-        border: 1px solid rgb(255 255 255 / 0.45);
+        border: 1px solid rgb(232 101 27 / 0.28);
       }
       .contact-rings span:last-child {
         width: min(80svh, 82vw);
-        border: 1px solid rgb(255 255 255 / 0.25);
-        background: radial-gradient(closest-side, rgb(255 255 255 / 0.2), transparent);
+        border: 1px solid rgb(31 78 140 / 0.16);
+        background: radial-gradient(closest-side, rgb(255 255 255 / 0.3), transparent);
       }
       .contact-glow {
         position: absolute;
@@ -1316,7 +1399,7 @@ const faq = [
         width: 70vw;
         height: 40svh;
         translate: -50% 0;
-        background: radial-gradient(closest-side, rgb(255 168 70 / 0.5), rgb(255 150 50 / 0.15) 55%, transparent);
+        background: radial-gradient(closest-side, rgb(255 140 60 / 0.5), rgb(255 130 50 / 0.15) 55%, transparent);
         filter: blur(30px);
         pointer-events: none;
       }
@@ -1334,11 +1417,11 @@ const faq = [
       .mail {
         margin: 0;
         font-size: clamp(13px, 0.95vw, 15px);
-        color: #4a4a4a;
+        color: var(--muted);
       }
       .mail a {
         color: var(--ink);
-        text-decoration-color: var(--amber);
+        text-decoration-color: var(--orange);
         text-underline-offset: 4px;
       }
 
@@ -1350,7 +1433,7 @@ const faq = [
         background: var(--panel);
         border-top: 1px solid var(--line);
         font-size: 12px;
-        color: rgb(0 0 0 / 0.55);
+        color: rgb(42 28 16 / 0.6);
       }
       .foot nav {
         display: flex;
@@ -1383,10 +1466,10 @@ const faq = [
           --pad: 6vw;
         }
         .pin {
-          --cy: 27%;
+          --cy: 27%; /* until placeOrb() measures the real gap */
         }
-        .rings span:first-child { width: 72vw; }
-        .rings span:last-child { width: 60vw; }
+        .rings span:first-child { width: calc(var(--orb, 62vw) * 1.14); }
+        .rings span:last-child { width: calc(var(--orb, 62vw) * 0.98); }
         .links:not(.end) {
           display: none;
         }
@@ -1439,33 +1522,56 @@ const faq = [
         .bokeh i:nth-child(2) { left: 14%; top: 34%; }
         .bokeh i:nth-child(3) { left: 82%; top: 30%; }
         .bokeh i:nth-child(4) { left: 74%; top: 8%; }
-        .services {
-          padding: 12svh 0 8svh;
-          gap: 3svh;
+        /* No scrubbed wipe on phones: the hero sticks and the cards section
+           scrolls up over it at its natural height, cards stacked. */
+        .track {
+          height: auto;
+        }
+        .pin {
+          position: static;
+          height: auto;
+          overflow: visible;
+        }
+        /* .pin > * (absolute) would outrank plain .hero / .services. */
+        .pin > .hero {
+          position: sticky;
+          top: 0;
+          height: 100svh;
+          overflow: hidden;
+        }
+        .pin > .services {
+          position: relative;
+          inset: auto;
+          transform: none;
+          padding: 12svh var(--pad) 10svh;
+          gap: 4svh;
+          border-top: 1px solid var(--line);
+        }
+        .services-count {
+          display: block;
+          position: absolute;
+          left: var(--pad);
+          top: 5svh;
         }
         .services-head {
           grid-template-columns: 1fr auto;
-          row-gap: 1.6svh;
-          padding: 0 var(--pad);
+          row-gap: 2.4svh;
         }
-        .services-head p { grid-row: 2; grid-column: 1 / -1; font-size: 13px; }
+        .services-head p { grid-row: 2; grid-column: 1 / -1; font-size: 14px; }
         .services-head .dots { grid-column: 2; grid-row: 1; }
-        /* Three columns don't fit: swipeable row instead. */
         .cards {
-          display: flex;
-          gap: 12px;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          padding: 0 var(--pad);
-          scrollbar-width: none;
+          flex: none;
+          grid-template-columns: 1fr;
+          gap: 14px;
         }
-        .card {
-          flex: 0 0 76vw;
-          scroll-snap-align: center;
+        .icon {
+          flex: none;
+          aspect-ratio: 2 / 1;
+          height: auto;
         }
-        .card-copy { padding: 0 20px 20px; }
-        .card h3 { font-size: 17px; }
-        .card p { font-size: 13px; }
+        .card-copy { padding: 0 20px 22px; }
+        .card h3 { font-size: 17px; margin-bottom: 10px; }
+        .card p { font-size: 14px; min-height: 0; }
 
         .sec {
           padding: 12svh var(--pad) 10svh;

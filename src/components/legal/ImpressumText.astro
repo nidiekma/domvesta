@@ -1,0 +1,59 @@
+---
+// Impressum — Kopfdaten aus src/data/site.ts (legal); Register- und
+// Versicherungsangaben übernommen von https://bensiefkes.de/impressum/
+// Geteilt von /impressum und /lab/domvesta/impressum: Rechtstext nur hier pflegen.
+import { legal } from "../../data/site.ts";
+---
+
+<h2>Angaben gemäß § 5 DDG</h2>
+<address>
+  <strong>{legal.owners.join(" & ")}</strong><br />
+  {legal.business}<br />
+  {legal.street}<br />
+  {legal.city}
+</address>
+
+<h3>Kontakt</h3>
+<p>
+  Telefon: <a href={`tel:${legal.phoneHref}`}>{legal.phone}</a><br />
+  E-Mail: <a href={`mailto:${legal.email}`}>{legal.email}</a>
+</p>
+
+<h2>Zulassungen &amp; Register</h2>
+<p>Die folgenden Angaben beziehen sich auf Ben Siefkes:</p>
+
+<h3>Vermittlerregister-Nummer</h3>
+<p>
+  Versicherungsvermittler mit Erlaubnis nach § 34d Abs. 1 GewO:<br />
+  Registrierungs-Nr. <strong>D-G6CT-WLA1I-16</strong>
+</p>
+<p>
+  Die Registrierung kann im Vermittlerregister überprüft werden:<br />
+  <a href="https://www.vermittlerregister.info" target="_blank" rel="noopener">www.vermittlerregister.info</a>
+</p>
+
+<h3>Zuständige Aufsichtsbehörde</h3>
+<p>
+  IHK Oldenburg<br />
+  Moslestraße 6<br />
+  26122 Oldenburg
+</p>
+
+<h3>Berufshaftpflichtversicherung</h3>
+<p>
+  andsafe Aktiengesellschaft<br />
+  Provinzial-Allee 1<br />
+  48159 Münster<br />
+  Geltungsbereich: Deutschland 
+</p>
+
+<h2>Streitbeilegung</h2>
+<p>
+  Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:
+  <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr/</a><br />
+  Unsere E-Mail-Adresse finden Sie oben im Impressum.
+</p>
+<p>
+  Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+  Verbraucherschlichtungsstelle teilzunehmen.
+</p>

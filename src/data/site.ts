@@ -42,15 +42,17 @@ export const site = {
   },
 } as const;
 
-// --- Rechtliches (Daten aus bensiefkes.de/impressum) -------------------------
+// --- Rechtliches (Impressum + verantwortliche Stelle im Datenschutz) ---------
+// Anschrift, Tätigkeit und E-Mail nach Kundenvorgabe (Oktober 2026); Telefon
+// und Registerangaben weiterhin aus bensiefkes.de/impressum.
 export const legal = {
   owners: ["Ben Siefkes", "Joshua de Buhr"],
-  business: "Finanzdienstleistungen",
-  street: "Raiffeisenstraße 23",
+  business: "Energie- und Versicherungsmakler",
+  street: "Hermann-Allmers-Weg 3",
   city: "26122 Oldenburg",
   phone: "+49 172 7856681",
   phoneHref: "+491727856681",
-  email: "finanzen@bensiefkes.de",
+  email: "info@domvesta.de",
 } as const;
 
 // --- Gründer ----------------------------------------------------------------

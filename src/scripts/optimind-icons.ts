@@ -121,7 +121,11 @@ function glyph(kind: IconKind) {
   return g;
 }
 
-function mountIcon(canvas: HTMLCanvasElement, kind: IconKind) {
+// Per-page tint: glyph body, hemisphere ground bounce and contact shadow.
+export type IconColors = { body: number; ground: number; shadow: number };
+const DEFAULT_COLORS: IconColors = { body: 0xd2d0cc, ground: 0xb8b2aa, shadow: 0x000000 };
+
+function mountIcon(canvas: HTMLCanvasElement, kind: IconKind, colors: IconColors) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -144,7 +148,7 @@ function mountIcon(canvas: HTMLCanvasElement, kind: IconKind) {
   const surface = new THREE.PlaneGeometry(12, 12);
   const occluder = new THREE.Mesh(surface, new THREE.MeshBasicMaterial({ colorWrite: false }));
   occluder.renderOrder = -1;
-  const plane = new THREE.Mesh(surface, new THREE.ShadowMaterial({ opacity: 0.15 }));
+  const plane = new THREE.Mesh(surface, new THREE.ShadowMaterial({ color: colors.shadow, opacity: 0.15 }));
   plane.receiveShadow = true;
   scene.add(occluder, plane);
 
@@ -158,7 +162,7 @@ function mountIcon(canvas: HTMLCanvasElement, kind: IconKind) {
     glyph(kind),
     // Tone-on-tone: a matte light grey close to the card, not bright white.
     new THREE.MeshPhysicalMaterial({
-      color: 0xd2d0cc,
+      color: colors.body,
       roughness: 0.6,
       metalness: 0,
       clearcoat: 0.35,
@@ -172,7 +176,7 @@ function mountIcon(canvas: HTMLCanvasElement, kind: IconKind) {
   icon.add(mesh);
   scene.add(icon);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b2aa, 0.5));
+  scene.add(new THREE.HemisphereLight(0xffffff, colors.ground, 0.5));
   // Fairly grazing key from the top left: models the rounded bevels and casts
   // the long, soft shadow down-right like the reference.
   const key = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -242,9 +246,10 @@ function mountIcon(canvas: HTMLCanvasElement, kind: IconKind) {
 
 // Mounts every icon canvas and runs one shared loop while the services
 // screen is on stage.
-export function mountIcons(canvases: HTMLCanvasElement[]) {
+export function mountIcons(canvases: HTMLCanvasElement[], opts: { colors?: Partial<IconColors> } = {}) {
+  const colors = { ...DEFAULT_COLORS, ...opts.colors };
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const icons = canvases.map((c) => mountIcon(c, (c.dataset.icon as IconKind) ?? "ring"));
+  const icons = canvases.map((c) => mountIcon(c, (c.dataset.icon as IconKind) ?? "ring", colors));
   const state = { reveal: 0, active: false };
   const pointer = { x: 0, y: 0 };
   const tilt = { x: 0, y: 0 };
