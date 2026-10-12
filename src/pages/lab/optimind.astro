@@ -1,0 +1,692 @@
+---
+// Sandbox: live recreation of Anton Skvortsov's "AI company website concept"
+// (@skvortsov.design, Instagram reel DFqJMFtNjBB / Dribbble shot 25858512).
+// The original is a C4D/Redshift render, not a real site — "Optimind" is a
+// fictional brand. Self-contained on purpose: no global.css, no site layout,
+// not linked from anywhere, noindex.
+//
+// One pinned, full-viewport stage; scroll scrubs the reel's three screens:
+//   001 intro panel over a close-up of the orb
+//   002 panel slides away, camera pulls back to the orb hero
+//   003 a panel wipes up, services cards rise, embossed icons light up
+import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource/schibsted-grotesk/400.css";
+
+const services = [
+  {
+    icon: "ring",
+    title: "Workflow Optimization",
+    text: "We automate your workflows by connecting your favourite applications. Boosting efficiency and enhancing productivity.",
+  },
+  {
+    icon: "triangle",
+    title: "Business consulting",
+    text: "Using our expertise, we delve deep into your organisation and consult you on how AI-driven automations could enhance your operations.",
+  },
+  {
+    icon: "diamond",
+    title: "Chatbot development",
+    text: "We develop advanced chatbots that are reactive, understand nuances, and are capable of solving extremely complicated queries.",
+  },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Optimind — concept study</title>
+  </head>
+  <body>
+    <main class="track">
+      <div class="pin" style="--t1:0;--t2:0;--head:0;--c0:0;--c1:0;--c2:0;--reveal:0">
+        <!-- 002: orb hero (bottom layer, always there) -->
+        <div class="hero-bg" aria-hidden="true"></div>
+        <div class="rings" aria-hidden="true"><span></span><span></span></div>
+        <div class="bokeh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <canvas class="orb" aria-hidden="true"></canvas>
+        <p class="intro-caption">
+          Helping forward-looking companies thrive<br />with custom AI solutions and automated<br />workflows.
+        </p>
+        <section class="hero-copy" aria-label="Services">
+          <h2>We’re a full-service<br />AI automation agency.</h2>
+          <p>We deliver complete AI automation<br />services under one roof.</p>
+        </section>
+
+        <!-- 001: intro panel, slides up and away -->
+        <section class="intro">
+          <h1>Growing<br />smarter with AI</h1>
+          <p class="intro-lede">
+            We specialize in workflow automation and personalized AI solutions for progressive organizations.
+          </p>
+          <div class="cta">
+            <a class="btn btn-dark" href="#" data-goto="0.9">Get in touch</a>
+            <a class="btn btn-line" href="#" data-goto="0.9">Our services</a>
+          </div>
+          <span class="count">001 / 003</span>
+          <span class="dots" aria-hidden="true"><i></i><i></i></span>
+        </section>
+
+        <!-- 003: services, wipes up over the hero -->
+        <section class="services" aria-label="Our services">
+          <header class="services-head">
+            <h2>Discover<br />our services</h2>
+            <p>We deliver complete AI automation<br />services under one roof.</p>
+            <span class="dots" aria-hidden="true"><i></i><i></i></span>
+          </header>
+          <div class="cards">
+            {
+              services.map((s, i) => (
+                <article class="card" style={`--c: var(--c${i})`}>
+                  <canvas class="icon" data-icon={s.icon} aria-hidden="true" />
+                  <div class="card-copy">
+                    <h3>{s.title}</h3>
+                    <p>{s.text}</p>
+                  </div>
+                </article>
+              ))
+            }
+          </div>
+        </section>
+
+        <!-- Chrome that stays put across all three screens -->
+        <header class="nav">
+          <span class="brand">Optimind</span>
+          <nav class="links" aria-label="Primary">
+            <a href="#" data-goto="0" data-nav="home">Home</a>
+            <a href="#" data-goto="0.4" data-nav="services">Services</a>
+            <a href="#">Work</a>
+            <a href="#">Plans</a>
+          </nav>
+          <nav class="links end" aria-label="Secondary">
+            <a href="#">Team</a>
+            <a href="#">Contact</a>
+          </nav>
+        </header>
+        <span class="count count-fixed" aria-hidden="true">002 / 003</span>
+        <div class="scroll-cue" aria-hidden="true">
+          <svg viewBox="0 0 14 22" width="14" height="22">
+            <rect x="0.75" y="0.75" width="12.5" height="20.5" rx="6.25" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+            <rect class="wheel" x="6.2" y="5" width="1.6" height="4" rx="0.8" fill="currentColor"></rect>
+          </svg>
+        </div>
+        <button class="share" type="button">
+          <svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="1.4">
+              <circle cx="12.5" cy="3" r="2"></circle><circle cx="3.5" cy="8" r="2"></circle><circle cx="12.5" cy="13" r="2"></circle>
+              <path d="M5.3 7 10.7 4M5.3 9l5.4 3"></path>
+            </g>
+          </svg>
+          Share
+        </button>
+        <p class="credit">Recreation of a concept by Anton Skvortsov (@skvortsov.design) · Optimind is fictional</p>
+      </div>
+    </main>
+
+    <script>
+      import { mountOrb } from "../../scripts/optimind-orb";
+      import { mountIcons } from "../../scripts/optimind-icons";
+
+      const track = document.querySelector<HTMLElement>(".track")!;
+      const pin = document.querySelector<HTMLElement>(".pin")!;
+      const countFixed = document.querySelector<HTMLElement>(".count-fixed")!;
+      const navLinks = document.querySelectorAll<HTMLElement>("[data-nav]");
+
+      function safeMount<T>(label: string, fn: () => T): T | null {
+        try {
+          return fn();
+        } catch (err) {
+          // No WebGL: the CSS layers still carry the composition.
+          console.warn(`[optimind] ${label} disabled:`, err);
+          return null;
+        }
+      }
+      const orbCanvas = document.querySelector<HTMLCanvasElement>("canvas.orb")!;
+      const orb = safeMount("orb", () => mountOrb(orbCanvas));
+      if (!orb) orbCanvas.remove();
+      const icons = safeMount("icons", () => mountIcons([...document.querySelectorAll<HTMLCanvasElement>("canvas.icon")]));
+
+      // Scroll timeline: p runs 0→1 over the pinned track.
+      const clamp = (v: number) => Math.min(1, Math.max(0, v));
+      const seg = (p: number, a: number, b: number) => {
+        const x = clamp((p - a) / (b - a));
+        return x * x * (3 - 2 * x);
+      };
+      const maxScroll = () => track.offsetHeight - window.innerHeight;
+
+      let queued = false;
+      function update() {
+        queued = false;
+        const max = maxScroll();
+        const p = max > 0 ? clamp(window.scrollY / max) : 0;
+        const t1 = seg(p, 0.05, 0.3);
+        const t2 = seg(p, 0.48, 0.62);
+        const reveal = seg(p, 0.76, 0.95);
+        const vars: Record<string, number> = {
+          t1,
+          t2,
+          head: seg(p, 0.57, 0.67),
+          c0: seg(p, 0.58, 0.74),
+          c1: seg(p, 0.62, 0.78),
+          c2: seg(p, 0.66, 0.82),
+          reveal,
+        };
+        for (const [k, v] of Object.entries(vars)) pin.style.setProperty(`--${k}`, v.toFixed(4));
+
+        countFixed.textContent = t2 > 0.5 ? "003 / 003" : "002 / 003";
+        const section = t1 < 0.5 ? "home" : "services";
+        navLinks.forEach((a) => a.classList.toggle("active", a.dataset.nav === section));
+
+        orb?.setProgress(1 - t1, t2);
+        icons?.set(reveal, t2 > 0);
+      }
+      const queue = () => {
+        if (!queued) {
+          queued = true;
+          requestAnimationFrame(update);
+        }
+      };
+      window.addEventListener("scroll", queue, { passive: true });
+      window.addEventListener("resize", queue);
+      update();
+
+      const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.querySelectorAll<HTMLElement>("[data-goto]").forEach((el) =>
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.scrollTo({ top: Number(el.dataset.goto) * maxScroll(), behavior: smooth ? "smooth" : "auto" });
+        }),
+      );
+      document.querySelectorAll('a[href="#"]:not([data-goto])').forEach((a) => a.addEventListener("click", (e) => e.preventDefault()));
+      document.querySelector(".share")?.addEventListener("click", () => {
+        navigator.share?.({ title: document.title, url: location.href }).catch(() => {});
+      });
+    </script>
+
+    <style is:global>
+      html {
+        background: #9c9c9c;
+      }
+      body {
+        margin: 0;
+        color: #1d1d1d;
+        font-family: "Schibsted Grotesk", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+    </style>
+
+    <style>
+      .track {
+        height: 600svh;
+      }
+      .pin {
+        --pad: 3.6vw;
+        --cy: 52%;
+        --drop: 14svh;
+        --panel: #c8c8c8;
+        position: sticky;
+        top: 0;
+        height: 100svh;
+        overflow: hidden;
+      }
+      .pin > * {
+        position: absolute;
+      }
+
+      /* --- type --- */
+      h1,
+      h2 {
+        margin: 0;
+        font-family: "Archivo Variable", system-ui, sans-serif;
+        font-stretch: 125%;
+        font-weight: 400;
+        font-size: clamp(22px, 2.55vw, 46px);
+        line-height: 1.16;
+        letter-spacing: 0.005em;
+        text-transform: uppercase;
+      }
+
+      /* --- 002 hero layer --- */
+      .hero-bg {
+        inset: 0;
+        background:
+          radial-gradient(55% 70% at 52% var(--cy), rgb(240 240 240 / 0.5), transparent 70%),
+          linear-gradient(100deg, #9d9d9d 0%, #bdbdbd 38%, #d6d6d6 72%, #e0e0e0 100%);
+      }
+      .rings,
+      .bokeh {
+        inset: 0;
+        pointer-events: none;
+        /* Rides along with the orb's camera pull-back. */
+        transform: translateY(calc((1 - var(--t1)) * var(--drop))) scale(calc(1 + (1 - var(--t1)) * 0.15));
+        transform-origin: 50% var(--cy);
+      }
+      .rings span {
+        position: absolute;
+        left: 50%;
+        top: var(--cy);
+        aspect-ratio: 1;
+        translate: -50% -50%;
+        border-radius: 50%;
+      }
+      .rings span:first-child {
+        width: min(84svh, 92vw);
+        border: 1px solid rgb(255 255 255 / 0.4);
+        box-shadow: 0 0 0 1px rgb(0 0 0 / 0.04);
+      }
+      .rings span:last-child {
+        width: min(74svh, 81vw);
+        border: 1px solid rgb(255 255 255 / 0.22);
+        background: radial-gradient(closest-side, rgb(255 255 255 / 0.18), transparent);
+      }
+      .bokeh i {
+        position: absolute;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgb(255 214 160 / 0.4), rgb(255 200 140 / 0.12) 60%, transparent 72%);
+        border: 1px solid rgb(255 225 190 / 0.22);
+        filter: blur(0.6px);
+      }
+      .bokeh i:nth-child(1) { left: 18%; top: 37%; width: 7.5svh; }
+      .bokeh i:nth-child(2) { left: 24%; top: 62%; width: 9svh; }
+      .bokeh i:nth-child(3) { left: 19%; top: 74%; width: 7svh; opacity: 0.7; }
+      .bokeh i:nth-child(4) { left: 79%; top: 24%; width: 11svh; opacity: 0.6; filter: blur(3px); }
+      .orb {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        pointer-events: none;
+      }
+      .intro-caption {
+        left: var(--pad);
+        top: 71%;
+        margin: 0;
+        font-size: clamp(11px, 0.95vw, 15px);
+        line-height: 1.6;
+        color: rgb(255 255 255 / 0.85);
+        transform: translateY(calc(var(--t1) * -40svh));
+        opacity: calc(1 - var(--t1) * 2.5);
+      }
+      .hero-copy {
+        left: var(--pad);
+        top: 47%;
+        color: #fff;
+        transform: translateY(calc((1 - var(--t1)) * 50svh));
+        opacity: calc(var(--t1) * 1.5);
+      }
+      .hero-copy h2 {
+        text-shadow: 0 1px 18px rgb(0 0 0 / 0.12);
+      }
+      .hero-copy p {
+        margin: 3.6svh 0 0;
+        font-size: clamp(11px, 0.95vw, 15px);
+        line-height: 1.6;
+        color: rgb(255 255 255 / 0.85);
+      }
+
+      /* --- 001 intro panel --- */
+      .intro {
+        inset: 0 0 auto 0;
+        height: 54svh;
+        background: var(--panel);
+        transform: translateY(calc(var(--t1) * -105%));
+        display: grid;
+        grid-template-columns: 34% 1fr auto;
+        grid-template-rows: 1fr auto auto;
+        align-items: start;
+        padding: 23svh var(--pad) 3.2svh;
+        box-sizing: border-box;
+      }
+      /* Content fades as the panel slides up under the nav. */
+      .intro > * {
+        opacity: calc(1 - var(--t1) * 1.8);
+      }
+      .intro h1 {
+        grid-column: 1;
+        grid-row: 1;
+      }
+      .intro-lede {
+        grid-column: 2;
+        grid-row: 1;
+        max-width: 30em;
+        margin: 0;
+        font-size: clamp(13px, 1.25vw, 19px);
+        line-height: 1.5;
+        color: #4a4a4a;
+      }
+      .intro .dots {
+        grid-column: 3;
+        grid-row: 1;
+      }
+      .cta {
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        gap: 1.8vw;
+      }
+      .intro .count {
+        grid-column: 1;
+        grid-row: 2;
+        align-self: end;
+      }
+      .btn {
+        display: inline-grid;
+        place-items: center;
+        min-width: 13vw;
+        height: max(36px, 4.8svh);
+        padding: 0 22px;
+        box-sizing: border-box;
+        border-radius: 999px;
+        font: 500 clamp(9px, 0.72vw, 12px) / 1 "Archivo Variable", sans-serif;
+        font-stretch: 110%;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: box-shadow 0.3s, background-color 0.3s;
+      }
+      .btn-dark {
+        color: #fff;
+        background: #0d0d0d;
+        border: 1px solid rgb(255 176 74 / 0.75);
+        box-shadow:
+          0 -3px 12px -2px rgb(255 160 50 / 0.55),
+          inset 0 1px 0 rgb(255 200 120 / 0.5);
+      }
+      .btn-dark:hover {
+        box-shadow:
+          0 -3px 18px 0 rgb(255 160 50 / 0.75),
+          inset 0 1px 0 rgb(255 200 120 / 0.7);
+      }
+      .btn-line {
+        color: #2a2a2a;
+        border: 1px solid rgb(0 0 0 / 0.35);
+      }
+      .btn-line:hover {
+        background: rgb(255 255 255 / 0.25);
+      }
+
+      .count {
+        font: clamp(8px, 0.62vw, 10px) / 1 "Archivo Variable", sans-serif;
+        letter-spacing: 0.06em;
+        color: rgb(0 0 0 / 0.6);
+      }
+      .count-fixed {
+        left: var(--pad);
+        top: 13.5svh;
+        z-index: 5;
+        opacity: calc(var(--t1) * 2 - 1);
+      }
+      .dots {
+        display: flex;
+        gap: 4px;
+        padding-top: 0.6em;
+      }
+      .dots i {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #1d1d1d;
+      }
+
+      /* --- 003 services --- */
+      .services {
+        inset: 0;
+        background: var(--panel);
+        transform: translateY(calc((1 - var(--t2)) * 101%));
+        padding: 23svh var(--pad) 9svh;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 6svh;
+      }
+      .services-head {
+        display: grid;
+        grid-template-columns: 34% 1fr auto;
+        align-items: start;
+        opacity: var(--head);
+        transform: translateY(calc((1 - var(--head)) * 4svh));
+      }
+      .services-head p {
+        margin: 0;
+        font-size: clamp(11px, 0.95vw, 15px);
+        line-height: 1.6;
+        color: #4a4a4a;
+      }
+      .cards {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2vw;
+      }
+      .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgb(0 0 0 / 0.17);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02));
+        /* Staggered rise; each card reads its own --cN through --c. */
+        transform: translateY(calc((1 - var(--c)) * 70svh));
+        overflow: hidden;
+      }
+      .icon {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        display: block;
+      }
+      .card-copy {
+        padding: 0 2vw 2.6svh;
+        opacity: calc(var(--reveal) * 2.5 - 0.3);
+      }
+      .card h3 {
+        margin: 0 0 2.2svh;
+        font-size: clamp(14px, 1.2vw, 20px);
+        font-weight: 400;
+        color: #1d1d1d;
+      }
+      .card p {
+        margin: 0;
+        max-width: 34em;
+        min-height: 4.8em; /* 3 lines, so titles line up across cards */
+        font-size: clamp(11px, 0.8vw, 13px);
+        line-height: 1.6;
+        color: #6a6a6a;
+      }
+
+      /* --- fixed chrome --- */
+      .nav {
+        inset: 0 var(--pad) auto;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        padding: 3.4svh 0 2.6svh;
+        border-bottom: 1px solid rgb(0 0 0 / 0.16);
+        font-family: "Archivo Variable", system-ui, sans-serif;
+        font-stretch: 112%;
+        text-transform: uppercase;
+        color: #1f1f1f;
+      }
+      .brand {
+        font-size: clamp(12px, 1.05vw, 17px);
+        letter-spacing: 0.02em;
+      }
+      .links {
+        display: flex;
+        gap: 4.6vw;
+      }
+      .links.end {
+        justify-content: flex-end;
+        gap: 3.4vw;
+      }
+      .links a {
+        position: relative;
+        color: inherit;
+        text-decoration: none;
+        font-size: clamp(9px, 0.68vw, 12px);
+        letter-spacing: 0.04em;
+        opacity: 0.8;
+      }
+      .links a:hover,
+      .links a.active {
+        opacity: 1;
+      }
+      .links a::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: calc(-2.6svh - 1px);
+        width: 4.8vw;
+        height: 2px;
+        translate: -50% 50%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, transparent, #ffc070 30%, #ffb04a 70%, transparent);
+        box-shadow: 0 0 10px 2px rgb(255 170 60 / 0.6);
+        opacity: 0;
+        transition: opacity 0.4s;
+      }
+      .links a.active::after {
+        opacity: 1;
+      }
+      .scroll-cue {
+        z-index: 10;
+        left: 50%;
+        bottom: 3.2svh;
+        translate: -50% 0;
+        color: rgb(0 0 0 / 0.45);
+      }
+      .wheel {
+        animation: wheel 1.8s ease-in-out infinite;
+      }
+      @keyframes wheel {
+        0% { transform: translateY(0); opacity: 1; }
+        70% { transform: translateY(5px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 0; }
+      }
+      .share {
+        z-index: 10;
+        right: var(--pad);
+        bottom: 3.6svh;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        font: clamp(8px, 0.62vw, 10px) / 1 "Archivo Variable", sans-serif;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgb(0 0 0 / 0.6);
+      }
+      .credit {
+        z-index: 10;
+        left: var(--pad);
+        bottom: 3.6svh;
+        margin: 0;
+        font-size: 10px;
+        color: rgb(0 0 0 / 0.32);
+      }
+
+      /* --- portrait / phone --- */
+      @media (max-aspect-ratio: 1/1), (max-width: 720px) {
+        .pin {
+          --pad: 6vw;
+          --cy: 40%;
+          --drop: 30svh;
+        }
+        .links:not(.end) {
+          display: none;
+        }
+        .nav {
+          grid-template-columns: 1fr 1fr;
+          padding: 2.6svh 0 2svh;
+        }
+        .brand {
+          font-size: 14px;
+        }
+        .links a {
+          font-size: 10px;
+        }
+        h1,
+        h2 {
+          font-size: clamp(22px, 6.6vw, 34px);
+        }
+        .intro {
+          height: 62svh;
+          grid-template-columns: 1fr auto;
+          grid-template-rows: auto auto 1fr auto;
+          row-gap: 2.6svh;
+          padding-top: 15svh;
+        }
+        .intro h1 { grid-column: 1; grid-row: 1; }
+        .intro .dots { grid-column: 2; grid-row: 1; }
+        .intro-lede { grid-column: 1 / -1; grid-row: 2; font-size: 15px; }
+        .cta { grid-column: 1 / -1; grid-row: 3; align-self: end; gap: 10px; }
+        .btn { min-width: 0; flex: 1; }
+        .intro .count { grid-column: 1; grid-row: 4; }
+        .intro-caption {
+          top: 78%;
+        }
+        .hero-copy {
+          top: auto;
+          bottom: 13svh;
+          right: var(--pad);
+        }
+        .hero-copy h2 {
+          font-size: 5.2vw;
+        }
+        .hero-copy p {
+          font-size: 13px;
+        }
+        .count-fixed {
+          top: 10svh;
+        }
+        .bokeh i:nth-child(1) { left: 8%; top: 22%; }
+        .bokeh i:nth-child(2) { left: 12%; top: 46%; }
+        .bokeh i:nth-child(3) { left: 80%; top: 52%; }
+        .services {
+          padding: 15svh 0 10svh;
+          gap: 4svh;
+        }
+        .services-head {
+          grid-template-columns: 1fr auto;
+          row-gap: 2svh;
+          padding: 0 var(--pad);
+        }
+        .services-head p { grid-row: 2; font-size: 13px; }
+        .services-head .dots { grid-column: 2; grid-row: 1; }
+        /* Three columns don't fit: swipeable row instead. */
+        .cards {
+          display: flex;
+          gap: 12px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          padding: 0 var(--pad);
+          scrollbar-width: none;
+        }
+        .card {
+          flex: 0 0 76vw;
+          scroll-snap-align: center;
+        }
+        .card-copy { padding: 0 20px 20px; }
+        .card h3 { font-size: 17px; }
+        .card p { font-size: 13px; }
+        .credit {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .wheel {
+          animation: none;
+        }
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,1552 @@
+---
+// Sandbox: Domvesta landing in the visual language of /lab/optimind (the
+// Skvortsov-concept recreation). Copy: docs/copy_v3.md, nothing else.
+// Self-contained on purpose: no global.css, no site layout, not linked from
+// anywhere, noindex.
+//
+// A pinned, full-viewport stage scrubs the opening like Optimind, minus its
+// intro panel: one orb hero (headline left, lede + CTA right) → the benefit
+// panel wipes up with its cards and embossed icons already in place.
+// Everything after that scrolls normally in the same grey/amber/wide-type style.
+import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource/schibsted-grotesk/400.css";
+
+const TOTAL = "009";
+const mail = "info@domvesta.de";
+const cta = `mailto:${mail}?subject=${encodeURIComponent("Unverbindliches Erstgespräch")}`;
+
+const benefits = [
+  {
+    icon: "document",
+    title: "Verwaltung entlasten",
+    text: "Verträge bündeln, Unterlagen digital abrufen und alltägliche Vorgänge vereinfachen.",
+  },
+  {
+    icon: "trend",
+    title: "Kosten optimieren",
+    text: "Sonderkonditionen prüfen und Einsparpotenziale erkennen – mit Leistungen und Vertragsbedingungen im Blick.",
+  },
+  {
+    icon: "person",
+    title: "Persönlich betreut bleiben",
+    text: "Bei Fragen, Veränderungen oder neuen Liegenschaften ist Domvesta Ihre zentrale Anlaufstelle.",
+  },
+];
+
+const energy = [
+  {
+    title: "Dokumente griffbereit",
+    text: "Verträge, Jahresabrechnungen und weitere Unterlagen je Lieferstelle einsehen.",
+  },
+  {
+    title: "Vorgänge digital erledigen",
+    text: "Zählerstände melden und SEPA-Lastschriftmandate einrichten.",
+  },
+  {
+    title: "Neue Liegenschaften integrieren",
+    text: "Weitere Objekte in die bestehende Vertrags- und Portalstruktur aufnehmen.",
+  },
+];
+
+const insurance = [
+  {
+    title: "Kosten senken und Leistungen verbessern",
+    text: "Wir prüfen, wo günstigere Beiträge möglich sind und wie sich Ihr Versicherungsschutz optimieren lässt.",
+  },
+  {
+    title: "Schäden und Unterlagen digital bearbeiten",
+    text: "Digitale Schadenmeldungen, Dokumente und Abrechnungen erleichtern die Verwaltung. Je nach Versicherungspartner unterstützen auch KI-gestützte Lösungen das Schadenmanagement.",
+  },
+  {
+    title: "Weitere Immobilien aufnehmen",
+    text: "Wir begleiten die Einbindung neuer Liegenschaften in den Rahmenvertrag und klären Voraussetzungen und Versicherungsschutz mit dem Versicherer.",
+  },
+];
+
+const questions = [
+  "Festpreis für Planungssicherheit oder ein flexibles Preismodell?",
+  "Welche Versicherungsleistungen sind für Ihren Bestand sinnvoll?",
+  "Und welcher Anbieter erleichtert tatsächlich Ihre Abläufe?",
+];
+
+const steps = [
+  { title: "Kennenlernen", text: "Wir sprechen über Ihren Bestand, Ihre bisherigen Abläufe und Ihre Ziele." },
+  { title: "Vergleichen", text: "Wir sichten Ihre Unterlagen und stellen passende Angebote verständlich gegenüber." },
+  {
+    title: "Umsetzen und begleiten",
+    text: "Nach Ihrer Entscheidung und den erforderlichen Freigaben begleiten wir die Umstellung – und bleiben für die laufende Betreuung ansprechbar.",
+  },
+];
+
+const faq = [
+  {
+    q: "Welche Unterlagen benötigen Sie?",
+    a: "Für den Einstieg helfen aktuelle Energieabrechnungen, Verträge und eine Lieferstellenübersicht. Im Versicherungsbereich benötigen wir die vorhandenen Policen und relevante Objekt- und Schadendaten. Was im Einzelnen erforderlich ist, stimmen wir mit Ihnen ab.",
+  },
+  {
+    q: "Müssen alle Verträge gleichzeitig wechseln?",
+    a: "Nein. Wir berücksichtigen Laufzeiten und Kündigungsfristen. Ihr Bestand kann schrittweise in die neue Lösung überführt werden.",
+  },
+  {
+    q: "Können neue Liegenschaften später dazukommen?",
+    a: "Ja. Wir begleiten die Aufnahme in die bestehende Rahmenvertragslösung und klären die jeweiligen Konditionen und Voraussetzungen mit dem Anbieter.",
+  },
+  {
+    q: "Ist eine Kostenersparnis garantiert?",
+    a: "Nein. Wir prüfen Ihre Ausgangssituation und zeigen, welche Verbesserungen möglich sind. Neben dem Preis zählen dabei auch Versicherungsschutz, Vertragsbedingungen und Verwaltungsaufwand.",
+  },
+  {
+    q: "Wer kümmert sich nach dem Abschluss?",
+    a: "Domvesta bleibt Ihre persönliche Anlaufstelle. Wir unterstützen Sie bei Rückfragen und Veränderungen sowie bei der Abstimmung mit den Anbietern. Über Versicherungsleistungen und Schadenregulierung entscheidet der Versicherer.",
+  },
+];
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <title>Domvesta – Strom, Gas und Versicherungen für Hausverwaltungen</title>
+    <meta
+      name="description"
+      content="Bündeln Sie Ihre Energieverträge, digitalisieren Sie Ihre Verwaltung und optimieren Sie die Absicherung Ihrer Immobilien."
+    />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="#top" data-goto="0">Domvesta</a>
+      <nav class="links" aria-label="Hauptnavigation">
+        <a href="#leistungen" data-goto="1" data-nav="leistungen">Leistungen</a>
+        <a href="#strom-gas" data-nav="strom-gas">Strom &amp; Gas</a>
+        <a href="#versicherungen" data-nav="versicherungen">Versicherungen</a>
+        <a href="#team" data-nav="team">Über uns</a>
+      </nav>
+      <nav class="links end" aria-label="Service">
+        <a href="#faq" data-nav="faq">FAQ</a>
+        <a href="#kontakt" data-nav="kontakt">Kontakt</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- ============ 001–002: pinned opening (hero → benefit cards) ============ -->
+      <div class="track" id="top">
+        <div class="pin" style="--t2:0">
+          <div class="hero-bg" aria-hidden="true"></div>
+          <div class="rings" aria-hidden="true"><span></span><span></span></div>
+          <div class="bokeh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <canvas class="orb" aria-hidden="true"></canvas>
+          <div class="hero-text">
+            <section class="hero-main" aria-labelledby="hero-title">
+              <span class="eyebrow">Für Hausverwaltungen</span>
+              <h1 id="hero-title">
+                Strom. Gas.<br />Versicherung.<br />Ein Ansprechpartner.<br />Mehr Übersicht.<br />Weniger Aufwand.
+              </h1>
+            </section>
+            <div class="hero-side">
+              <p class="hero-lede">
+                Bündeln Sie Ihre Energieverträge, digitalisieren Sie Ihre Verwaltung und optimieren Sie die Absicherung Ihrer
+                Immobilien. Domvesta verbindet passende Rahmenvertragslösungen mit persönlicher Betreuung – damit Sie mehr
+                Zeit für Ihr Kerngeschäft haben.
+              </p>
+              <a class="btn btn-dark" href={cta}>Unverbindliches Erstgespräch vereinbaren</a>
+            </div>
+          </div>
+
+          <section class="services" id="leistungen" aria-labelledby="leistungen-title">
+            <header class="services-head">
+              <h2 id="leistungen-title">Viele Liegenschaften.<br />Eine klare Lösung.</h2>
+              <p>
+                Unterschiedliche Anbieter, verstreute Unterlagen und immer neue Rückfragen kosten Zeit. Wir bringen Struktur in
+                Ihre Energie- und Versicherungsverträge und übernehmen die Abstimmung mit den Partnern.
+              </p>
+              <span class="dots" aria-hidden="true"><i></i><i></i></span>
+            </header>
+            <div class="cards">
+              {
+                benefits.map((b, i) => (
+                  <article class="card">
+                    <canvas class="icon" data-icon={b.icon} aria-hidden="true" />
+                    <div class="card-copy">
+                      <h3>{b.title}</h3>
+                      <p>{b.text}</p>
+                    </div>
+                  </article>
+                ))
+              }
+            </div>
+          </section>
+
+          <span class="count count-fixed" aria-hidden="true">001 / {TOTAL}</span>
+          <div class="scroll-cue" aria-hidden="true">
+            <svg viewBox="0 0 14 22" width="14" height="22">
+              <rect x="0.75" y="0.75" width="12.5" height="20.5" rx="6.25" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+              <rect class="wheel" x="6.2" y="5" width="1.6" height="4" rx="0.8" fill="currentColor"></rect>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 003: Strom & Gas ============ -->
+      <section class="sec" id="strom-gas" aria-labelledby="strom-gas-title">
+        <span class="count">003 / {TOTAL}</span>
+        <div class="split">
+          <div class="split-head reveal">
+            <h2 id="strom-gas-title">Strom und Gas:<br />Ihr Bestand in einem Portal.</h2>
+            <p class="lede">
+              Wir bündeln Ihre Strom- und Gaslieferstellen bei einem passenden Energieanbieter. Rahmenverträge und ein
+              digitales Lieferstellenportal schaffen eine Struktur, die Ihre tägliche Arbeit erleichtert und mit Ihrem Bestand
+              wächst.
+            </p>
+          </div>
+          <ol class="rows">
+            {
+              energy.map((e, i) => (
+                <li class="row reveal" style={`--d:${i}`}>
+                  <span class="row-num">0{i + 1}</span>
+                  <div>
+                    <h3>{e.title}</h3>
+                    <p>{e.text}</p>
+                  </div>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+        <p class="note reveal">
+          Die konkreten Portalfunktionen und Aufnahmebedingungen stimmen wir mit dem ausgewählten Anbieter ab.
+        </p>
+      </section>
+
+      <!-- ============ 004: Versicherungen ============ -->
+      <section class="sec" id="versicherungen" aria-labelledby="versicherungen-title">
+        <span class="count">004 / {TOTAL}</span>
+        <header class="sec-head reveal">
+          <h2 id="versicherungen-title">Versicherungen:<br />Passender Schutz.<br />Einfachere Abläufe.</h2>
+          <p class="lede">
+            Als Versicherungsmakler prüfen wir Ihre bestehenden Verträge und entwickeln eine passende Rahmenvertragslösung für
+            Ihren Immobilienbestand. Dabei betrachten wir Beitrag, Leistungsumfang und Verwaltungsaufwand gemeinsam.
+          </p>
+        </header>
+        <div class="tiles">
+          {
+            insurance.map((t, i) => (
+              <article class="tile reveal" style={`--d:${i}`}>
+                <span class="row-num">0{i + 1}</span>
+                <h3>{t.title}</h3>
+                <p>{t.text}</p>
+              </article>
+            ))
+          }
+        </div>
+        <p class="pull reveal">Bei Vertragsfragen und im Schadenfall bleiben wir an Ihrer Seite und unterstützen die Abstimmung.</p>
+      </section>
+
+      <!-- ============ 005: Entscheidung (dark) ============ -->
+      <section class="sec dark" id="entscheidung" aria-labelledby="entscheidung-title">
+        <span class="count">005 / {TOTAL}</span>
+        <div class="dark-glow" aria-hidden="true"></div>
+        <h2 id="entscheidung-title" class="reveal">Eine gute Entscheidung<br />berücksichtigt mehr<br />als den Preis.</h2>
+        <ul class="questions">
+          {
+            questions.map((q, i) => (
+              <li class="reveal" style={`--d:${i}`}>
+                <span class="row-num">0{i + 1}</span>
+                {q}
+              </li>
+            ))
+          }
+        </ul>
+        <div class="dark-foot reveal">
+          <p>
+            Wir betrachten Marktsituation, Konditionen, Leistungen und digitale Möglichkeiten gemeinsam. Chancen und Risiken
+            erklären wir verständlich.
+          </p>
+          <p class="glow-text">
+            So erhalten Sie eine nachvollziehbare Entscheidungsgrundlage – auch für Ihre nächste Eigentümerversammlung.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ 006: Team ============ -->
+      <section class="sec team" id="team" aria-labelledby="team-title">
+        <span class="count">006 / {TOTAL}</span>
+        <div class="team-grid">
+          <figure class="team-photo reveal">
+            <div class="team-rings" aria-hidden="true"><span></span><span></span></div>
+            <img
+              src="/team-800.webp"
+              srcset="/team-800.webp 800w, /team.webp 1600w"
+              sizes="(max-width: 720px) 88vw, 46vw"
+              width="800"
+              height="598"
+              alt="Joshua de Buhr und Ben Siefkes"
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+          <div class="team-copy">
+            <h2 id="team-title" class="reveal">Persönlich für Sie da.<br />Langfristig an Ihrer Seite.</h2>
+            <p class="lede reveal">
+              Wir sind <strong>Joshua de Buhr und Ben Siefkes</strong>, die Menschen hinter Domvesta.
+            </p>
+            <p class="reveal">
+              Wir möchten Ihre Verwaltung kennenlernen, Ihre Abläufe verstehen und eine Zusammenarbeit aufbauen, auf die Sie sich
+              langfristig verlassen können.
+            </p>
+            <p class="reveal">
+              Eine Rückfrage zur Abrechnung, eine neue Liegenschaft oder ein Vertrag, der überprüft werden sollte? Rufen Sie uns
+              an. Wir nehmen Ihr Anliegen auf und kümmern uns um die nächsten Schritte mit den zuständigen Partnern.
+            </p>
+            <div class="people">
+              <div class="person reveal" style="--d:0">
+                <span class="person-name">Joshua de Buhr</span>
+                <span class="person-role">Strom, Gas &amp; Energieprojekte</span>
+              </div>
+              <div class="person reveal" style="--d:1">
+                <span class="person-name">Ben Siefkes</span>
+                <span class="person-role">Versicherungen &amp; Rahmenverträge</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <aside class="trust reveal" aria-labelledby="trust-title">
+          <div>
+            <h3 id="trust-title">Beratung ist Vertrauenssache.</h3>
+            <p>
+              Erfahren Sie auf ProvenExpert, wie Kunden die persönliche Finanz- und Versicherungsberatung von Ben Siefkes
+              bewerten.
+            </p>
+          </div>
+          <a
+            class="btn btn-line"
+            href="https://www.provenexpert.com/de-de/ben-siefkes-finanz-und-versicherungsmakler/"
+            target="_blank"
+            rel="noopener"
+          >
+            Kundenbewertungen zu Ben Siefkes ansehen ↗
+          </a>
+        </aside>
+      </section>
+
+      <!-- ============ 007: Ablauf ============ -->
+      <section class="sec" id="ablauf" aria-labelledby="ablauf-title">
+        <span class="count">007 / {TOTAL}</span>
+        <h2 id="ablauf-title" class="reveal">In drei Schritten<br />zur Zusammenarbeit.</h2>
+        <ol class="steps">
+          {
+            steps.map((s, i) => (
+              <li class="step reveal" style={`--d:${i}`}>
+                <span class="step-num">{i + 1}</span>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <!-- ============ 008: FAQ ============ -->
+      <section class="sec" id="faq" aria-labelledby="faq-title">
+        <span class="count">008 / {TOTAL}</span>
+        <div class="split">
+          <h2 id="faq-title" class="reveal">Häufige<br />Fragen</h2>
+          <div class="faq reveal">
+            {
+              faq.map((f) => (
+                <details>
+                  <summary>
+                    {f.q}
+                    <span class="plus" aria-hidden="true" />
+                  </summary>
+                  <p>{f.a}</p>
+                </details>
+              ))
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 009: Kontakt ============ -->
+      <section class="sec contact" id="kontakt" aria-labelledby="kontakt-title">
+        <span class="count">009 / {TOTAL}</span>
+        <div class="contact-rings" aria-hidden="true"><span></span><span></span></div>
+        <div class="contact-glow" aria-hidden="true"></div>
+        <div class="contact-body">
+          <h2 id="kontakt-title" class="reveal">Mehr Zeit für Ihre Verwaltung<br />beginnt mit einem Gespräch.</h2>
+          <p class="lede reveal">
+            Lassen Sie uns gemeinsam herausfinden, wie Sie Strom, Gas und Versicherungen in Ihrem Bestand einfacher organisieren
+            können.
+          </p>
+          <a class="btn btn-dark reveal" href={cta}>Unverbindliches Erstgespräch vereinbaren</a>
+          <p class="reveal mail">Oder schreiben Sie uns: <a href={`mailto:${mail}`}>{mail}</a></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>© Domvesta</span>
+      <nav aria-label="Rechtliches">
+        <a href="/impressum">Impressum</a>
+        <a href="/datenschutz">Datenschutz</a>
+      </nav>
+    </footer>
+
+    <script>
+      import { mountOrb } from "../../scripts/optimind-orb";
+      import { mountIcons } from "../../scripts/optimind-icons";
+
+      const track = document.querySelector<HTMLElement>(".track")!;
+      const pin = document.querySelector<HTMLElement>(".pin")!;
+      const nav = document.querySelector<HTMLElement>(".nav")!;
+      const countFixed = document.querySelector<HTMLElement>(".count-fixed")!;
+      const navLinks = document.querySelectorAll<HTMLElement>("[data-nav]");
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function safeMount<T>(label: string, fn: () => T): T | null {
+        try {
+          return fn();
+        } catch (err) {
+          // No WebGL: the CSS layers still carry the composition.
+          console.warn(`[domvesta] ${label} disabled:`, err);
+          return null;
+        }
+      }
+      const orbCanvas = document.querySelector<HTMLCanvasElement>("canvas.orb")!;
+      // Smaller orb than Optimind so the hero text has room on both sides (rings
+      // shrink to match); on phones it sits up top with the text below (--cy: 27%).
+      const orb = safeMount("orb", () => mountOrb(orbCanvas, { portraitLift: 0.23, portraitFit: 1.6, landscapeFit: 3.1 }));
+      if (!orb) orbCanvas.remove();
+      const icons = safeMount("icons", () => mountIcons([...document.querySelectorAll<HTMLCanvasElement>("canvas.icon")]));
+
+      // --- pinned opening: p runs 0→1 over the track: short hold on the hero, then the wipe
+      const clamp = (v: number) => Math.min(1, Math.max(0, v));
+      const seg = (p: number, a: number, b: number) => {
+        const x = clamp((p - a) / (b - a));
+        return x * x * (3 - 2 * x);
+      };
+      const maxScroll = () => track.offsetHeight - window.innerHeight;
+
+      const setActive = (id: string | null) =>
+        navLinks.forEach((a) => a.classList.toggle("active", a.dataset.nav === id));
+
+      // Sections with their own ids; filled by the observer further down.
+      const visible = new Set<string>();
+      let pinnedActive: string | null = null;
+      let queued = false;
+      function update() {
+        queued = false;
+        const max = maxScroll();
+        const p = max > 0 ? clamp((window.scrollY - track.offsetTop) / max) : 0;
+        const t2 = seg(p, 0.2, 0.75);
+        pin.style.setProperty("--t2", t2.toFixed(4));
+        countFixed.textContent = t2 > 0.5 ? "002 / 009" : "001 / 009";
+
+        // Pin still on screen? (It scrolls away once the track ends.)
+        const pinOnScreen = window.scrollY < track.offsetTop + track.offsetHeight;
+        orb?.setProgress(0, t2);
+        // Icons are simply there (fully revealed); they only follow the pointer.
+        icons?.set(1, t2 > 0 && pinOnScreen);
+
+        // Transparent over the pinned opening (like Optimind), frosted once
+        // normal sections start scrolling underneath.
+        nav.classList.toggle("solid", window.scrollY > track.offsetTop + max - 1);
+        pinnedActive = t2 > 0.5 ? "leistungen" : null;
+        if (!visible.size) setActive(pinnedActive);
+      }
+      const queue = () => {
+        if (!queued) {
+          queued = true;
+          requestAnimationFrame(update);
+        }
+      };
+      window.addEventListener("scroll", queue, { passive: true });
+      window.addEventListener("resize", queue);
+      update();
+
+      // Jumps into the pinned timeline go to a progress value, not an element.
+      document.querySelectorAll<HTMLElement>("[data-goto]").forEach((el) =>
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          const top = track.offsetTop + Number(el.dataset.goto) * maxScroll();
+          window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+        }),
+      );
+
+      // --- active nav link: whichever section crosses the middle of the viewport
+      const sections = [...document.querySelectorAll<HTMLElement>("main > section[id]")];
+      const navIo = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id);
+          const current = sections.find((s) => visible.has(s.id));
+          setActive(current ? current.id : pinnedActive);
+        },
+        { rootMargin: "-45% 0px -50% 0px" },
+      );
+      sections.forEach((s) => navIo.observe(s));
+
+      // --- reveal-on-scroll for the normal sections
+      const revealIo = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            e.target.classList.add("in");
+            revealIo.unobserve(e.target);
+          }
+        },
+        { rootMargin: "0px 0px -12% 0px" },
+      );
+      document.querySelectorAll(".reveal").forEach((el) => revealIo.observe(el));
+    </script>
+
+    <style is:global>
+      html {
+        background: #c8c8c8;
+        scroll-padding-top: 90px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        html {
+          scroll-behavior: smooth;
+        }
+      }
+      body {
+        margin: 0;
+        color: #1d1d1d;
+        font-family: "Schibsted Grotesk", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+    </style>
+
+    <style>
+      :root {
+        --pad: 3.6vw;
+        --panel: #c8c8c8;
+        --ink: #1d1d1d;
+        --muted: #5c5c5c;
+        --line: rgb(0 0 0 / 0.16);
+        --amber: #ffb04a;
+      }
+
+      /* --- type --- */
+      h1,
+      h2 {
+        margin: 0;
+        font-family: "Archivo Variable", system-ui, sans-serif;
+        font-stretch: 125%;
+        font-weight: 400;
+        font-size: clamp(22px, 2.55vw, 46px);
+        line-height: 1.16;
+        letter-spacing: 0.005em;
+        text-transform: uppercase;
+        hyphens: auto;
+        overflow-wrap: break-word;
+      }
+      h3 {
+        margin: 0;
+        font-weight: 400;
+      }
+      .lede {
+        font-size: clamp(14px, 1.15vw, 18px);
+        line-height: 1.55;
+        color: #474747;
+      }
+      .count {
+        font: clamp(8px, 0.62vw, 10px) / 1 "Archivo Variable", sans-serif;
+        letter-spacing: 0.06em;
+        color: rgb(0 0 0 / 0.6);
+      }
+      .dots {
+        display: flex;
+        gap: 4px;
+        padding-top: 0.6em;
+      }
+      .dots i {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+      .row-num {
+        font: clamp(9px, 0.7vw, 11px) / 1 "Archivo Variable", sans-serif;
+        font-stretch: 125%;
+        letter-spacing: 0.08em;
+        color: rgb(0 0 0 / 0.5);
+      }
+
+      /* --- buttons --- */
+      .btn {
+        display: inline-grid;
+        place-items: center;
+        min-width: 13vw;
+        min-height: max(40px, 4.8svh);
+        padding: 10px 26px;
+        box-sizing: border-box;
+        border-radius: 999px;
+        font: 500 clamp(10px, 0.72vw, 12px) / 1.3 "Archivo Variable", sans-serif;
+        font-stretch: 110%;
+        letter-spacing: 0.04em;
+        text-align: center;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: box-shadow 0.3s, background-color 0.3s;
+      }
+      .btn-dark {
+        color: #fff;
+        background: #0d0d0d;
+        border: 1px solid rgb(255 176 74 / 0.75);
+        box-shadow:
+          0 -3px 12px -2px rgb(255 160 50 / 0.55),
+          inset 0 1px 0 rgb(255 200 120 / 0.5);
+      }
+      .btn-dark:hover {
+        box-shadow:
+          0 -3px 18px 0 rgb(255 160 50 / 0.75),
+          inset 0 1px 0 rgb(255 200 120 / 0.7);
+      }
+      .btn-line {
+        color: #2a2a2a;
+        border: 1px solid rgb(0 0 0 / 0.35);
+      }
+      .btn-line:hover {
+        background: rgb(255 255 255 / 0.25);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--amber);
+        outline-offset: 3px;
+      }
+
+      /* --- nav (fixed over everything) --- */
+      .nav {
+        position: fixed;
+        inset: 0 0 auto;
+        z-index: 50;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        padding: 3.4svh var(--pad) 2.6svh;
+        font-family: "Archivo Variable", system-ui, sans-serif;
+        font-stretch: 112%;
+        text-transform: uppercase;
+        color: #1f1f1f;
+        transition: background-color 0.4s, backdrop-filter 0.4s, padding 0.4s;
+      }
+      .nav::after {
+        content: "";
+        position: absolute;
+        left: var(--pad);
+        right: var(--pad);
+        bottom: 0;
+        height: 1px;
+        background: var(--line);
+      }
+      .nav.solid {
+        background: rgb(200 200 200 / 0.72);
+        backdrop-filter: blur(16px) saturate(1.1);
+        -webkit-backdrop-filter: blur(16px) saturate(1.1);
+      }
+      .brand {
+        justify-self: start;
+        color: inherit;
+        text-decoration: none;
+        font-size: clamp(12px, 1.05vw, 17px);
+        letter-spacing: 0.02em;
+      }
+      .links {
+        display: flex;
+        gap: 3.6vw;
+      }
+      .links.end {
+        justify-content: flex-end;
+        gap: 3.4vw;
+      }
+      .links a {
+        position: relative;
+        color: inherit;
+        text-decoration: none;
+        font-size: clamp(9px, 0.68vw, 12px);
+        letter-spacing: 0.04em;
+        opacity: 0.8;
+      }
+      .links a:hover,
+      .links a.active {
+        opacity: 1;
+      }
+      .links a::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: calc(-2.6svh - 1px);
+        width: max(100%, 3.6vw);
+        height: 2px;
+        translate: -50% 50%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, transparent, #ffc070 30%, var(--amber) 70%, transparent);
+        box-shadow: 0 0 10px 2px rgb(255 170 60 / 0.6);
+        opacity: 0;
+        transition: opacity 0.4s;
+      }
+      .links a.active::after {
+        opacity: 1;
+      }
+
+      /* ================= pinned opening ================= */
+      .track {
+        height: 220svh;
+      }
+      .pin {
+        --cy: 52%;
+        position: sticky;
+        top: 0;
+        height: 100svh;
+        overflow: hidden;
+      }
+      .pin > * {
+        position: absolute;
+      }
+      .hero-bg {
+        inset: 0;
+        background:
+          radial-gradient(55% 70% at 52% var(--cy), rgb(240 240 240 / 0.5), transparent 70%),
+          linear-gradient(100deg, #9d9d9d 0%, #bdbdbd 38%, #d6d6d6 72%, #e0e0e0 100%);
+      }
+      .rings,
+      .bokeh {
+        inset: 0;
+        pointer-events: none;
+      }
+      .rings span,
+      .team-rings span,
+      .contact-rings span {
+        position: absolute;
+        left: 50%;
+        top: var(--cy, 50%);
+        aspect-ratio: 1;
+        translate: -50% -50%;
+        border-radius: 50%;
+      }
+      .rings span:first-child {
+        width: min(72svh, 80vw);
+        border: 1px solid rgb(255 255 255 / 0.4);
+        box-shadow: 0 0 0 1px rgb(0 0 0 / 0.04);
+      }
+      .rings span:last-child {
+        width: min(63svh, 70vw);
+        border: 1px solid rgb(255 255 255 / 0.22);
+        background: radial-gradient(closest-side, rgb(255 255 255 / 0.18), transparent);
+      }
+      .bokeh i {
+        position: absolute;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgb(255 214 160 / 0.4), rgb(255 200 140 / 0.12) 60%, transparent 72%);
+        border: 1px solid rgb(255 225 190 / 0.22);
+        filter: blur(0.6px);
+      }
+      .bokeh i:nth-child(1) { left: 18%; top: 37%; width: 7.5svh; }
+      .bokeh i:nth-child(2) { left: 24%; top: 62%; width: 9svh; }
+      .bokeh i:nth-child(3) { left: 19%; top: 74%; width: 7svh; opacity: 0.7; }
+      .bokeh i:nth-child(4) { left: 79%; top: 24%; width: 11svh; opacity: 0.6; filter: blur(3px); }
+      .orb {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        pointer-events: none;
+      }
+      /* Hero: headline left (white, over the orb's edge like Optimind),
+         lede + CTA right of the orb (dark, on the light side of the gradient). */
+      .hero-text {
+        inset: 0;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 1fr 23vw;
+        align-items: center;
+        padding: 6svh var(--pad) 0;
+        pointer-events: none;
+      }
+      .hero-text a {
+        pointer-events: auto;
+      }
+      .hero-main {
+        color: #fff;
+      }
+      .hero-main h1 {
+        font-size: clamp(22px, 2.2vw, 42px);
+        text-shadow: 0 1px 18px rgb(0 0 0 / 0.14);
+      }
+      .eyebrow {
+        display: block;
+        margin-bottom: 2.6svh;
+        font: clamp(9px, 0.7vw, 11px) / 1 "Archivo Variable", sans-serif;
+        font-stretch: 125%;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgb(255 255 255 / 0.85);
+      }
+      .eyebrow::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        margin-right: 10px;
+        border-radius: 50%;
+        background: var(--amber);
+        box-shadow: 0 0 8px 2px rgb(255 170 60 / 0.6);
+        vertical-align: 1px;
+      }
+      .hero-side {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3.4svh;
+      }
+      .hero-lede {
+        margin: 0;
+        font-size: clamp(13px, 1vw, 17px);
+        line-height: 1.6;
+        color: #3c3c3c;
+      }
+      .count-fixed {
+        left: var(--pad);
+        top: 13.5svh;
+        z-index: 5;
+      }
+
+      /* services (benefit cards) */
+      .services {
+        inset: 0;
+        z-index: 3; /* wipes over the hero text */
+        background: var(--panel);
+        transform: translateY(calc((1 - var(--t2)) * 101%));
+        padding: 21svh var(--pad) 9svh;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 5svh;
+      }
+      .services-head {
+        display: grid;
+        grid-template-columns: 46% 1fr auto;
+        column-gap: 2vw;
+        align-items: start;
+      }
+      .services-head p {
+        max-width: 34em;
+        margin: 0;
+        font-size: clamp(12px, 0.95vw, 15px);
+        line-height: 1.6;
+        color: #4a4a4a;
+      }
+      .cards {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2vw;
+      }
+      .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgb(0 0 0 / 0.17);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02));
+        overflow: hidden;
+      }
+      .icon {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        display: block;
+      }
+      .card-copy {
+        padding: 0 2vw 2.6svh;
+      }
+      .card h3 {
+        margin: 0 0 1.8svh;
+        font-size: clamp(14px, 1.2vw, 20px);
+        color: var(--ink);
+      }
+      .card p {
+        margin: 0;
+        max-width: 34em;
+        min-height: 3.2em; /* 2 lines, so titles line up across cards */
+        font-size: clamp(11px, 0.85vw, 14px);
+        line-height: 1.6;
+        color: #666;
+      }
+      .scroll-cue {
+        z-index: 10;
+        left: 50%;
+        bottom: 3.2svh;
+        translate: -50% 0;
+        color: rgb(0 0 0 / 0.45);
+        opacity: calc(1 - var(--t2) * 3);
+      }
+      .wheel {
+        animation: wheel 1.8s ease-in-out infinite;
+      }
+      @keyframes wheel {
+        0% { transform: translateY(0); opacity: 1; }
+        70% { transform: translateY(5px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 0; }
+      }
+
+      /* ================= normal sections ================= */
+      .sec {
+        position: relative;
+        padding: 16svh var(--pad) 14svh;
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+      }
+      .sec > .count {
+        position: absolute;
+        left: var(--pad);
+        top: 6svh;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 46% 1fr;
+        column-gap: 2vw;
+        align-items: start;
+      }
+      .split-head .lede,
+      .sec-head .lede {
+        max-width: 34em;
+        margin: 4svh 0 0;
+      }
+      .sec-head {
+        display: grid;
+        grid-template-columns: 46% 1fr;
+        column-gap: 2vw;
+        align-items: end;
+      }
+      .sec-head .lede {
+        margin: 0;
+      }
+
+      /* numbered rows (Strom & Gas) */
+      .rows {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border-top: 1px solid var(--line);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 4.5vw 1fr;
+        gap: 1vw;
+        padding: 3.4svh 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .row .row-num {
+        padding-top: 0.5em;
+      }
+      .row h3,
+      .tile h3 {
+        font-size: clamp(16px, 1.35vw, 22px);
+        margin-bottom: 1.2svh;
+      }
+      .row p,
+      .tile p {
+        margin: 0;
+        max-width: 36em;
+        font-size: clamp(13px, 0.95vw, 15px);
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .note {
+        margin: 6svh 0 0 calc(46% + 2vw);
+        max-width: 40em;
+        font-size: clamp(12px, 0.85vw, 14px);
+        line-height: 1.6;
+        color: rgb(0 0 0 / 0.5);
+      }
+
+      /* tiles (Versicherungen) */
+      /* One shared row grid (subgrid) so number, title and text line up across
+         all three tiles, whatever the text length. */
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: minmax(15svh, auto) auto auto;
+        gap: 0 2vw;
+        margin-top: 8svh;
+      }
+      .tile {
+        display: grid;
+        grid-row: span 3;
+        grid-template-rows: subgrid;
+        row-gap: 2svh;
+        padding: 3.4svh 2vw;
+        box-sizing: border-box;
+        border: 1px solid rgb(0 0 0 / 0.17);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02));
+      }
+      .tile h3 {
+        margin-bottom: 0;
+      }
+      .pull {
+        margin: 8svh 0 0;
+        max-width: 26em;
+        padding-left: 1.6vw;
+        border-left: 2px solid var(--amber);
+        font-size: clamp(16px, 1.5vw, 24px);
+        line-height: 1.45;
+        color: var(--ink);
+      }
+
+      /* dark decision section */
+      .dark {
+        overflow: hidden;
+        background: #121212;
+        color: #f2f2f2;
+        border-top: 0;
+      }
+      .dark > .count {
+        color: rgb(255 255 255 / 0.5);
+      }
+      .dark-glow {
+        position: absolute;
+        right: -10vw;
+        top: 10%;
+        width: 60vw;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgb(255 150 50 / 0.28), rgb(255 120 30 / 0.08) 55%, transparent);
+        filter: blur(20px);
+        pointer-events: none;
+      }
+      .dark h2 {
+        position: relative;
+      }
+      .questions {
+        position: relative;
+        list-style: none;
+        margin: 8svh 0 0;
+        padding: 0;
+        border-top: 1px solid rgb(255 255 255 / 0.14);
+      }
+      .questions li {
+        display: grid;
+        grid-template-columns: 4.5vw 1fr;
+        gap: 1vw;
+        align-items: baseline;
+        padding: 3.2svh 0;
+        border-bottom: 1px solid rgb(255 255 255 / 0.14);
+        font-size: clamp(17px, 1.7vw, 28px);
+        line-height: 1.35;
+      }
+      .questions .row-num {
+        color: var(--amber);
+      }
+      .dark-foot {
+        position: relative;
+        display: grid;
+        grid-template-columns: 46% 1fr;
+        column-gap: 2vw;
+        margin-top: 7svh;
+      }
+      .dark-foot p {
+        margin: 0;
+        max-width: 32em;
+        font-size: clamp(14px, 1.05vw, 17px);
+        line-height: 1.6;
+        color: rgb(255 255 255 / 0.7);
+      }
+      .glow-text {
+        grid-column: 2;
+        color: #ffd29a !important;
+        text-shadow: 0 0 24px rgb(255 160 60 / 0.35);
+      }
+
+      /* team */
+      .team-grid {
+        display: grid;
+        grid-template-columns: 46% 1fr;
+        column-gap: 4vw;
+        align-items: center;
+      }
+      .team-photo {
+        position: relative;
+        margin: 0;
+        aspect-ratio: 1.2;
+        display: grid;
+        place-items: end center;
+        border-radius: 20px;
+        overflow: hidden;
+        background:
+          radial-gradient(60% 55% at 50% 62%, rgb(255 190 110 / 0.45), transparent 70%),
+          linear-gradient(100deg, #9d9d9d 0%, #bdbdbd 40%, #d9d9d9 100%);
+        border: 1px solid rgb(255 255 255 / 0.4);
+      }
+      .team-rings {
+        position: absolute;
+        inset: 0;
+        --cy: 55%;
+      }
+      .team-rings span:first-child {
+        width: 86%;
+        border: 1px solid rgb(255 255 255 / 0.45);
+      }
+      .team-rings span:last-child {
+        width: 70%;
+        border: 1px solid rgb(255 255 255 / 0.25);
+      }
+      .team-photo img {
+        position: relative;
+        width: 92%;
+        height: auto;
+        filter: saturate(0.85) drop-shadow(0 20px 30px rgb(0 0 0 / 0.18));
+      }
+      .team-copy h2 {
+        margin-bottom: 4svh;
+      }
+      .team-copy p {
+        max-width: 34em;
+        margin: 0 0 2.2svh;
+        font-size: clamp(14px, 1.05vw, 17px);
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .team-copy .lede {
+        color: #3a3a3a;
+      }
+      .team-copy strong {
+        font-weight: 500;
+        color: var(--ink);
+      }
+      .people {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.4vw;
+        margin-top: 4svh;
+      }
+      .person {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2svh;
+        padding: 2.6svh 1.6vw;
+        border: 1px solid rgb(0 0 0 / 0.17);
+        border-radius: 14px;
+      }
+      .person-name {
+        font: 400 clamp(12px, 0.95vw, 16px) / 1.2 "Archivo Variable", sans-serif;
+        font-stretch: 125%;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+      .person-role {
+        font-size: clamp(12px, 0.85vw, 14px);
+        color: var(--muted);
+      }
+      .trust {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 3vw;
+        margin-top: 10svh;
+        padding: 3.6svh 2.4vw;
+        border: 1px solid rgb(0 0 0 / 0.17);
+        border-radius: 16px;
+        background: linear-gradient(90deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.03));
+      }
+      .trust h3 {
+        font-size: clamp(16px, 1.35vw, 22px);
+        margin-bottom: 1svh;
+      }
+      .trust p {
+        margin: 0;
+        max-width: 40em;
+        font-size: clamp(13px, 0.95vw, 15px);
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .trust .btn {
+        flex: none;
+      }
+
+      /* steps */
+      .steps {
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2vw;
+        margin: 9svh 0 0;
+        padding: 0;
+      }
+      .step {
+        position: relative;
+        padding-top: 4svh;
+      }
+      .step::before,
+      .step::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 2px;
+      }
+      .step::before {
+        right: 0;
+        background: var(--line);
+      }
+      .step::after {
+        width: 0;
+        background: linear-gradient(90deg, #ffc070, var(--amber));
+        box-shadow: 0 0 10px 1px rgb(255 170 60 / 0.55);
+        transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--d, 0) * 0.25s + 0.2s);
+      }
+      .step.in::after {
+        width: 100%;
+      }
+      .step-num {
+        display: block;
+        margin-bottom: 3svh;
+        font: 300 clamp(48px, 6vw, 104px) / 0.9 "Archivo Variable", sans-serif;
+        font-stretch: 125%;
+        color: rgb(255 255 255 / 0.55);
+        -webkit-text-stroke: 1px rgb(0 0 0 / 0.18);
+      }
+      .step h3 {
+        margin-bottom: 1.6svh;
+        font-size: clamp(16px, 1.35vw, 22px);
+      }
+      .step p {
+        margin: 0;
+        max-width: 30em;
+        font-size: clamp(13px, 0.95vw, 15px);
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      /* faq */
+      .faq {
+        border-top: 1px solid var(--line);
+      }
+      .faq details {
+        border-bottom: 1px solid var(--line);
+      }
+      .faq summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2vw;
+        padding: 3svh 0;
+        cursor: pointer;
+        list-style: none;
+        font-size: clamp(15px, 1.25vw, 20px);
+      }
+      .faq summary::-webkit-details-marker {
+        display: none;
+      }
+      .plus {
+        position: relative;
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border: 1px solid rgb(0 0 0 / 0.3);
+        border-radius: 50%;
+        transition: transform 0.35s, background-color 0.35s, border-color 0.35s;
+      }
+      .plus::before,
+      .plus::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 10px;
+        height: 1px;
+        background: currentColor;
+        translate: -50% -50%;
+      }
+      .plus::after {
+        rotate: 90deg;
+      }
+      .faq details[open] .plus {
+        transform: rotate(45deg);
+        background: #0d0d0d;
+        border-color: rgb(255 176 74 / 0.75);
+        color: #fff;
+        box-shadow: 0 0 10px rgb(255 160 50 / 0.45);
+      }
+      .faq details p {
+        margin: 0;
+        max-width: 42em;
+        padding: 0 0 3.4svh;
+        font-size: clamp(13px, 1vw, 16px);
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      /* contact */
+      .contact {
+        overflow: hidden;
+        min-height: 100svh;
+        box-sizing: border-box;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        background:
+          radial-gradient(55% 70% at 50% 50%, rgb(240 240 240 / 0.5), transparent 70%),
+          linear-gradient(100deg, #9d9d9d 0%, #bdbdbd 38%, #d6d6d6 72%, #e0e0e0 100%);
+      }
+      .contact-rings {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .contact-rings span:first-child {
+        width: min(96svh, 96vw);
+        border: 1px solid rgb(255 255 255 / 0.45);
+      }
+      .contact-rings span:last-child {
+        width: min(80svh, 82vw);
+        border: 1px solid rgb(255 255 255 / 0.25);
+        background: radial-gradient(closest-side, rgb(255 255 255 / 0.2), transparent);
+      }
+      .contact-glow {
+        position: absolute;
+        left: 50%;
+        bottom: -18svh;
+        width: 70vw;
+        height: 40svh;
+        translate: -50% 0;
+        background: radial-gradient(closest-side, rgb(255 168 70 / 0.5), rgb(255 150 50 / 0.15) 55%, transparent);
+        filter: blur(30px);
+        pointer-events: none;
+      }
+      .contact-body {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4svh;
+      }
+      .contact-body .lede {
+        max-width: 32em;
+        margin: 0;
+      }
+      .mail {
+        margin: 0;
+        font-size: clamp(13px, 0.95vw, 15px);
+        color: #4a4a4a;
+      }
+      .mail a {
+        color: var(--ink);
+        text-decoration-color: var(--amber);
+        text-underline-offset: 4px;
+      }
+
+      .foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3svh var(--pad);
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+        color: rgb(0 0 0 / 0.55);
+      }
+      .foot nav {
+        display: flex;
+        gap: 2vw;
+      }
+      .foot a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .foot a:hover {
+        color: var(--ink);
+      }
+
+      /* reveal-on-scroll */
+      .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition:
+          opacity 0.9s ease calc(var(--d, 0) * 0.12s),
+          transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--d, 0) * 0.12s);
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* ================= portrait / phone ================= */
+      @media (max-aspect-ratio: 1/1), (max-width: 720px) {
+        :root {
+          --pad: 6vw;
+        }
+        .pin {
+          --cy: 27%;
+        }
+        .rings span:first-child { width: 72vw; }
+        .rings span:last-child { width: 60vw; }
+        .links:not(.end) {
+          display: none;
+        }
+        .nav {
+          grid-template-columns: 1fr 1fr;
+          padding: 2.6svh var(--pad) 2svh;
+        }
+        .brand {
+          font-size: 14px;
+        }
+        .links a {
+          font-size: 10px;
+        }
+        .links.end {
+          gap: 6vw;
+        }
+        /* German compounds (Liegenschaften, Ansprechpartner) don't fit a
+           phone line at full width; a narrower cut avoids hyphenation. */
+        h1,
+        h2 {
+          font-size: clamp(20px, 5.6vw, 32px);
+          font-stretch: 106%;
+        }
+        /* Phones: orb up top, all hero text stacked underneath it. */
+        .hero-text {
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          align-items: stretch;
+          gap: 2.6svh;
+          padding: 0 var(--pad) 11svh;
+        }
+        .hero-main h1 {
+          font-size: clamp(20px, 5.6vw, 32px);
+        }
+        .eyebrow {
+          margin-bottom: 1.6svh;
+        }
+        .hero-side {
+          gap: 2.4svh;
+        }
+        .hero-lede {
+          font-size: 14px;
+        }
+        .btn { min-width: 0; width: 100%; }
+        .count-fixed {
+          top: 10svh;
+        }
+        .bokeh i:nth-child(1) { left: 6%; top: 12%; }
+        .bokeh i:nth-child(2) { left: 14%; top: 34%; }
+        .bokeh i:nth-child(3) { left: 82%; top: 30%; }
+        .bokeh i:nth-child(4) { left: 74%; top: 8%; }
+        .services {
+          padding: 12svh 0 8svh;
+          gap: 3svh;
+        }
+        .services-head {
+          grid-template-columns: 1fr auto;
+          row-gap: 1.6svh;
+          padding: 0 var(--pad);
+        }
+        .services-head p { grid-row: 2; grid-column: 1 / -1; font-size: 13px; }
+        .services-head .dots { grid-column: 2; grid-row: 1; }
+        /* Three columns don't fit: swipeable row instead. */
+        .cards {
+          display: flex;
+          gap: 12px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          padding: 0 var(--pad);
+          scrollbar-width: none;
+        }
+        .card {
+          flex: 0 0 76vw;
+          scroll-snap-align: center;
+        }
+        .card-copy { padding: 0 20px 20px; }
+        .card h3 { font-size: 17px; }
+        .card p { font-size: 13px; }
+
+        .sec {
+          padding: 12svh var(--pad) 10svh;
+        }
+        .sec > .count {
+          top: 5svh;
+        }
+        .split,
+        .sec-head,
+        .team-grid,
+        .dark-foot {
+          grid-template-columns: 1fr;
+          row-gap: 4svh;
+        }
+        .glow-text {
+          grid-column: 1;
+        }
+        .note {
+          margin-left: 0;
+        }
+        .row,
+        .questions li {
+          grid-template-columns: 11vw 1fr;
+        }
+        .tiles,
+        .steps,
+        .people {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+        .steps {
+          gap: 6svh;
+        }
+        /* Stacked on phones: nothing to align across, plain flow. */
+        .tiles {
+          grid-template-rows: none;
+        }
+        .tile {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          grid-row: auto;
+          padding: 24px 20px;
+        }
+        .person {
+          padding: 18px 20px;
+        }
+        .pull {
+          padding-left: 16px;
+        }
+        .trust {
+          flex-direction: column;
+          align-items: stretch;
+          padding: 24px 20px;
+        }
+        .questions li {
+          font-size: 18px;
+        }
+        .foot {
+          flex-direction: column;
+          gap: 10px;
+        }
+        .foot nav {
+          gap: 20px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .wheel {
+          animation: none;
+        }
+        .reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        .step::after {
+          width: 100%;
+          transition: none;
+        }
+      }
+    </style>
+  </body>
+</html>
