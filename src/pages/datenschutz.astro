@@ -1,12 +1,11 @@
 ---
-// Text: src/components/legal/DatenschutzText.astro (geteilt mit /lab/domvesta/datenschutz).
+// Datenschutzerklärung. Text: src/components/legal/DatenschutzText.astro.
 import LegalPage from "../layouts/LegalPage.astro";
 import DatenschutzText from "../components/legal/DatenschutzText.astro";
 ---
 
-{/* Echtes Weiches Trennzeichen (U+00AD), nicht "&shy;": der Titel geht als
-    String-Prop durch und wird beim Rendern escaped — die Entity stand dadurch
-    wörtlich auf der Seite. */}
-<LegalPage title="Datenschutz­erklärung">
+{/* Echtes weiches Trennzeichen (U+00AD) im Titel, nicht "&shy;": der Titel geht
+    als String-Prop durch und wird beim Rendern escaped. */}
+<LegalPage title="Datenschutz­erklärung" page="datenschutz">
   <DatenschutzText />
 </LegalPage>

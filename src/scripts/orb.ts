@@ -7,8 +7,10 @@
 //     "lightning" streaks,
 //   - glow via additive sprites instead of a bloom pass, because the canvas is
 //     transparent over the CSS card and bloom on alpha is unreliable.
-// The page's scroll timeline drives it through setProgress().
-// Sandbox only (/lab/optimind) — nothing on the Domvesta homepage uses this.
+// The homepage hero (src/pages/index.astro) places it with setFrame() and its
+// scroll timeline drives it through setProgress(). introDrop/portrait*/
+// landscapeFit and the intro close-up date from the first concept recreation;
+// the homepage always uses setFrame() and intro 0.
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 

@@ -1,0 +1,397 @@
+---
+// Top bar shared by the homepage and the legal pages.
+// Desktop: brand, four section links, two service links (FAQ/Kontakt, or
+// Impressum/Datenschutz on the legal pages).
+// Phones: brand + burger. The burger opens a full-screen index of all nine
+// sections, numbered like the section counters, plus the CTA.
+import { sections, pad2, ctaLink, mail, phone } from "../data/site";
+import Mark from "./Mark.astro";
+
+interface Props {
+  /** Where the homepage lives: "" on the homepage itself, "/" elsewhere. */
+  home?: string;
+  /** On a legal page: which one is current. */
+  legal?: "impressum" | "datenschutz";
+}
+
+const { home = "", legal } = Astro.props;
+const onPage = home === "";
+const href = (id: string) => (id === "top" ? (onPage ? "#top" : home) : `${home}#${id}`);
+// On the page itself, "top" and "leistungen" jump into the pinned opening by
+// progress instead of by element (the page script handles [data-goto]).
+const goto = (id: string) => (!onPage ? undefined : id === "top" ? "0" : id === "leistungen" ? "1" : undefined);
+const main = [
+  { id: "leistungen", label: "Vorteile" },
+  { id: "strom-gas", label: "Strom & Gas" },
+  { id: "versicherungen", label: "Versicherungen" },
+  { id: "team", label: "Über uns" },
+];
+const legalHref = (p: string) => `/${p}`;
+---
+
+<header class="nav">
+  <a class="brand" href={href("top")} data-goto={goto("top")}><Mark class="brand-mark" />Domvesta</a>
+  <nav class="links" aria-label="Hauptnavigation">
+    {
+      main.map((m) => (
+        <a href={href(m.id)} data-goto={goto(m.id)} data-nav={onPage ? m.id : undefined}>
+          {m.label}
+        </a>
+      ))
+    }
+  </nav>
+  {
+    legal ? (
+      <nav class="links end" aria-label="Rechtliches">
+        <a href={legalHref("impressum")} class:list={{ active: legal === "impressum" }} aria-current={legal === "impressum" ? "page" : undefined}>
+          Impressum
+        </a>
+        <a href={legalHref("datenschutz")} class:list={{ active: legal === "datenschutz" }} aria-current={legal === "datenschutz" ? "page" : undefined}>
+          Datenschutz
+        </a>
+      </nav>
+    ) : (
+      <nav class="links end" aria-label="Service">
+        <a href="#faq" data-nav="faq">FAQ</a>
+        <a href="#kontakt" data-nav="kontakt">Kontakt</a>
+      </nav>
+    )
+  }
+  <!-- Phones: call directly, next to the burger. -->
+  <a class="call" href={phone.href} aria-label={`Anrufen: ${phone.label}`}>
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M5 4h3.5l1.5 4-2 1.3a11 11 0 0 0 6.7 6.7L16 14l4 1.5V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4z"></path>
+    </svg>
+  </a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menü öffnen">
+    <span></span><span></span>
+  </button>
+</header>
+
+<!-- Outside the header on purpose: .nav.solid has a backdrop-filter, which would
+     make the header the containing block for this fixed panel. -->
+<div class="menu" id="menu" inert>
+  <nav aria-label="Abschnitte">
+    <ol class="menu-list">
+      {
+        sections.map((s, i) => (
+          <li>
+            <a href={href(s.id)} data-goto={goto(s.id)}>
+              <span class="menu-num">{pad2(i + 1)}</span>
+              {s.label}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+  <div class="menu-foot">
+    <a class="menu-cta" {...ctaLink}>Erstgespräch vereinbaren</a>
+    <a class="menu-mail" href={`mailto:${mail}`}>{mail}</a>
+    <p class="menu-legal">
+      <a href={legalHref("impressum")}>Impressum</a>
+      <a href={legalHref("datenschutz")}>Datenschutz</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  const nav = document.querySelector<HTMLElement>(".nav")!;
+  const burger = nav.querySelector<HTMLButtonElement>(".burger")!;
+  const menu = document.getElementById("menu")!;
+  const behind = [...document.querySelectorAll<HTMLElement>("body > main, body > footer")];
+  // Same query as the phone CSS; leaving it (rotation, resize) closes the menu.
+  const phoneMq = window.matchMedia("(max-aspect-ratio: 1/1), (max-width: 720px)");
+  let open = false;
+
+  function setOpen(next: boolean, restoreFocus = false) {
+    if (next === open) return;
+    open = next;
+    burger.setAttribute("aria-expanded", String(open));
+    burger.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+    nav.classList.toggle("menu-open", open);
+    menu.classList.toggle("open", open);
+    menu.inert = !open;
+    behind.forEach((el) => (el.inert = open));
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    if (open) menu.querySelector("a")?.focus({ preventScroll: true });
+    else if (restoreFocus) burger.focus();
+  }
+
+  burger.addEventListener("click", () => setOpen(!open, true));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && open) setOpen(false, true);
+  });
+  // Capture phase: close and unlock scrolling before a link's own handler
+  // (e.g. the page's [data-goto] jump) scrolls.
+  menu.addEventListener(
+    "click",
+    (e) => {
+      if ((e.target as Element).closest("a")) setOpen(false);
+    },
+    { capture: true },
+  );
+  phoneMq.addEventListener("change", () => !phoneMq.matches && setOpen(false));
+</script>
+
+<style>
+  .nav {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 3.4svh var(--pad) 2.6svh;
+    font-family: "Archivo Variable", system-ui, sans-serif;
+    font-stretch: 112%;
+    text-transform: uppercase;
+    color: var(--ink);
+    transition: background-color 0.4s, backdrop-filter 0.4s;
+  }
+  .nav::after {
+    content: "";
+    position: absolute;
+    left: var(--pad);
+    right: var(--pad);
+    bottom: 0;
+    height: 1px;
+    background: var(--line);
+  }
+  .nav.solid {
+    background: rgb(246 240 230 / 0.94);
+    backdrop-filter: blur(16px) saturate(1.1);
+    -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  }
+  .nav.menu-open {
+    background: var(--panel);
+  }
+  .brand {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    color: inherit;
+    text-decoration: none;
+    font-size: clamp(12px, 1.05vw, 17px);
+    letter-spacing: 0.02em;
+  }
+  /* The svg comes from Mark.astro and carries that component's scope. */
+  .brand :global(.brand-mark) {
+    width: 1.75em;
+    height: 1.75em;
+    flex: none;
+  }
+  .links {
+    display: flex;
+    gap: 3.6vw;
+  }
+  .links.end {
+    justify-content: flex-end;
+    gap: 3.4vw;
+  }
+  .links a {
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+    font-size: clamp(9px, 0.68vw, 12px);
+    letter-spacing: 0.04em;
+    opacity: 0.8;
+  }
+  .links a:hover,
+  .links a.active {
+    opacity: 1;
+  }
+  .links a::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: calc(-2.6svh - 1px);
+    width: max(100%, 3.6vw);
+    height: 2px;
+    translate: -50% 50%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #fc9a64 30%, var(--orange) 70%, transparent);
+    box-shadow: 0 0 10px 2px rgb(250 100 27 / 0.5);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .links a.active::after {
+    opacity: 1;
+  }
+  a:focus-visible,
+  .burger:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+  }
+
+  /* --- burger + menu: phones only --- */
+  .call,
+  .burger,
+  .menu {
+    display: none;
+  }
+
+  @media (max-aspect-ratio: 1/1), (max-width: 720px) {
+    .nav {
+      grid-template-columns: 1fr auto auto;
+      padding: 2.2svh var(--pad) 1.8svh;
+    }
+    /* Orange: a contact action (the darker cut keeps 3.5:1 on the cream). */
+    .call {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      margin-right: 4px;
+      color: var(--orange-text);
+    }
+    .call svg {
+      width: 23px;
+      height: 23px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .links {
+      display: none;
+    }
+    .brand {
+      font-size: 18px;
+    }
+    .burger {
+      position: relative;
+      display: block;
+      width: 44px;
+      height: 44px;
+      margin-right: -8px;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .burger span {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+      transition: translate 0.3s, rotate 0.3s;
+    }
+    .burger span:first-child {
+      top: 17px;
+    }
+    .burger span:last-child {
+      top: 25px;
+    }
+    .burger[aria-expanded="true"] span:first-child {
+      translate: 0 4px;
+      rotate: 45deg;
+    }
+    .burger[aria-expanded="true"] span:last-child {
+      translate: 0 -4px;
+      rotate: -45deg;
+    }
+
+    .menu {
+      position: fixed;
+      inset: 0;
+      z-index: 49;
+      display: flex;
+      flex-direction: column;
+      gap: 4svh;
+      overflow-y: auto;
+      padding: calc(4svh + 44px + 3svh) var(--pad) 4svh;
+      box-sizing: border-box;
+      background: var(--panel);
+      opacity: 0;
+      visibility: hidden;
+      translate: 0 -10px;
+      transition: opacity 0.3s, translate 0.3s, visibility 0s 0.3s;
+    }
+    .menu.open {
+      opacity: 1;
+      visibility: visible;
+      translate: 0 0;
+      transition: opacity 0.3s, translate 0.3s;
+    }
+    .menu-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .menu-list a {
+      display: grid;
+      grid-template-columns: 3em 1fr;
+      align-items: baseline;
+      padding: 1.7svh 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+      text-decoration: none;
+      font: 400 clamp(16px, 4.6vw, 20px) / 1.2 "Archivo Variable", system-ui, sans-serif;
+      font-stretch: 112%;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .menu-num {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .menu-foot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.4svh;
+      margin-top: auto;
+    }
+    .menu-cta {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-height: 52px;
+      box-sizing: border-box;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(180deg, #fb7a3a, #e2560f);
+      border: 1px solid rgb(252 162 92 / 0.6);
+      box-shadow:
+        0 -3px 14px -2px rgb(250 110 40 / 0.5),
+        0 12px 26px -14px rgb(220 80 15 / 0.8),
+        inset 0 1px 0 rgb(255 214 190 / 0.55);
+      font: 500 13px / 1.3 "Archivo Variable", system-ui, sans-serif;
+      font-stretch: 110%;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+    .menu-mail {
+      color: var(--ink);
+      font-size: 15px;
+      text-decoration-color: var(--orange);
+      text-underline-offset: 4px;
+    }
+    .menu-legal {
+      display: flex;
+      gap: 20px;
+      margin: 0;
+      font-size: 12px;
+    }
+    .menu-legal a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .menu,
+    .menu.open,
+    .burger span {
+      transition: none;
+    }
+  }
+</style>
