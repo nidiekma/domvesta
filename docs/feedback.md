@@ -1,3 +1,0 @@
-- teamfoto und da drunter nicht mehr so viel text sondenr so wie auf eurem entwurf (auf dem entwurf sind zwei einzerl Bilder, das soll aber quasi zusammengefügt werden)
-- impressum z.b. https://bensiefkes.de/impressum/ (rechtlich prüfen)
-- hoster anpassen unter datenschutz, derzeit OVH genannt 
