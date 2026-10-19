@@ -1618,9 +1618,9 @@ const faq: { q: string; a: string }[] = [
         object-fit: cover;
         object-position: 50% 0%;
       }
-      /* Rings over the photo, multiplied: they show on the light backdrop and
-         vanish over hair and the dark suits, so they read as sitting behind
-         the two. The lower part fades out before the white shirts. */
+      /* Rings over the photo, cut to the backdrop by a silhouette mask
+         (team-mask.webp, sized and placed like the img) so they pass behind
+         the two instead of across faces and shirts. */
       .team-rings {
         position: absolute;
         z-index: 1;
@@ -1628,8 +1628,8 @@ const faq: { q: string; a: string }[] = [
         --cy: 64%;
         mix-blend-mode: multiply;
         pointer-events: none;
-        -webkit-mask-image: linear-gradient(to bottom, #000 42%, transparent 62%);
-        mask-image: linear-gradient(to bottom, #000 42%, transparent 62%);
+        -webkit-mask: url(/team-mask.webp) 50% 0% / cover no-repeat;
+        mask: url(/team-mask.webp) 50% 0% / cover no-repeat;
       }
       .team-rings span:first-child {
         width: 104%;
