@@ -16,12 +16,17 @@
 import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource/schibsted-grotesk/400.css";
 import "@fontsource/schibsted-grotesk/500.css";
+import "@fontsource/schibsted-grotesk/600.css";
 import "@fontsource/instrument-serif/400.css";
 import Nav from "../components/Nav.astro";
 import { lg, sm, type LgIcon, type SmIcon } from "../components/icons";
 import { counter, ctaLink, founders, mail, phone } from "../data/site";
 
 const highlights = ["Digitaler Überblick", "Konditionen optimieren", "Persönlich betreut"];
+
+// 02 headline: the chores Domvesta takes off the desk, crossed out (customer
+// screenshot of 22.10.2026). Soft hyphens let the long one break on phones.
+const chores = ["Unterlagen suchen", "Hohe Preise rechtfertigen", "Anbietern hinter­her­telefonieren"];
 
 // text: phones (mobile mockup); long: desktop (screenshot of 16.10.2026).
 const benefits: { icon: LgIcon; title: string; text: string; long: string }[] = [
@@ -39,7 +44,7 @@ const benefits: { icon: LgIcon; title: string; text: string; long: string }[] = 
   },
   {
     icon: "personSignal",
-    title: "Abstimmung abgeben",
+    title: "Kommunikation abgeben",
     text: "Wir übernehmen die Kommunikation mit Energie- und Versicherungspartnern.",
     long: "Wir übernehmen die Kommunikation mit Energie- und Versicherungspartnern und bleiben Ihre Anlaufstelle.",
   },
@@ -50,7 +55,7 @@ const benefits: { icon: LgIcon; title: string; text: string; long: string }[] = 
 const portal: { icon: SmIcon; label: string }[] = [
   { icon: "doc", label: "Verträge" },
   { icon: "doc", label: "Dokumente" },
-  { icon: "list", label: "Meine Anliegen" },
+  { icon: "list", label: "Meine Anlagen" },
   { icon: "person", label: "Kontakt" },
 ];
 
@@ -60,7 +65,7 @@ const boardNav: (BoardRow & { active?: boolean })[][] = [
     { icon: "homeFill", label: "Übersicht", active: true },
     { icon: "doc", label: "Verträge" },
     { icon: "doc", label: "Dokumente" },
-    { icon: "list", label: "Meine Anliegen" },
+    { icon: "list", label: "Meine Anlagen" },
   ],
   [
     { icon: "person", label: "Benutzerprofil" },
@@ -97,14 +102,34 @@ const boardCards: { icon: SmIcon; title: string; rows: BoardRow[] }[] = [
   },
 ];
 
-const tasks: { icon: SmIcon; label: string }[] = [
-  { icon: "gauge", label: "Zählerstände melden" },
-  { icon: "bars", label: "Abschläge ändern" },
-  { icon: "doc", label: "Rechnungsadresse ändern" },
-  { icon: "card", label: "Bankverbindung aktualisieren" },
-  { icon: "bank", label: "SEPA-Mandate verwalten" },
-  { icon: "pencil", label: "Verträge kündigen" },
-  { icon: "filePlus", label: "Weitere Verträge importieren" },
+// The numbered rows next to the portal, each an icon list.
+const energyRows: { title: string; items: { icon: SmIcon; label: string }[] }[] = [
+  {
+    title: "Unterlagen griffbereit",
+    items: [
+      { icon: "fileSearch", label: "Verträge digital einsehen" },
+      {
+        icon: "calendarCheck",
+        label: "Fristgerechte Jahresabrechnungen zum gewünschten Zeitpunkt – 01.01. oder unterjährig.",
+      },
+    ],
+  },
+  {
+    title: "Vorgänge einfacher erledigen",
+    items: [
+      { icon: "gauge", label: "Zählerstände melden" },
+      { icon: "bars", label: "Abschläge ändern" },
+      { icon: "mail", label: "Rechnungsadresse ändern" },
+      { icon: "bank", label: "Bankverbindung aktualisieren" },
+      { icon: "filePen", label: "SEPA-Mandate verwalten" },
+      { icon: "circleX", label: "Verträge kündigen" },
+      { icon: "download", label: "Weitere Verträge importieren" },
+    ],
+  },
+  {
+    title: "Bestand erweitern",
+    items: [{ icon: "housePlus", label: "Neue Liegenschaften integrieren." }],
+  },
 ];
 
 const insurance: { icon: LgIcon; title: string; text: string }[] = [
@@ -212,13 +237,15 @@ const faq: { q: string; a: string }[] = [
           <section class="services" id="leistungen" aria-labelledby="leistungen-title">
             <span class="count services-count" aria-hidden="true">{counter(2)}</span>
             <header class="services-head">
-              <h2 id="leistungen-title">
-                Weniger suchen.<br /><span class="d-only">Weniger abstimmen.<br /></span>Mehr Überblick.
+              <!-- The page script adds .in once the panel is in place; the
+                   orange lines then strike through one after the other. -->
+              <h2 id="leistungen-title" class="chores">
+                <span class="sr-only">Schluss mit:</span>
+                {chores.map((c, i) => <s style={`--i:${i}`}><span>{c}</span></s>)}
               </h2>
               <p>
-                Viele Anbieter, verstreute Unterlagen, offene Rückfragen? <span class="m-only">Wir bringen Ordnung hinein.</span><span
-                  class="d-only">Wir machen daraus klare Abläufe.</span
-                >
+                Wir bündeln Ihre Strom-, Gas- und Versicherungsverträge mit Blick auf Preis und Leistung, halten
+                Unterlagen digital bereit und übernehmen die Kommunikation mit den Anbietern.
               </p>
             </header>
             <div class="cards">
@@ -247,8 +274,8 @@ const faq: { q: string; a: string }[] = [
         <header class="sec-head reveal">
           <h2 id="strom-gas-title">Strom und Gas.<br />Digital geordnet.</h2>
           <p class="lede">
-            Ihre eingebundenen Lieferstellen im Portal des ausgewählten Anbieters. Wir unterstützen bei Einrichtung und
-            Lieferantenkommunikation.
+            <strong>Alle Lieferstellen in einem Portal.</strong> Wir helfen bei der Einrichtung und übernehmen die
+            Kommunikation mit Ihrem Energieversorger.
           </p>
         </header>
         <div class="energy">
@@ -323,36 +350,24 @@ const faq: { q: string; a: string }[] = [
             </div>
           </figure>
           <ol class="rows">
-            <li class="row reveal">
-              <span class="big-num">01</span>
-              <div>
-                <h3>Unterlagen griffbereit</h3>
-                <p>Verträge und Jahresabrechnungen digital einsehen.</p>
-              </div>
-            </li>
-            <li class="row reveal" style="--d:1">
-              <span class="big-num">02</span>
-              <div>
-                <h3>Vorgänge einfacher erledigen</h3>
-                <ul class="tasks">
-                  {
-                    tasks.map((t) => (
-                      <li>
-                        <Fragment set:html={sm(t.icon)} />
-                        {t.label}
-                      </li>
-                    ))
-                  }
-                </ul>
-              </div>
-            </li>
-            <li class="row reveal" style="--d:2">
-              <span class="big-num">03</span>
-              <div>
-                <h3>Bestand erweitern</h3>
-                <p>Neue Liegenschaften integrieren.</p>
-              </div>
-            </li>
+            {
+              energyRows.map((r, i) => (
+                <li class="row reveal" style={`--d:${i}`}>
+                  <span class="big-num">0{i + 1}</span>
+                  <div>
+                    <h3>{r.title}</h3>
+                    <ul class="tasks">
+                      {r.items.map((t) => (
+                        <li>
+                          <Fragment set:html={sm(t.icon)} />
+                          <span>{t.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </li>
+              ))
+            }
           </ol>
         </div>
       </section>
@@ -379,8 +394,11 @@ const faq: { q: string; a: string }[] = [
           }
         </div>
         <aside class="claim reveal" aria-labelledby="claim-title">
-          <h3 id="claim-title" class="claim-title">Auch im Schadenfall<br />an Ihrer Seite.</h3>
-          <p>Wir begleiten Meldung und Abstimmung. Die digitale Bearbeitung wird von einer KI unterstützt.</p>
+          <h3 id="claim-title" class="claim-title">Auch im Schadensfall<br />an Ihrer Seite.</h3>
+          <p>
+            Wir begleiten die Schadenmeldung und die Abstimmung mit dem Versicherer. Über einen KI-gestützten digitalen
+            Schadenmanager können Sie den Bearbeitungsstand jederzeit online einsehen.
+          </p>
         </aside>
       </section>
 
@@ -565,6 +583,7 @@ const faq: { q: string; a: string }[] = [
       const pin = document.querySelector<HTMLElement>(".pin")!;
       const nav = document.querySelector<HTMLElement>(".nav")!;
       const services = document.querySelector<HTMLElement>(".services")!;
+      const chores = document.querySelector<HTMLElement>(".chores")!;
       const countFixed = document.querySelector<HTMLElement>(".count-fixed")!;
       const orbStage = document.querySelector<HTMLElement>(".orb-stage")!;
       // Same query as the CSS phone block: no pinned stage there (see placeOrb, update).
@@ -629,6 +648,7 @@ const faq: { q: string; a: string }[] = [
           // while its stage is off screen.
           const r = orbStage.getBoundingClientRect();
           orb?.setProgress(0, r.bottom > 0 && r.top < window.innerHeight ? 0 : 1);
+          if (chores.getBoundingClientRect().top < window.innerHeight * 0.75) chores.classList.add("in");
           nav.classList.toggle("solid", window.scrollY > 4);
           pinnedActive = null;
           if (!visible.size) setActive(null);
@@ -640,6 +660,7 @@ const faq: { q: string; a: string }[] = [
         pin.style.setProperty("--t2", t2.toFixed(4));
         countFixed.textContent = (t2 > 0.5 ? countFixed.dataset.next : countFixed.dataset.first) ?? "";
         orb?.setProgress(0, t2);
+        if (t2 > 0.9) chores.classList.add("in");
 
         // Transparent over the pinned opening, frosted once
         // normal sections start scrolling underneath.
@@ -759,6 +780,14 @@ const faq: { q: string; a: string }[] = [
         .m-only {
           display: none !important;
         }
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
       }
     </style>
 
@@ -1091,21 +1120,42 @@ const faq: { q: string; a: string }[] = [
         gap: 4.4svh;
       }
       /* Headline | divider | lede. Sized by height too, so the full panel fits
-         short desktop screens. */
+         short desktop screens; the longest chore fills the wide column. */
       .services-head {
         display: grid;
-        grid-template-columns: minmax(0, 58%) 1fr;
+        grid-template-columns: minmax(0, 68%) 1fr;
         align-items: center;
       }
       .services-head h2 {
-        font-size: clamp(26px, min(3.6vw, 6.2svh), 72px);
+        font-size: clamp(20px, min(2.4vw, 4.4svh), 60px);
+        line-height: 1.6;
+      }
+      /* The crossed-out chores: one per line, an orange stroke through the
+         middle of the capitals that overshoots the words a little. The stroke
+         is a background on the inline span, so a chore that wraps (phones)
+         is struck on every line. */
+      .chores s {
+        display: block;
+        text-decoration: none;
+      }
+      .chores s span {
+        --stroke: max(2px, 0.065em);
+        margin: 0 -0.4em;
+        padding: 0 0.4em;
+        background: linear-gradient(var(--orange), var(--orange)) no-repeat 0 52% / 0% var(--stroke);
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+        transition: background-size 0.6s cubic-bezier(0.65, 0, 0.25, 1) calc(var(--i) * 0.22s);
+      }
+      .chores.in s span {
+        background-size: 100% var(--stroke);
       }
       .services-head p {
         max-width: 24em;
         margin: 0;
-        padding: 2svh 0 2svh 4vw;
+        padding: 2svh 0 2svh 3.4vw;
         border-left: 1px solid var(--line);
-        font-size: clamp(15px, 1.3vw, 22px);
+        font-size: clamp(14px, min(1.3vw, 2.5svh), 22px);
         line-height: 1.55;
         color: var(--muted);
       }
@@ -1217,6 +1267,10 @@ const faq: { q: string; a: string }[] = [
       .sec-head .lede {
         max-width: 32em;
         margin: 0;
+      }
+      .lede strong {
+        font-weight: 600;
+        color: var(--ink);
       }
 
       /* 03: Strom & Gas. Desktop: the portal dashboard wide on the left,
@@ -1409,7 +1463,6 @@ const faq: { q: string; a: string }[] = [
         margin-bottom: 1.2svh;
         font-size: clamp(17px, 1.45vw, 24px);
       }
-      .row p,
       .tile p {
         margin: 0;
         max-width: 36em;
@@ -1427,20 +1480,26 @@ const faq: { q: string; a: string }[] = [
       .tasks {
         list-style: none;
         display: grid;
-        gap: 1.6svh;
-        margin: 2.4svh 0 0;
+        gap: 1.2svh;
+        margin: 1.6svh 0 0;
         padding: 0;
       }
       .tasks li {
-        display: flex;
-        align-items: center;
-        gap: 16px;
+        display: grid;
+        grid-template-columns: 26px 1fr;
+        align-items: start;
+        column-gap: 18px;
         font-size: clamp(13px, 0.95vw, 16px);
+        line-height: 1.45;
         color: var(--muted);
       }
+      /* One-liners centre on the icon; longer items hang from their first line. */
+      .tasks li span {
+        padding-top: calc((26px - 1lh) / 2);
+      }
       .tasks :global(.ic) {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         color: var(--ink);
       }
 
@@ -2170,6 +2229,12 @@ const faq: { q: string; a: string }[] = [
         }
         .services-head h2 {
           font-size: clamp(22px, 6.2vw, 34px);
+          line-height: 1.3;
+        }
+        /* The long chore wraps here: keep its two lines together and set
+           the chores apart instead. */
+        .chores s + s {
+          margin-top: 0.45em;
         }
         .services-head p {
           max-width: none;
@@ -2270,7 +2335,6 @@ const faq: { q: string; a: string }[] = [
         .row h3 {
           font-size: 20px;
         }
-        .row p,
         .tile p,
         .step p {
           font-size: 15px;
@@ -2481,6 +2545,10 @@ const faq: { q: string; a: string }[] = [
         }
         .step::after {
           width: 100%;
+          transition: none;
+        }
+        .chores s span {
+          background-size: 100% var(--stroke);
           transition: none;
         }
       }
