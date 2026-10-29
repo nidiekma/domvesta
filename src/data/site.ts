@@ -35,10 +35,13 @@ export const ctaLink = {
 
 // --- Rechtliches (Impressum + verantwortliche Stelle im Datenschutz) ---------
 // Anschrift, Tätigkeit und E-Mail nach Kundenvorgabe (Oktober 2026); Telefon
-// und Registerangaben weiterhin aus bensiefkes.de/impressum.
+// und Registerangaben weiterhin aus bensiefkes.de/impressum. Der
+// Unternehmensberater ist extern und steht nur im Impressum als "Beraten
+// durch" (Kundenvorgabe Oktober 2026).
 export const legal = {
   owners: ["Ben Siefkes", "Joshua de Buhr"],
   business: "Energie- und Versicherungsmakler",
+  consultant: { name: "Frank Willers", role: "Unternehmensberater" },
   street: "Hermann-Allmers-Weg 3",
   city: "26122 Oldenburg",
   phone: "+49 172 7856681",
