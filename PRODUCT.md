@@ -46,12 +46,12 @@ Domvesta is a two-person consultancy that takes energy (Strom & Gas) and insuran
 - Real ProvenExpert rating: 4,9/5 from 55+ reviews (https://www.provenexpert.com/ben-siefkes-finanz-und-versicherungsmakler/) — the only third-party proof; it belongs to Ben Siefkes' existing broker profile.
 - Real partnership: Wirth Rechtsanwälte + the insurance partner's digital Schadenmanager (named in the Schadensmanagement copy).
 - Real legal/contact data for the Impressum from bensiefkes.de (Raiffeisenstraße 23, 26122 Oldenburg).
-- No testimonials, case studies, client counts, or savings figures exist — do not fabricate any.
+- Two real testimonials supplied by the client (October 2026): Carlo Kuhnert (Kuhnert Immobilien) and BKM Immobilienverwaltung, shown in the Kundenstimmen section. No case studies, client counts, or savings figures exist — do not fabricate any, and add testimonials only when the client supplies them.
 
 ## Product Principles
 
 1. **Convert to conversation, not to purchase** — every section should lower the threshold to booking the Erstgespräch; the site sells a first call, not a contract.
 2. **Trust through real people** — two named founders with verifiable credentials are the product; keep them visible and never replace them with generic corporate imagery.
 3. **Entlastung is the message and the experience** — the site must feel as effortless and organized as the service it promises; clutter contradicts the pitch.
-4. **Only real proof** — ProvenExpert rating, named partners, and real credentials only; absence of testimonials/case studies is a fact to respect, not a gap to fill.
+4. **Only real proof** — ProvenExpert rating, named partners, real credentials and client-supplied testimonials only; missing case studies or figures are a fact to respect, not a gap to fill.
 5. **Client-approved copy is load-bearing** — wording survived client feedback rounds; propose copy changes explicitly, never rewrite silently.

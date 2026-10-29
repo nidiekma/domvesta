@@ -161,6 +161,28 @@ const steps = [
   },
 ];
 
+// 08: customer voices, text and photos from the customer's social posts
+// (29.10.2026). The photos, client logo included, are cut from those posts
+// until the originals arrive.
+const voices: { title: [string, string]; quote: string; source: string; img: string; alt: string }[] = [
+  {
+    title: ["Klare Antworten.", "Kurze Wege."],
+    quote:
+      "Ich schätze die unkomplizierte Zusammenarbeit mit Domvesta. Feste Ansprechpartner, verständliche Antworten und Unterstützung bei der Abstimmung mit den Versorgern – das entlastet uns im Tagesgeschäft.",
+    source: "Carlo Kuhnert · Kuhnert Immobilien",
+    img: "testimonial-kuhnert",
+    alt: "Carlo Kuhnert neben dem Logo von Kuhnert Immobilien",
+  },
+  {
+    title: ["Persönlich betreut.", "Im Alltag entlastet."],
+    quote:
+      "Bei Fragen sind Ben und Joshua schnell erreichbar und kümmern sich persönlich. Das erleichtert uns den Verwaltungsalltag und gibt uns mehr Zeit für unsere Eigentümer, Mieter und Objekte.",
+    source: "BKM Immobilienverwaltung",
+    img: "testimonial-bkm",
+    alt: "Das Team der BKM Immobilienverwaltung vor dem Firmenlogo",
+  },
+];
+
 const faq: { q: string; a: string }[] = [
   {
     q: "Wie viel Aufwand haben wir?",
@@ -539,9 +561,49 @@ const faq: { q: string; a: string }[] = [
         </div>
       </section>
 
-      <!-- ============ 08: FAQ ============ -->
-      <section class="sec" id="faq" aria-labelledby="faq-title">
+      <!-- ============ 08: Kundenstimmen ============ -->
+      <section class="sec" id="stimmen" aria-labelledby="stimmen-title">
         <span class="count">{counter(8)}</span>
+        <header class="sec-head reveal">
+          <h2 id="stimmen-title">Echte Stimmen.<br />Aus der Verwaltung.</h2>
+          <p class="lede">Wie Hausverwaltungen die Zusammenarbeit mit uns im Alltag erleben.</p>
+        </header>
+        <div class="voices">
+          {
+            voices.map((v, i) => (
+              <figure class="voice reveal" style={`--d:${i}`}>
+                <h3 class="voice-title">
+                  {v.title[0]}
+                  <br />
+                  {v.title[1]}
+                </h3>
+                <img
+                  class="voice-photo"
+                  src={`/${v.img}-800.webp`}
+                  srcset={`/${v.img}-800.webp 800w, /${v.img}.webp 1400w`}
+                  sizes="(max-aspect-ratio: 1/1) 88vw, (max-width: 720px) 88vw, 46vw"
+                  width="800"
+                  height="470"
+                  alt={v.alt}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div class="voice-quote">
+                  <span class="voice-mark" aria-hidden="true">“</span>
+                  <blockquote>
+                    <p>{v.quote}</p>
+                  </blockquote>
+                  <figcaption>{v.source}</figcaption>
+                </div>
+              </figure>
+            ))
+          }
+        </div>
+      </section>
+
+      <!-- ============ 09: FAQ ============ -->
+      <section class="sec" id="faq" aria-labelledby="faq-title">
+        <span class="count">{counter(9)}</span>
         <div class="split">
           <div class="split-head reveal">
             <h2 id="faq-title">Ihre Fragen.<br />Klare Antworten.</h2>
@@ -564,9 +626,9 @@ const faq: { q: string; a: string }[] = [
         </div>
       </section>
 
-      <!-- ============ 09: Kontakt ============ -->
+      <!-- ============ 10: Kontakt ============ -->
       <section class="sec contact" id="kontakt" aria-labelledby="kontakt-title">
-        <span class="count">{counter(9)}</span>
+        <span class="count">{counter(10)}</span>
         <div class="contact-rings" aria-hidden="true"><span></span><span></span></div>
         <div class="contact-glow" aria-hidden="true"></div>
         <div class="contact-body">
@@ -1902,7 +1964,80 @@ const faq: { q: string; a: string }[] = [
         color: var(--ink);
       }
 
-      /* 08: faq */
+      /* 08: customer voices, after the customer's posts: headline, photo
+         with the client logo, night navy quote panel. Subgrid rows keep both
+         photos and both panels level although the quotes differ in length. */
+      .voices {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 2.4vw;
+        margin-top: 9svh;
+      }
+      .voice {
+        display: grid;
+        grid-row: span 3;
+        grid-template-rows: subgrid;
+        row-gap: 10px;
+        margin: 0;
+      }
+      .voice-title {
+        align-self: end;
+        margin-bottom: calc(3.4svh - 10px);
+        font: 400 clamp(17px, 1.6vw, 28px) / 1.16 "Archivo Variable", sans-serif;
+        font-stretch: 125%;
+        letter-spacing: 0.005em;
+        text-transform: uppercase;
+        color: var(--ink);
+      }
+      .voice-photo {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1.7;
+        object-fit: cover;
+        box-sizing: border-box;
+        border-radius: 20px;
+        border: 1px solid rgb(25 22 37 / 0.12);
+        background: #e9e4dc;
+      }
+      /* The orange glow of section 05, held in the corner of the mark. */
+      .voice-quote {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-content: start;
+        column-gap: clamp(18px, 1.8vw, 32px);
+        padding: clamp(22px, 2.6vw, 44px) clamp(22px, 2.6vw, 44px) clamp(24px, 2.8vw, 46px);
+        border-radius: 20px;
+        background:
+          radial-gradient(70% 90% at 0% 0%, rgb(250 100 27 / 0.2), transparent 70%),
+          linear-gradient(160deg, #262236 0%, #191625 55%, #110f1a 100%);
+        color: #fff;
+      }
+      .voice-mark {
+        grid-row: span 2;
+        height: 0.5em;
+        margin-top: -0.04em;
+        font: 800 clamp(84px, 8vw, 144px) / 0.86 "Archivo Variable", sans-serif;
+        color: var(--orange);
+      }
+      .voice-quote blockquote {
+        margin: 0;
+      }
+      .voice-quote p {
+        margin: 0;
+        max-width: 34em;
+        font-size: clamp(16px, 1.3vw, 21px);
+        font-weight: 500;
+        line-height: 1.5;
+        text-wrap: pretty;
+      }
+      .voice-quote figcaption {
+        margin-top: 2.4svh;
+        font-size: clamp(13px, 0.92vw, 15px);
+        color: rgb(255 255 255 / 0.68);
+      }
+
+      /* 09: faq */
       .faq {
         border-top: 1px solid var(--line);
       }
@@ -1970,7 +2105,7 @@ const faq: { q: string; a: string }[] = [
         color: var(--muted);
       }
 
-      /* 09: contact */
+      /* 10: contact */
       .contact {
         overflow: hidden;
         min-height: 100svh;
@@ -2516,6 +2651,39 @@ const faq: { q: string; a: string }[] = [
         }
         .roles .btn {
           margin-top: 3svh;
+        }
+
+        .voices {
+          grid-template-columns: 1fr;
+          row-gap: 7svh;
+          margin-top: 5svh;
+        }
+        .voice {
+          grid-row: auto;
+          grid-template-rows: none;
+        }
+        .voice-title {
+          margin-bottom: 8px;
+          font-size: clamp(18px, 5vw, 24px);
+          font-stretch: 106%;
+        }
+        /* Mark above the quote, so the text keeps the full panel width. */
+        .voice-quote {
+          grid-template-columns: 1fr;
+          padding: 22px 20px 24px;
+        }
+        .voice-mark {
+          grid-row: auto;
+          height: 0.42em;
+          margin-bottom: 14px;
+          font-size: 68px;
+        }
+        .voice-quote p {
+          font-size: 17px;
+        }
+        .voice-quote figcaption {
+          margin-top: 14px;
+          font-size: 14px;
         }
 
         .faq summary {

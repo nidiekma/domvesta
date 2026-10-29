@@ -14,6 +14,7 @@ export const sections = [
   { id: "entscheidung", label: "Klar entscheiden" },
   { id: "team", label: "Ihr Team" },
   { id: "ablauf", label: "So starten wir" },
+  { id: "stimmen", label: "Kundenstimmen" },
   { id: "faq", label: "Häufige Fragen" },
   { id: "kontakt", label: "Kontakt" },
 ] as const;
