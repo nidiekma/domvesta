@@ -45,7 +45,7 @@ export const ctaLink = {
 export const legal = {
   owners: ["Ben Siefkes", "Joshua de Buhr"],
   business: "Energie- und Versicherungsmakler",
-  consultant: { name: "Frank Willers", role: "Unternehmensberater" },
+  consultant: { name: "Frank Willers", role: "Unternehmensberater", web: "https://frankwillers.com/" },
   street: "Hermann-Allmers-Weg 3",
   city: "26122 Oldenburg",
   phone: "+49 172 7856681",

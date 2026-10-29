@@ -12,7 +12,10 @@ import { legal } from "../../data/site.ts";
   {legal.city}
 </address>
 
-<p>Beraten durch {legal.consultant.name}, {legal.consultant.role}</p>
+<p>
+  Beraten durch {legal.consultant.name}, {legal.consultant.role}<br />
+  <a href={legal.consultant.web} target="_blank" rel="noopener">{legal.consultant.web.replace(/^https?:\/\/|\/$/g, "")}</a>
+</p>
 
 <h3>Kontakt</h3>
 <p>
