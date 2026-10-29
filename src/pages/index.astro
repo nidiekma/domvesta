@@ -19,8 +19,9 @@ import "@fontsource/schibsted-grotesk/500.css";
 import "@fontsource/schibsted-grotesk/600.css";
 import "@fontsource/instrument-serif/400.css";
 import Nav from "../components/Nav.astro";
+import Social from "../components/Social.astro";
 import { lg, sm, type LgIcon, type SmIcon } from "../components/icons";
-import { counter, ctaLink, founders, mail, phone } from "../data/site";
+import { counter, ctaLink, founders, mail, phone, whatsapp } from "../data/site";
 
 const highlights = ["Digitaler Überblick", "Konditionen optimieren", "Persönlich betreut"];
 
@@ -642,6 +643,12 @@ const faq: { q: string; a: string }[] = [
           <div class="reach reveal">
             <p>Lieber schreiben?<br /><a href={`mailto:${mail}`}>{mail}</a></p>
             <p>Lieber telefonieren?<br /><a href={phone.href}>{phone.label}</a></p>
+            <p>
+              Lieber per WhatsApp?<br />
+              <a class="reach-wa" href={whatsapp.href} target="_blank" rel="noopener">
+                <Fragment set:html={sm("whatsapp")} />{whatsapp.label}
+              </a>
+            </p>
           </div>
           <p class="signoff reveal">Alter Verwalter, ist das einfach.</p>
         </div>
@@ -650,6 +657,7 @@ const faq: { q: string; a: string }[] = [
 
     <footer class="foot">
       <span>© Domvesta</span>
+      <Social />
       <nav aria-label="Rechtliches">
         <a href="/impressum">Impressum</a>
         <a href="/datenschutz">Datenschutz</a>
@@ -2195,6 +2203,14 @@ const faq: { q: string; a: string }[] = [
         text-decoration-color: var(--orange);
         text-underline-offset: 4px;
         white-space: nowrap;
+      }
+      .reach-wa :global(.ic) {
+        display: inline-block;
+        width: 1.15em;
+        height: 1.15em;
+        margin-right: 0.35em;
+        vertical-align: -0.2em;
+        color: var(--orange-text);
       }
       .signoff {
         margin: 3svh 0 0;

@@ -27,6 +27,9 @@ export const counter = (n: number) => `${pad2(n)} / ${pad2(sections.length)} · 
 // --- Kontakt ----------------------------------------------------------------
 export const mail = "info@domvesta.de";
 export const phone = { label: "0176 45179132", href: "tel:+4917645179132" } as const;
+/** WhatsApp Business: the number from the Impressum (Kundenvorgabe 29.10.2026). */
+export const whatsapp = { label: "0172 7856681", href: "https://wa.me/491727856681" } as const;
+export const instagram = "https://www.instagram.com/domvesta.de/";
 /** Every "Erstgespräch vereinbaren" button: Calendly in a new tab. */
 export const ctaLink = {
   href: "https://calendly.com/finanzen-bensiefkes/treffen-mit-domvesta-1",

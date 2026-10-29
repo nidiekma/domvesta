@@ -1,0 +1,60 @@
+---
+// Instagram and WhatsApp as round icon links: footer of every page and the
+// phone menu. Styles its own icons, since the legal pages don't load the
+// homepage's global .ic rules.
+import { instagram, whatsapp } from "../data/site";
+import { sm } from "./icons";
+---
+
+<p class="social">
+  <a href={instagram} target="_blank" rel="noopener" aria-label="Domvesta auf Instagram">
+    <Fragment set:html={sm("instagram")} />
+  </a>
+  <a href={whatsapp.href} target="_blank" rel="noopener" aria-label={`WhatsApp: ${whatsapp.label}`}>
+    <Fragment set:html={sm("whatsapp")} />
+  </a>
+</p>
+
+<style>
+  .social {
+    display: flex;
+    gap: 10px;
+    margin: 0;
+  }
+  .social a {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgb(25 22 37 / 0.2);
+    border-radius: 50%;
+    color: var(--ink);
+    transition: border-color 0.3s, color 0.3s;
+  }
+  .social a:hover {
+    border-color: var(--orange);
+    color: var(--orange-text);
+  }
+  .social a:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+  }
+  .social :global(.ic) {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @media (max-aspect-ratio: 1/1), (max-width: 720px) {
+    .social {
+      gap: 14px;
+    }
+    .social a {
+      width: 44px;
+      height: 44px;
+    }
+  }
+</style>

@@ -10,6 +10,7 @@ import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource/schibsted-grotesk/400.css";
 import "@fontsource/schibsted-grotesk/500.css";
 import Nav from "../components/Nav.astro";
+import Social from "../components/Social.astro";
 
 interface Props {
   title: string;
@@ -79,6 +80,7 @@ const text = (await Astro.slots.render("default")).replace(/<h2>([\s\S]*?)<\/h2>
 
     <footer class="foot">
       <span>© Domvesta</span>
+      <Social />
       <nav aria-label="Rechtliches">
         <a href="/impressum">Impressum</a>
         <a href="/datenschutz">Datenschutz</a>

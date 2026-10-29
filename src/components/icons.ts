@@ -41,6 +41,9 @@ const SM = {
   phone: `<path d="M5 4h3.5l1.5 4-2 1.3a11 11 0 0 0 6.7 6.7L16 14l4 1.5V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4z"/>`,
   mobile: `<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/>`,
   chevron: `<path d="M9 6l6 6-6 6"/>`,
+  // Contact channels (nav, contact section, footer, phone menu)
+  whatsapp: `<path d="M3.6 20.4 4.8 16.2A8.4 8.4 0 1 1 8 19.3z"/><path d="M5 4h3.5l1.5 4-2 1.3a11 11 0 0 0 6.7 6.7L16 14l4 1.5V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4z" transform="translate(12 11.9) scale(.42) translate(-11.75 -12.25)" fill="currentColor" stroke="none"/>`,
+  instagram: `<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.9"/><circle cx="17.1" cy="6.9" r="1.1" fill="currentColor" stroke="none"/>`,
   arrow: `<path d="M4 12h16M14 6l6 6-6 6"/>`,
 };
 
