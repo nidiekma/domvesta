@@ -8,6 +8,11 @@
 //     daher die Textvariante "lokales Hosting".
 //   - Abschnitt "Social Media" (Instagram) ergänzt (Oktober 2026): das Profil
 //     ist nur verlinkt, kein Plugin oder Feed eingebunden.
+//   - Hosting auf GitHub Pages umgestellt (Oktober 2026): hier stand noch OVH
+//     aus der Vorlage. Der AVV-Absatz ist entfallen; ob GitHubs Data Protection
+//     Agreement für das verwendete Konto gilt, ist noch zu klären.
+//   - ProvenExpert (Oktober 2026): das Profil ist nur verlinkt, es ist kein
+//     Bewertungssiegel eingebunden, das beim Seitenaufruf Daten überträgt.
 import { legal } from "../../data/site.ts";
 ---
 
@@ -64,43 +69,38 @@ import { legal } from "../../data/site.ts";
 <h2>2. Hosting</h2>
 <p>Wir hosten die Inhalte unserer Website bei folgendem Anbieter:</p>
 
-<h3>Externes Hosting</h3>
+<h3>GitHub Pages</h3>
 <p>
-  Diese Website wird extern gehostet. Die personenbezogenen Daten, die auf dieser Website erfasst
-  werden, werden auf den Servern des Hosters / der Hoster gespeichert. Hierbei kann es sich
-  v.&nbsp;a. um IP-Adressen, Kontaktanfragen, Meta- und Kommunikationsdaten, Vertragsdaten,
-  Kontaktdaten, Namen, Websitezugriffe und sonstige Daten, die über eine Website generiert werden,
-  handeln.
+  Diese Website wird über den Dienst GitHub Pages bereitgestellt. Anbieter ist (nachfolgend
+  „GitHub“):
 </p>
-<p>
-  Das externe Hosting erfolgt zum Zwecke der Vertragserfüllung gegenüber unseren potenziellen und
-  bestehenden Kunden (Art. 6 Abs. 1 lit. b DSGVO) und im Interesse einer sicheren, schnellen und
-  effizienten Bereitstellung unseres Online-Angebots durch einen professionellen Anbieter (Art. 6
-  Abs. 1 lit. f DSGVO). Sofern eine entsprechende Einwilligung abgefragt wurde, erfolgt die
-  Verarbeitung ausschließlich auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG,
-  soweit die Einwilligung die Speicherung von Cookies oder den Zugriff auf Informationen im
-  Endgerät des Nutzers (z.&nbsp;B. Device-Fingerprinting) im Sinne des TDDDG umfasst. Die
-  Einwilligung ist jederzeit widerrufbar.
-</p>
-<p>
-  Unser(e) Hoster wird bzw. werden Ihre Daten nur insoweit verarbeiten, wie dies zur Erfüllung
-  seiner Leistungspflichten erforderlich ist und unsere Weisungen in Bezug auf diese Daten
-  befolgen.
-</p>
-<p>Wir setzen folgende(n) Hoster ein:</p>
 <address>
-  OVH GmbH<br />
-  Oskar-Jäger-Str. 173/K6<br />
-  50825 Köln<br />
-  Deutschland
+  GitHub, Inc.<br />
+  88 Colin P. Kelly Jr. Street<br />
+  San Francisco, CA 94107<br />
+  USA
 </address>
-
-<h4>Auftragsverarbeitung</h4>
 <p>
-  Wir haben einen Vertrag über Auftragsverarbeitung (AVV) zur Nutzung des oben genannten Dienstes
-  geschlossen. Hierbei handelt es sich um einen datenschutzrechtlich vorgeschriebenen Vertrag, der
-  gewährleistet, dass dieser die personenbezogenen Daten unserer Websitebesucher nur nach unseren
-  Weisungen und unter Einhaltung der DSGVO verarbeitet.
+  Wenn Sie diese Website aufrufen, protokolliert und speichert GitHub Ihre IP-Adresse aus
+  Sicherheitsgründen, unabhängig davon, ob Sie bei GitHub angemeldet sind. Darüber hinaus
+  verarbeitet GitHub die Daten, die für die Auslieferung der Seiten technisch erforderlich sind
+  (z.&nbsp;B. aufgerufene Adresse, Zeitpunkt des Abrufs, Browsertyp und Betriebssystem). Details
+  entnehmen Sie der Dokumentation von GitHub Pages:{" "}
+  <a href="https://docs.github.com/pages/getting-started-with-github-pages/what-is-github-pages" target="_blank" rel="noopener">https://docs.github.com/pages/getting-started-with-github-pages/what-is-github-pages</a>.
+</p>
+<p>
+  Der Einsatz von GitHub Pages erfolgt im Interesse einer sicheren, schnellen und effizienten
+  Bereitstellung unseres Online-Angebots durch einen professionellen Anbieter (Art. 6 Abs. 1 lit. f
+  DSGVO).
+</p>
+<p>
+  Dabei können Daten in die USA übertragen werden. GitHub nimmt nach eigenen Angaben am „EU-US Data
+  Privacy Framework“ (DPF) teil. Der DPF ist ein Übereinkommen zwischen der Europäischen Union und
+  den USA, der die Einhaltung europäischer Datenschutzstandards bei Datenverarbeitungen in den USA
+  gewährleisten soll. Für Übermittlungen in Länder ohne Angemessenheitsbeschluss stützt sich GitHub
+  zudem auf die Standardvertragsklauseln der EU-Kommission. Weitere Informationen finden Sie in der
+  Datenschutzerklärung von GitHub:{" "}
+  <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement</a>.
 </p>
 
 <h2>3. Allgemeine Hinweise und Pflicht&shy;informationen</h2>
@@ -383,7 +383,7 @@ import { legal } from "../../data/site.ts";
   (z.&nbsp;B. Absender, Empfänger und Zeitpunkt). Wir weisen ferner darauf hin, dass WhatsApp nach
   eigener Aussage, personenbezogene Daten seiner Nutzer mit seiner in den USA ansässigen
   Konzernmutter Meta teilt. Weitere Details zur Datenverarbeitung finden Sie in der
-  Datenschutzrichtlinie von WhatsApp unter:
+  Datenschutzrichtlinie von WhatsApp unter:{" "}
   <a href="https://www.whatsapp.com/legal/#privacy-policy" target="_blank" rel="noopener">https://www.whatsapp.com/legal/#privacy-policy</a>.
 </p>
 <p>
@@ -404,13 +404,13 @@ import { legal } from "../../data/site.ts";
   Der DPF ist ein Übereinkommen zwischen der Europäischen Union und den USA, der die Einhaltung
   europäischer Datenschutzstandards bei Datenverarbeitungen in den USA gewährleisten soll. Jedes
   nach dem DPF zertifizierte Unternehmen verpflichtet sich, diese Datenschutzstandards
-  einzuhalten. Weitere Informationen hierzu erhalten Sie vom Anbieter unter folgendem Link:
+  einzuhalten. Weitere Informationen hierzu erhalten Sie vom Anbieter unter folgendem Link:{" "}
   <a href="https://www.dataprivacyframework.gov/participant/7735" target="_blank" rel="noopener">https://www.dataprivacyframework.gov/participant/7735</a>.
 </p>
 <p>Wir nutzen WhatsApp in der Variante „WhatsApp Business“.</p>
 <p>
   Die Datenübertragung in die USA wird auf die Standardvertragsklauseln der EU-Kommission
-  gestützt. Details finden Sie hier:
+  gestützt. Details finden Sie hier:{" "}
   <a href="https://www.whatsapp.com/legal/business-data-transfer-addendum" target="_blank" rel="noopener">https://www.whatsapp.com/legal/business-data-transfer-addendum</a>.
 </p>
 
@@ -424,7 +424,7 @@ import { legal } from "../../data/site.ts";
   Zum Zweck der Terminbuchung geben Sie die abgefragten Daten und den Wunschtermin in die dafür
   vorgesehene Maske ein. Die eingegebenen Daten werden für die Planung, Durchführung und ggf. für
   die Nachbereitung des Termins verwendet. Die Termindaten werden für uns auf den Servern von
-  Calendly gespeichert, dessen Datenschutzerklärung Sie hier einsehen können:
+  Calendly gespeichert, dessen Datenschutzerklärung Sie hier einsehen können:{" "}
   <a href="https://calendly.com/privacy" target="_blank" rel="noopener">https://calendly.com/privacy</a>.
 </p>
 <p>
@@ -443,7 +443,7 @@ import { legal } from "../../data/site.ts";
 </p>
 <p>
   Die Datenübertragung in die USA wird auf die Standardvertragsklauseln der EU-Kommission
-  gestützt. Details finden Sie hier:
+  gestützt. Details finden Sie hier:{" "}
   <a href="https://calendly.com/pages/dpa" target="_blank" rel="noopener">https://calendly.com/pages/dpa</a>.
 </p>
 <p>
@@ -451,31 +451,22 @@ import { legal } from "../../data/site.ts";
   Der DPF ist ein Übereinkommen zwischen der Europäischen Union und den USA, der die Einhaltung
   europäischer Datenschutzstandards bei Datenverarbeitungen in den USA gewährleisten soll. Jedes
   nach dem DPF zertifizierte Unternehmen verpflichtet sich, diese Datenschutzstandards
-  einzuhalten. Weitere Informationen hierzu erhalten Sie vom Anbieter unter folgendem Link:
+  einzuhalten. Weitere Informationen hierzu erhalten Sie vom Anbieter unter folgendem Link:{" "}
   <a href="https://www.dataprivacyframework.gov/participant/6050" target="_blank" rel="noopener">https://www.dataprivacyframework.gov/participant/6050</a>.
 </p>
 
 <h3>ProvenExpert</h3>
 <p>
-  Wir haben Bewertungssiegel von ProvenExpert auf dieser Website eingebunden. Anbieter ist Expert
-  Systems AG, Quedlinburger Str. 1, 10589 Berlin,
+  Auf dieser Website verlinken wir auf das Bewertungsprofil von Ben Siefkes bei ProvenExpert.
+  Anbieter ist die Expert Systems AG, Quedlinburger Str. 1, 10589 Berlin,{" "}
   <a href="https://www.provenexpert.com" target="_blank" rel="noopener">https://www.provenexpert.com</a>.
 </p>
 <p>
-  Das ProvenExpert-Siegel ermöglicht es uns, Kundenbewertungen, die bei ProvenExpert zu unserem
-  Unternehmen abgegeben wurden, auf unserer Website in einem Siegel darzustellen. Wenn Sie unsere
-  Website besuchen, wird eine Verbindung mit ProvenExpert hergestellt, sodass ProvenExpert
-  feststellen kann, dass Sie unsere Website besucht haben. Ferner erfasst ProvenExpert Ihre
-  Spracheinstellungen, um das Siegel in der gewählten Landessprache anzuzeigen.
-</p>
-<p>
-  Die Verwendung von ProvenExpert erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Der
-  Websitebetreiber hat ein berechtigtes Interesse an einer möglichst nachvollziehbaren Darstellung
-  von Kundenbewertungen. Sofern eine entsprechende Einwilligung abgefragt wurde, erfolgt die
-  Verarbeitung ausschließlich auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG,
-  soweit die Einwilligung die Speicherung von Cookies oder den Zugriff auf Informationen im
-  Endgerät des Nutzers (z.&nbsp;B. Device-Fingerprinting) im Sinne des TDDDG umfasst. Die
-  Einwilligung ist jederzeit widerrufbar.
+  Wir binden keine Bewertungssiegel, Widgets oder sonstigen Inhalte von ProvenExpert ein. Beim
+  Besuch dieser Website wird daher keine Verbindung zu ProvenExpert hergestellt. Erst wenn Sie den
+  Link anklicken, werden Sie zu ProvenExpert weitergeleitet und ProvenExpert kann Daten über Sie
+  erheben. Wie ProvenExpert Ihre Daten verarbeitet, erfahren Sie in der Datenschutzerklärung von
+  ProvenExpert.
 </p>
 
 <h2>5. Social Media</h2>
@@ -503,20 +494,20 @@ import { legal } from "../../data/site.ts";
 </p>
 <p>
   Für die Statistiken, die Instagram uns zu unserem Profil bereitstellt, sind wir und Meta
-  gemeinsam verantwortlich (Art. 26 DSGVO). Die Vereinbarung dazu finden Sie unter
+  gemeinsam verantwortlich (Art. 26 DSGVO). Die Vereinbarung dazu finden Sie unter{" "}
   <a href="https://www.facebook.com/legal/terms/page_controller_addendum" target="_blank" rel="noopener">https://www.facebook.com/legal/terms/page_controller_addendum</a>.
   Ihre Betroffenenrechte können Sie sowohl bei uns als auch bei Meta geltend machen. Anfragen an
   uns leiten wir bei Bedarf an Meta weiter.
 </p>
 <p>
   Meta ist nach dem „EU-US Data Privacy Framework“ (DPF) zertifiziert. Weitere Informationen
-  hierzu erhalten Sie vom Anbieter unter folgendem Link:
+  hierzu erhalten Sie vom Anbieter unter folgendem Link:{" "}
   <a href="https://privacycenter.instagram.com/policies/data_privacy_framework" target="_blank" rel="noopener">https://privacycenter.instagram.com/policies/data_privacy_framework</a>.
 </p>
 <p>
   Daten, die wir selbst über Instagram erhalten (z.&nbsp;B. Nachrichten), löschen wir, sobald der
   Zweck der Speicherung entfällt. Gesetzliche Aufbewahrungsfristen bleiben unberührt. Wie Meta
-  Ihre Daten verarbeitet, erfahren Sie in der Datenschutzrichtlinie von Instagram:
+  Ihre Daten verarbeitet, erfahren Sie in der Datenschutzrichtlinie von Instagram:{" "}
   <a href="https://privacycenter.instagram.com/policy/" target="_blank" rel="noopener">https://privacycenter.instagram.com/policy/</a>.
 </p>
 
@@ -551,9 +542,9 @@ import { legal } from "../../data/site.ts";
   Servern von Google findet dabei nicht statt.
 </p>
 <p>
-  Weitere Informationen zu Google Fonts finden Sie unter
-  <a href="https://developers.google.com/fonts/faq" target="_blank" rel="noopener">https://developers.google.com/fonts/faq</a>
-  und in der Datenschutzerklärung von Google:
+  Weitere Informationen zu Google Fonts finden Sie unter{" "}
+  <a href="https://developers.google.com/fonts/faq" target="_blank" rel="noopener">https://developers.google.com/fonts/faq</a>{" "}
+  und in der Datenschutzerklärung von Google:{" "}
   <a href="https://policies.google.com/privacy?hl=de" target="_blank" rel="noopener">https://policies.google.com/privacy?hl=de</a>.
 </p>
 
@@ -623,12 +614,12 @@ import { legal } from "../../data/site.ts";
 <p>
   Wir nutzen Zoom. Anbieter dieses Dienstes ist die Zoom Communications Inc., San Jose, 55 Almaden
   Boulevard, 6th Floor, San Jose, CA 95113, USA. Details zur Datenverarbeitung entnehmen Sie der
-  Datenschutzerklärung von Zoom:
+  Datenschutzerklärung von Zoom:{" "}
   <a href="https://explore.zoom.us/de/privacy/" target="_blank" rel="noopener">https://explore.zoom.us/de/privacy/</a>.
 </p>
 <p>
   Die Datenübertragung in die USA wird auf die Standardvertragsklauseln der EU-Kommission
-  gestützt. Details finden Sie hier:
+  gestützt. Details finden Sie hier:{" "}
   <a href="https://explore.zoom.us/de/privacy/" target="_blank" rel="noopener">https://explore.zoom.us/de/privacy/</a>.
 </p>
 <p>
@@ -636,7 +627,7 @@ import { legal } from "../../data/site.ts";
   Der DPF ist ein Übereinkommen zwischen der Europäischen Union und den USA, der die Einhaltung
   europäischer Datenschutzstandards bei Datenverarbeitungen in den USA gewährleisten soll. Jedes
   nach dem DPF zertifizierte Unternehmen verpflichtet sich, diese Datenschutzstandards
-  einzuhalten. Weitere Informationen hierzu erhalten Sie vom Anbieter unter folgendem Link:
+  einzuhalten. Weitere Informationen hierzu erhalten Sie vom Anbieter unter folgendem Link:{" "}
   <a href="https://www.dataprivacyframework.gov/participant/5728" target="_blank" rel="noopener">https://www.dataprivacyframework.gov/participant/5728</a>.
 </p>
 
