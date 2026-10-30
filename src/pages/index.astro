@@ -18,6 +18,9 @@ import "@fontsource/schibsted-grotesk/400.css";
 import "@fontsource/schibsted-grotesk/500.css";
 import "@fontsource/schibsted-grotesk/600.css";
 import "@fontsource/instrument-serif/400.css";
+// Same file as the @font-face above (Vite hashes by content), preloaded so the
+// hero headline, nav and buttons don't wait for the CSS to discover it.
+import archivoLatin from "@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url";
 import Nav from "../components/Nav.astro";
 import Social from "../components/Social.astro";
 import { lg, sm, type LgIcon, type SmIcon } from "../components/icons";
@@ -206,6 +209,14 @@ const faq: { q: string; a: string }[] = [
     a: "Wir bleiben persönlich für Sie da. Ob Rückfragen, Vertragsänderungen oder Schadensfälle: Sie melden sich bei uns, wir kümmern uns um die Abstimmung mit dem Anbieter.",
   },
 ];
+
+// <head>: title and description also feed the link previews (Open Graph), e.g.
+// when the site is shared on WhatsApp. The preview image, public/og.jpg, is a
+// 1200×630 capture of the hero (logo, eyebrow, headline, orb; no button).
+const title = "Domvesta – Strom, Gas und Versicherungen für Hausverwaltungen";
+const description =
+  "Strom, Gas und Versicherungen für Hausverwaltungen: Verträge bündeln, Unterlagen digital finden, Fristgerechte Abrechnung.";
+const canonical = new URL("/", Astro.site);
 ---
 
 <!doctype html>
@@ -213,15 +224,24 @@ const faq: { q: string; a: string }[] = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="canonical" href={new URL("/", Astro.site)} />
-    <title>Domvesta – Strom, Gas und Versicherungen für Hausverwaltungen</title>
-    <meta
-      name="description"
-      content="Strom, Gas und Versicherungen für Hausverwaltungen: Verträge bündeln, Unterlagen digital finden, Fristgerechte Abrechnung."
-    />
+    <link rel="canonical" href={canonical} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="Domvesta" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL("/og.jpg", Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Domvesta: Strom. Gas. Versicherung. Ein Ansprechpartner. Für Hausverwaltungen." />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <Nav />
@@ -659,13 +679,13 @@ const faq: { q: string; a: string }[] = [
       <span>© Domvesta</span>
       <Social />
       <nav aria-label="Rechtliches">
-        <a href="/impressum">Impressum</a>
-        <a href="/datenschutz">Datenschutz</a>
+        <a href="/impressum/">Impressum</a>
+        <a href="/datenschutz/">Datenschutz</a>
       </nav>
     </footer>
 
     <script>
-      import { mountOrb } from "../scripts/orb";
+      import type { mountOrb } from "../scripts/orb";
 
       const track = document.querySelector<HTMLElement>(".track")!;
       const pin = document.querySelector<HTMLElement>(".pin")!;
@@ -679,31 +699,38 @@ const faq: { q: string; a: string }[] = [
       const navLinks = document.querySelectorAll<HTMLElement>("[data-nav]");
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      function safeMount<T>(label: string, fn: () => T): T | null {
-        try {
-          return fn();
-        } catch (err) {
-          // No WebGL: the CSS layers still carry the composition.
-          console.warn(`[domvesta] ${label} disabled:`, err);
-          return null;
-        }
-      }
       const orbCanvas = document.querySelector<HTMLCanvasElement>("canvas.orb")!;
+      // three.js is by far the heaviest script and the orb pure decoration, so it
+      // loads once the page has painted (see loadOrb at the end of the setup).
       // placeOrb() sizes and centres it in its stage.
-      const orb = safeMount("orb", () =>
-        mountOrb(orbCanvas, {
-          // Night-navy cage around the orange core, like the logo's cubes around the hexagon.
-          colors: { shell: 0x191625, inner: 0x625f64, nodes: 0x191625, smoke: 0x9a3d0c, edgeGlow: 0xfa7a35 },
-        }),
-      );
-      if (!orb) orbCanvas.remove();
+      let orb: ReturnType<typeof mountOrb> | null = null;
+      const loadOrb = () =>
+        import("../scripts/orb")
+          .then(({ mountOrb }) =>
+            mountOrb(orbCanvas, {
+              // Night-navy cage around the orange core, like the logo's cubes around the hexagon.
+              colors: { shell: 0x191625, inner: 0x625f64, nodes: 0x191625, smoke: 0x9a3d0c, edgeGlow: 0xfa7a35 },
+            }),
+          )
+          .then((mounted) => {
+            orb = mounted;
+            placeOrb();
+            update();
+            orbCanvas.classList.add("ready");
+          })
+          .catch((err) => {
+            // No WebGL: the CSS layers still carry the composition.
+            console.warn("[domvesta] orb disabled:", err);
+            orbCanvas.remove();
+          });
 
       // The canvas fills its stage (desktop: the right part of the hero; phones:
       // a block of its own). Cage size and centre are set explicitly; the rings
-      // follow via --orb / --cy on the stage.
+      // follow via --orb / --cy on the stage. Measured on the stage, so the rings
+      // still fit the screen when there is no canvas (no WebGL).
       function placeOrb() {
-        const w = orbCanvas.clientWidth;
-        const h = orbCanvas.clientHeight;
+        const w = orbStage.clientWidth;
+        const h = orbStage.clientHeight;
         if (!w || !h) return;
         const phone = phoneMq.matches;
         const y = phone ? h / 2 : h * 0.48;
@@ -770,6 +797,10 @@ const faq: { q: string; a: string }[] = [
       window.addEventListener("resize", relayout);
       phoneMq.addEventListener("change", relayout);
       update();
+      // The orb: once the first frame has painted, when the main thread is idle.
+      requestAnimationFrame(() =>
+        "requestIdleCallback" in window ? requestIdleCallback(loadOrb, { timeout: 2000 }) : setTimeout(loadOrb, 200),
+      );
 
       // Jumps into the pinned timeline go to a progress value, not an element
       // (on phones the cards are a normal section after the hero).
@@ -1184,6 +1215,12 @@ const faq: { q: string; a: string }[] = [
         width: 100%;
         height: 100%;
         display: block;
+        /* Fades in once three.js has loaded and drawn (loadOrb). */
+        opacity: 0;
+        transition: opacity 0.8s;
+      }
+      .orb.ready {
+        opacity: 1;
       }
       .count-fixed {
         left: var(--pad);
@@ -2753,6 +2790,9 @@ const faq: { q: string; a: string }[] = [
         }
         .chores s span {
           background-size: 100% var(--stroke);
+          transition: none;
+        }
+        .orb {
           transition: none;
         }
       }

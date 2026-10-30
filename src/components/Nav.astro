@@ -28,7 +28,8 @@ const main = [
   { id: "versicherungen", label: "Versicherungen" },
   { id: "team", label: "Über uns" },
 ];
-const legalHref = (p: string) => `/${p}`;
+// Trailing slash: GitHub Pages serves /impressum/ and 301s /impressum to it.
+const legalHref = (p: string) => `/${p}/`;
 ---
 
 <header class="nav">
@@ -55,8 +56,8 @@ const legalHref = (p: string) => `/${p}`;
         </>
       ) : (
         <>
-          <a href="#faq" data-nav="faq">FAQ</a>
-          <a href="#kontakt" data-nav="kontakt">Kontakt</a>
+          <a href={href("faq")} data-nav="faq">FAQ</a>
+          <a href={href("kontakt")} data-nav="kontakt">Kontakt</a>
         </>
       )
     }
@@ -169,10 +170,11 @@ const legalHref = (p: string) => `/${p}`;
     height: 1px;
     background: var(--line);
   }
+  /* Unprefixed only: the build adds -webkit- for Safari. Writing both made the
+     minifier keep just the last one, so Chrome got no blur at all. */
   .nav.solid {
     background: rgb(246 240 230 / 0.94);
     backdrop-filter: blur(16px) saturate(1.1);
-    -webkit-backdrop-filter: blur(16px) saturate(1.1);
   }
   .nav.menu-open {
     background: var(--panel);

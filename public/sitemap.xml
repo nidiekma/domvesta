@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Only the homepage: Impressum and Datenschutz are noindex (LegalPage.astro). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://domvesta.de/</loc>
+  </url>
+</urlset>
